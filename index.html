@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Breezyfy — AI Image Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    :root{
+      --bg:    #080810;
+      --surf:  #0c0c1c;
+      --card:  #101020;
+      --card2: #14142a;
+      --bdr:   rgba(255,255,255,0.08);
+      --bact:  rgba(110,80,255,0.5);
+      --acc:   #6e50ff;
+      --alit:  #9b7dff;
+      --wh:    #ffffff;
+      --txt:   #e4e4f0;
+      --sub:   #8888aa;
+      --mut:   #4a4a66;
+      --ok:    #34d399;
+      --err:   #f87171;
+      --r:     10px;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;overflow:hidden}
+    body{background:var(--bg);color:var(--txt);font-family:'Syne',sans-serif}
+    body::after{
+      content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+      background:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.02'/%3E%3C/svg%3E");
+      background-size:160px;
+    }
+    .orb{position:fixed;border-radius:50%;filter:blur(120px);pointer-events:none;z-index:0}
+    .o1{width:500px;height:500px;top:-160px;left:-80px;background:radial-gradient(circle,rgba(110,80,255,.1),transparent 70%)}
+    .o2{width:380px;height:380px;bottom:-60px;right:80px;background:radial-gradient(circle,rgba(90,50,200,.07),transparent 70%)}
+
+    /* ── HEADER ── */
+    header{
+      position:relative;z-index:30;height:52px;flex-shrink:0;
+      display:flex;align-items:center;padding:0 24px;gap:16px;
+      border-bottom:1px solid var(--bdr);
+      background:rgba(8,8,16,.96);backdrop-filter:blur(24px);
+    }
+    .logo{
+      font-family:'Syne',sans-serif;font-size:22px;font-weight:800;
+      letter-spacing:-.02em;color:var(--wh);text-decoration:none;
+      white-space:nowrap;flex-shrink:0;
+    }
+    .logo span{color:var(--acc)}
+    .hd{width:1px;height:20px;background:var(--bdr);flex-shrink:0}
+    .htag{
+      font-family:'DM Mono',monospace;font-size:10px;
+      letter-spacing:.15em;text-transform:uppercase;
+      color:var(--sub);white-space:nowrap;
+    }
+
+    /* ── 3-COLUMN SHELL ── */
+    .shell{
+      display:flex;
+      height:calc(100vh - 52px);
+      position:relative;z-index:10;
+    }
+
+    /* ══════════════════════════════════════
+       LEFT SIDEBAR — big controls panel
+    ══════════════════════════════════════ */
+    .sidebar{
+      width:480px;
+      min-width:460px;
+      flex-shrink:0;
+      height:100%;
+      overflow-y:auto;
+      overflow-x:hidden;
+      background:var(--surf);
+      border-right:1px solid var(--bdr);
+      display:flex;
+      flex-direction:column;
+    }
+    .sidebar::-webkit-scrollbar{width:4px}
+    .sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}
+
+    .sec{padding:20px 24px;border-bottom:1px solid var(--bdr)}
+
+    .slbl{
+      font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
+      color:var(--wh);margin-bottom:12px;
+      display:flex;align-items:center;gap:10px;
+    }
+    .slbl::after{content:'';flex:1;height:1px;background:var(--bdr)}
+
+    /* prompt */
+    .pw{position:relative}
+    #prompt{
+      width:100%;background:var(--card);border:1px solid var(--bdr);
+      color:var(--wh);padding:13px 15px 32px;border-radius:12px;
+      font-family:'DM Mono',monospace;font-size:13px;line-height:1.75;
+      resize:none;height:130px;outline:none;
+      transition:border-color .2s,box-shadow .2s;
+    }
+    #prompt::placeholder{color:var(--mut)}
+    #prompt:focus{border-color:var(--bact);box-shadow:0 0 0 3px rgba(110,80,255,.09)}
+    .cc{
+      position:absolute;bottom:9px;right:12px;
+      font-family:'DM Mono',monospace;font-size:9.5px;color:var(--mut);
+    }
+
+    /* negative */
+    #neg{
+      width:100%;background:var(--card);border:1px solid var(--bdr);
+      color:var(--sub);padding:11px 14px;border-radius:12px;
+      font-family:'DM Mono',monospace;font-size:11px;line-height:1.65;
+      resize:none;height:76px;outline:none;transition:border-color .2s;
+    }
+    #neg:focus{border-color:rgba(248,113,113,.3);color:var(--wh)}
+
+    /* size tabs */
+    .stabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+    .stab{
+      font-family:'Syne',sans-serif;font-size:11px;font-weight:600;
+      letter-spacing:.08em;text-transform:uppercase;
+      padding:7px 15px;border-radius:50px;border:1px solid var(--bdr);
+      background:transparent;color:var(--sub);cursor:pointer;transition:all .18s;
+    }
+    .stab:hover{color:var(--wh);border-color:rgba(255,255,255,.2)}
+    .stab.on{background:rgba(110,80,255,.17);border-color:var(--bact);color:var(--wh)}
+
+    /* size cards */
+    input[type="radio"][name="sz"]{display:none}
+    .sgrp,.sgrp4{display:none}
+    .sgrp.on{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+    .sgrp4.on{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+    .scard{
+      background:var(--card);border:1px solid var(--bdr);border-radius:12px;
+      padding:13px 7px 11px;cursor:pointer;
+      display:flex;flex-direction:column;align-items:center;gap:6px;transition:all .18s;
+    }
+    .scard:hover{border-color:rgba(110,80,255,.3);background:var(--card2)}
+    input[type="radio"]:checked + .scard{border-color:var(--acc);background:rgba(110,80,255,.11)}
+    .svis{width:42px;height:32px;display:flex;align-items:center;justify-content:center}
+    .srect{
+      background:linear-gradient(135deg,rgba(110,80,255,.38),rgba(155,125,255,.16));
+      border:1.5px solid rgba(110,80,255,.48);border-radius:3px;transition:all .18s;
+    }
+    input[type="radio"]:checked + .scard .srect{
+      background:linear-gradient(135deg,rgba(110,80,255,.68),rgba(155,125,255,.38));
+      border-color:var(--alit);
+    }
+    .srat{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--wh)}
+    .spx{font-family:'DM Mono',monospace;font-size:9px;color:var(--sub)}
+    input[type="radio"]:checked + .scard .srat{color:var(--alit)}
+
+    /* custom */
+    .cgrp{display:none;flex-direction:column;gap:10px}
+    .cgrp.on{display:flex}
+    .crow{display:grid;grid-template-columns:1fr 36px 1fr 36px;gap:8px;align-items:center}
+    .diw{position:relative}
+    .dilbl{
+      position:absolute;left:11px;top:50%;transform:translateY(-50%);
+      font-size:10px;color:var(--sub);pointer-events:none;font-weight:600;
+    }
+    .diin{
+      width:100%;background:var(--card);border:1px solid var(--bdr);border-radius:9px;
+      color:var(--wh);font-family:'DM Mono',monospace;font-size:14px;
+      padding:10px 9px 10px 26px;outline:none;transition:border-color .2s;
+      -moz-appearance:textfield;
+    }
+    .diin::-webkit-outer-spin-button,.diin::-webkit-inner-spin-button{-webkit-appearance:none}
+    .diin:focus{border-color:var(--bact)}
+    .ibtn{
+      background:var(--card);border:1px solid var(--bdr);border-radius:9px;
+      width:36px;height:42px;display:flex;align-items:center;justify-content:center;
+      cursor:pointer;color:var(--sub);font-size:14px;transition:all .18s;
+    }
+    .ibtn:hover{border-color:var(--bact);color:var(--alit)}
+    .ibtn.lk{border-color:var(--bact);color:var(--alit)}
+    .appbtn{
+      background:transparent;border:1px dashed rgba(255,255,255,.13);border-radius:9px;
+      color:var(--sub);font-family:'Syne',sans-serif;font-size:10px;font-weight:600;
+      letter-spacing:.1em;text-transform:uppercase;padding:9px;
+      cursor:pointer;transition:all .18s;width:100%;
+    }
+    .appbtn:hover{border-color:var(--bact);color:var(--wh)}
+    .appbtn.done{border-color:var(--acc);color:var(--alit);background:rgba(110,80,255,.08)}
+
+    /* generate */
+    .gsec{padding:16px 24px 20px;margin-top:auto}
+    #genBtn{
+      width:100%;position:relative;overflow:hidden;
+      background:linear-gradient(135deg,var(--acc),#4a30c8);
+      border:none;border-radius:12px;color:#fff;
+      font-family:'Syne',sans-serif;font-size:15px;font-weight:700;
+      letter-spacing:.06em;padding:16px;cursor:pointer;
+      transition:transform .2s,box-shadow .2s,opacity .2s;
+    }
+    #genBtn::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.08),transparent)}
+    #genBtn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 10px 30px rgba(110,80,255,.42)}
+    #genBtn:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+    .shim{
+      position:absolute;top:0;left:-100%;width:50%;height:100%;
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,.13),transparent);
+      animation:shim 2.8s infinite;
+    }
+    @keyframes shim{to{left:200%}}
+
+    /* ══════════════════════════════════════
+       CENTER — KlingAI-style feed
+    ══════════════════════════════════════ */
+    .feed-col{
+      flex:1;
+      min-width:0;
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      border-right:1px solid var(--bdr);
+      overflow:hidden;
+    }
+
+    /* empty state */
+    .feed-empty{
+      flex:1;display:flex;flex-direction:column;
+      align-items:center;justify-content:center;
+      gap:18px;text-align:center;padding:40px;
+    }
+    .fe-ico{
+      width:72px;height:72px;border:1px solid var(--bdr);border-radius:18px;
+      display:flex;align-items:center;justify-content:center;
+      font-size:28px;background:var(--card);
+    }
+    .fe-title{
+      font-size:22px;font-weight:300;
+      font-family:'DM Mono',monospace;
+      color:var(--wh);letter-spacing:.03em;
+    }
+    .fe-sub{
+      font-family:'DM Mono',monospace;font-size:11px;
+      color:var(--sub);line-height:1.8;
+    }
+
+    /* scrollable feed */
+    .feed-scroll{
+      flex:1;
+      overflow-y:auto;
+      overflow-x:hidden;
+      display:none;   /* toggled via JS */
+      flex-direction:column;
+    }
+    .feed-scroll::-webkit-scrollbar{width:5px}
+    .feed-scroll::-webkit-scrollbar-track{background:transparent}
+    .feed-scroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:3px}
+
+    /* ── BATCH BLOCK ── */
+    .batch{
+      border-bottom:1px solid var(--bdr);
+      padding:0;
+    }
+
+    /* KlingAI-style batch header row */
+    .bh{
+      display:flex;align-items:center;gap:10px;
+      padding:14px 20px 12px;
+    }
+    .bh-img-ico{
+      width:22px;height:22px;flex-shrink:0;opacity:.5;
+    }
+    .bh-divider{
+      width:1px;height:16px;background:var(--bdr);flex-shrink:0;
+    }
+    .bh-badge{
+      font-family:'Syne',sans-serif;font-size:10px;font-weight:700;
+      letter-spacing:.06em;
+      background:var(--card2);border:1px solid var(--bdr);
+      color:var(--sub);padding:3px 10px;border-radius:5px;
+      white-space:nowrap;flex-shrink:0;
+    }
+    .bh-badge.hi{
+      background:rgba(110,80,255,.12);border-color:rgba(110,80,255,.3);
+      color:var(--alit);
+    }
+    .bh-prompt{
+      font-family:'DM Mono',monospace;font-size:12px;color:var(--sub);
+      flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    }
+    .bh-actions{
+      display:flex;align-items:center;gap:8px;flex-shrink:0;
+      margin-left:auto;
+    }
+    .bh-dl{
+      font-family:'Syne',sans-serif;font-size:10px;font-weight:700;
+      letter-spacing:.07em;text-transform:uppercase;
+      color:var(--ok);background:rgba(52,211,153,.08);
+      border:1px solid rgba(52,211,153,.22);
+      padding:5px 14px;border-radius:7px;cursor:pointer;
+      text-decoration:none;transition:all .18s;
+    }
+    .bh-dl:hover{background:rgba(52,211,153,.16)}
+    .bh-copy{
+      font-family:'Syne',sans-serif;font-size:10px;font-weight:700;
+      letter-spacing:.07em;text-transform:uppercase;
+      color:var(--sub);background:transparent;
+      border:1px solid var(--bdr);
+      padding:5px 12px;border-radius:7px;cursor:pointer;
+      text-decoration:none;transition:all .18s;
+    }
+    .bh-copy:hover{border-color:rgba(255,255,255,.2);color:var(--wh)}
+
+    /* ── IMAGE AREA ── */
+    .batch-img-area{
+      padding:0 20px 20px;
+    }
+
+    /* Loading card */
+    .load-card{
+      width:100%;
+      border-radius:12px;
+      border:1px solid var(--bdr);
+      background:var(--card);
+      overflow:hidden;
+      position:relative;
+      /* height set via JS to match aspect ratio */
+      min-height:260px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:16px;
+    }
+    /* dark tinted gradient bg like KlingAI */
+    .load-card::before{
+      content:'';position:absolute;inset:0;
+      background:linear-gradient(135deg,#0a0f20,#050812);
+      z-index:0;
+    }
+    .load-card > *{position:relative;z-index:1}
+
+    /* subtle dot pattern like KlingAI loading */
+    .load-dots{
+      position:absolute;inset:0;z-index:0;
+      background-image:radial-gradient(circle,rgba(110,80,255,.18) 1px,transparent 1px);
+      background-size:24px 24px;
+      opacity:.5;
+    }
+
+    .spinner{
+      width:44px;height:44px;
+      border:3px solid rgba(110,80,255,.18);
+      border-top-color:var(--acc);
+      border-radius:50%;
+      animation:spin .85s linear infinite;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .pulse-dot{
+      width:9px;height:9px;border-radius:50%;background:var(--acc);
+      box-shadow:0 0 0 0 rgba(110,80,255,.5);
+      animation:plsr 1.2s ease-in-out infinite;
+    }
+    @keyframes plsr{
+      0%  {box-shadow:0 0 0 0 rgba(110,80,255,.5)}
+      70% {box-shadow:0 0 0 13px rgba(110,80,255,0)}
+      100%{box-shadow:0 0 0 0 rgba(110,80,255,0)}
+    }
+    .load-row{
+      display:flex;align-items:center;gap:10px;
+    }
+    .load-lbl{
+      font-family:'DM Mono',monospace;font-size:11.5px;
+      color:var(--sub);letter-spacing:.09em;
+    }
+    /* animated chevrons like KlingAI */
+    .chevrons{
+      display:flex;gap:2px;
+    }
+    .chevrons span{
+      color:var(--acc);font-size:11px;
+      animation:chev .6s ease-in-out infinite;
+    }
+    .chevrons span:nth-child(2){animation-delay:.1s}
+    .chevrons span:nth-child(3){animation-delay:.2s}
+    .chevrons span:nth-child(4){animation-delay:.3s}
+    .chevrons span:nth-child(5){animation-delay:.4s}
+    @keyframes chev{
+      0%,100%{opacity:.2}
+      50%    {opacity:1}
+    }
+
+    /* Result image — constrained, centered */
+    .result-img-outer{
+      display:flex;
+      flex-direction:column;
+      align-items:flex-start;   /* left-align like KlingAI */
+      gap:10px;
+    }
+    .result-img-wrap{
+      /* Max height so portrait images don't go crazy tall */
+      max-height:420px;
+      /* Width auto from aspect-ratio + max-height */
+      width:auto;
+      border-radius:12px;
+      overflow:hidden;
+      position:relative;
+      border:1px solid var(--bdr);
+      background:var(--card);
+      /* aspect-ratio set inline via JS */
+      flex-shrink:0;
+    }
+    .result-img-wrap img{
+      height:100%;
+      width:auto;
+      max-height:420px;
+      display:block;
+      border-radius:12px;
+      transition:opacity .5s ease;
+    }
+    /* Always-visible download bar below the image */
+    .img-dl-bar{
+      display:flex;align-items:center;gap:10px;
+    }
+    .i-dl{
+      font-family:'Syne',sans-serif;font-size:11px;font-weight:700;
+      letter-spacing:.07em;text-transform:uppercase;
+      color:#fff;background:rgba(110,80,255,.75);
+      padding:7px 16px;border-radius:8px;text-decoration:none;
+      cursor:pointer;border:none;transition:background .18s;
+    }
+    .i-dl:hover{background:rgba(110,80,255,1)}
+    .i-size-tag{
+      font-family:'DM Mono',monospace;font-size:10px;
+      color:var(--sub);
+      background:var(--card);border:1px solid var(--bdr);
+      padding:6px 12px;border-radius:8px;
+    }
+
+    /* error */
+    .err-card{
+      width:100%;min-height:120px;
+      border-radius:12px;border:1px solid rgba(248,113,113,.2);
+      background:rgba(248,113,113,.05);
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      gap:10px;padding:24px;
+    }
+    .err-ico{font-size:26px}
+    .err-msg{font-family:'DM Mono',monospace;font-size:12px;color:var(--err);text-align:center}
+
+    /* ══════════════════════════════════════
+       RIGHT — thin Recent strip
+    ══════════════════════════════════════ */
+    .recent-col{
+      width:76px;
+      flex-shrink:0;
+      height:100%;
+      background:var(--surf);
+      display:flex;
+      flex-direction:column;
+      overflow:hidden;
+    }
+    .rc-hdr{
+      height:52px;flex-shrink:0;
+      border-bottom:1px solid var(--bdr);
+      display:flex;align-items:center;justify-content:center;
+    }
+    .rc-lbl{
+      font-family:'Syne',sans-serif;font-size:8px;font-weight:700;
+      letter-spacing:.2em;text-transform:uppercase;color:var(--sub);
+    }
+    .rc-scroll{
+      flex:1;overflow-y:auto;overflow-x:hidden;
+      padding:8px 7px;
+      display:flex;flex-direction:column;gap:7px;align-items:center;
+    }
+    .rc-scroll::-webkit-scrollbar{width:2px}
+    .rc-scroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}
+    .rc-thumb{
+      width:56px;height:56px;
+      border-radius:8px;object-fit:cover;
+      border:2px solid var(--bdr);
+      cursor:pointer;flex-shrink:0;
+      transition:all .2s;display:block;
+    }
+    .rc-thumb:hover{border-color:var(--acc);transform:scale(1.06)}
+    .rc-thumb.active{
+      border-color:var(--alit);
+      box-shadow:0 0 0 2px rgba(155,125,255,.3);
+    }
+
+    /* responsive */
+    @media(max-width:1100px){
+      .sidebar{width:380px;min-width:360px}
+    }
+    @media(max-width:860px){
+      .sidebar{width:300px;min-width:280px}
+      .recent-col{width:62px}
+      .rc-thumb{width:46px;height:46px}
+    }
+  </style>
+</head>
+<body>
+<div class="orb o1"></div>
+<div class="orb o2"></div>
+
+<header>
+  <a class="logo" href="#"><span>B</span>reezyfy</a>
+  <div class="hd"></div>
+  <span class="htag">AI Image Generator</span>
+</header>
+
+<div class="shell">
+
+  <!-- ══ LEFT SIDEBAR ══ -->
+  <aside class="sidebar">
+
+    <div class="sec">
+      <div class="slbl">Prompt</div>
+      <div class="pw">
+        <textarea id="prompt"
+          placeholder="Describe your image — subject, style, lighting, mood…"
+          maxlength="800" oninput="uc(this)"></textarea>
+        <span class="cc"><span id="cn">0</span>/800</span>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="slbl">Negative Prompt</div>
+      <textarea id="neg">ugly, blurry, low quality, deformed, bad anatomy, extra limbs, watermark, text, signature, cropped, worst quality, jpeg artifacts, noise, overexposed, underexposed</textarea>
+    </div>
+
+    <div class="sec">
+      <div class="slbl">Canvas Size</div>
+      <div class="stabs">
+        <button class="stab on" onclick="st('sq',this)">Square</button>
+        <button class="stab" onclick="st('po',this)">Portrait</button>
+        <button class="stab" onclick="st('la',this)">Landscape</button>
+        <button class="stab" onclick="st('cu',this)">Custom</button>
+      </div>
+
+      <!-- Square -->
+      <div class="sgrp on" id="g-sq">
+        <input type="radio" name="sz" id="sq1" value="512,512" checked>
+        <label class="scard" for="sq1">
+          <div class="svis"><div class="srect" style="width:21px;height:21px"></div></div>
+          <div class="srat">1:1</div><div class="spx">512 px</div>
+        </label>
+        <input type="radio" name="sz" id="sq2" value="768,768">
+        <label class="scard" for="sq2">
+          <div class="svis"><div class="srect" style="width:25px;height:25px"></div></div>
+          <div class="srat">1:1</div><div class="spx">768 px</div>
+        </label>
+        <input type="radio" name="sz" id="sq3" value="1024,1024">
+        <label class="scard" for="sq3">
+          <div class="svis"><div class="srect" style="width:29px;height:29px"></div></div>
+          <div class="srat">1:1</div><div class="spx">1024 px</div>
+        </label>
+      </div>
+
+      <!-- Portrait -->
+      <div class="sgrp4" id="g-po">
+        <input type="radio" name="sz" id="po1" value="512,768">
+        <label class="scard" for="po1">
+          <div class="svis"><div class="srect" style="width:16px;height:24px"></div></div>
+          <div class="srat">2:3</div><div class="spx">512×768</div>
+        </label>
+        <input type="radio" name="sz" id="po2" value="576,1024">
+        <label class="scard" for="po2">
+          <div class="svis"><div class="srect" style="width:14px;height:25px"></div></div>
+          <div class="srat">9:16</div><div class="spx">576×1024</div>
+        </label>
+        <input type="radio" name="sz" id="po3" value="768,1024">
+        <label class="scard" for="po3">
+          <div class="svis"><div class="srect" style="width:18px;height:24px"></div></div>
+          <div class="srat">3:4</div><div class="spx">768×1024</div>
+        </label>
+        <input type="radio" name="sz" id="po4" value="832,1216">
+        <label class="scard" for="po4">
+          <div class="svis"><div class="srect" style="width:16px;height:23px"></div></div>
+          <div class="srat">2:3</div><div class="spx">832×1216</div>
+        </label>
+      </div>
+
+      <!-- Landscape -->
+      <div class="sgrp4" id="g-la">
+        <input type="radio" name="sz" id="la1" value="768,512">
+        <label class="scard" for="la1">
+          <div class="svis"><div class="srect" style="width:25px;height:17px"></div></div>
+          <div class="srat">3:2</div><div class="spx">768×512</div>
+        </label>
+        <input type="radio" name="sz" id="la2" value="1024,576">
+        <label class="scard" for="la2">
+          <div class="svis"><div class="srect" style="width:27px;height:15px"></div></div>
+          <div class="srat">16:9</div><div class="spx">1024×576</div>
+        </label>
+        <input type="radio" name="sz" id="la3" value="1024,768">
+        <label class="scard" for="la3">
+          <div class="svis"><div class="srect" style="width:25px;height:19px"></div></div>
+          <div class="srat">4:3</div><div class="spx">1024×768</div>
+        </label>
+        <input type="radio" name="sz" id="la4" value="1280,720">
+        <label class="scard" for="la4">
+          <div class="svis"><div class="srect" style="width:28px;height:16px"></div></div>
+          <div class="srat">16:9</div><div class="spx">1280×720</div>
+        </label>
+      </div>
+
+      <!-- Custom -->
+      <div class="cgrp" id="g-cu">
+        <div class="crow">
+          <div class="diw">
+            <span class="dilbl">W</span>
+            <input class="diin" type="number" id="dimW" value="872" min="256" max="2048" step="64">
+          </div>
+          <button class="ibtn lk" id="lkBtn" onclick="toggleLock()">🔒</button>
+          <div class="diw">
+            <span class="dilbl">H</span>
+            <input class="diin" type="number" id="dimH" value="1024" min="256" max="2048" step="64">
+          </div>
+          <button class="ibtn" onclick="swapDims()">⇅</button>
+        </div>
+        <button class="appbtn" id="appBtn" onclick="applyCustom()">Apply Custom Size</button>
+      </div>
+    </div>
+
+    <div class="gsec">
+      <button id="genBtn" onclick="generate()">
+        <span class="shim"></span>Generate
+      </button>
+    </div>
+
+  </aside>
+
+  <!-- ══ CENTER FEED ══ -->
+  <div class="feed-col" id="feedCol">
+
+    <!-- Empty state -->
+    <div class="feed-empty" id="feedEmpty">
+      <div class="fe-ico">◈</div>
+      <div class="fe-title">Canvas awaits</div>
+      <div class="fe-sub">Write a prompt and press Generate<br/>Your images will appear here</div>
+    </div>
+
+    <!-- Feed scroll container -->
+    <div class="feed-scroll" id="feedScroll"></div>
+
+  </div>
+
+  <!-- ══ RIGHT RECENT STRIP ══ -->
+  <aside class="recent-col">
+    <div class="rc-hdr">
+      <span class="rc-lbl">Recent</span>
+    </div>
+    <div class="rc-scroll" id="rcScroll"></div>
+  </aside>
+
+</div><!-- /shell -->
+
+<script>
+/* ── char count ── */
+function uc(el){ document.getElementById('cn').textContent = el.value.length; }
+
+/* ── tab switch ── */
+function st(tab, btn) {
+  document.querySelectorAll('.stab').forEach(b => b.classList.remove('on'));
+  document.querySelectorAll('.sgrp, .sgrp4').forEach(g => { g.classList.remove('on'); g.style.display = 'none'; });
+  document.getElementById('g-cu').classList.remove('on');
+  document.getElementById('g-cu').style.display = 'none';
+  btn.classList.add('on');
+  if (tab === 'cu') {
+    const g = document.getElementById('g-cu');
+    g.classList.add('on'); g.style.display = 'flex';
+  } else {
+    const g = document.getElementById('g-' + tab);
+    g.classList.add('on'); g.style.display = 'grid';
+  }
+}
+
+/* ── custom dims ── */
+let aspectLocked = true;
+let aspectRatio  = 872 / 1024;
+let customApplied = false;
+
+function toggleLock() {
+  aspectLocked = !aspectLocked;
+  const btn = document.getElementById('lkBtn');
+  btn.textContent = aspectLocked ? '🔒' : '🔓';
+  btn.classList.toggle('lk', aspectLocked);
+  if (aspectLocked) {
+    const wv = parseFloat(document.getElementById('dimW').value) || 512;
+    const hv = parseFloat(document.getElementById('dimH').value) || 512;
+    aspectRatio = wv / hv;
+  }
+}
+document.getElementById('dimW').addEventListener('input', function () {
+  if (!aspectLocked) return;
+  document.getElementById('dimH').value = Math.round((parseFloat(this.value) || 512) / aspectRatio);
+  resetApply();
+});
+document.getElementById('dimH').addEventListener('input', function () {
+  if (!aspectLocked) return;
+  document.getElementById('dimW').value = Math.round((parseFloat(this.value) || 512) * aspectRatio);
+  resetApply();
+});
+function resetApply() {
+  customApplied = false;
+  const b = document.getElementById('appBtn');
+  b.classList.remove('done'); b.textContent = 'Apply Custom Size';
+}
+function swapDims() {
+  const wEl = document.getElementById('dimW'), hEl = document.getElementById('dimH');
+  [wEl.value, hEl.value] = [hEl.value, wEl.value];
+  if (aspectLocked) aspectRatio = parseFloat(wEl.value) / parseFloat(hEl.value);
+  resetApply();
+}
+function applyCustom() {
+  customApplied = true;
+  const b = document.getElementById('appBtn');
+  b.classList.add('done'); b.textContent = '✓ Applied';
+}
+
+/* ── get dimensions ── */
+function getDims() {
+  const tab = document.querySelector('.stab.on').textContent.trim().toLowerCase();
+  if (tab === 'custom') {
+    if (!customApplied) applyCustom();
+    return [
+      Math.max(256, Math.min(2048, parseInt(document.getElementById('dimW').value) || 512)),
+      Math.max(256, Math.min(2048, parseInt(document.getElementById('dimH').value) || 512))
+    ];
+  }
+  return document.querySelector('input[name="sz"]:checked').value.split(',').map(Number);
+}
+
+/* ── show feed ── */
+function showFeed() {
+  document.getElementById('feedEmpty').style.display  = 'none';
+  document.getElementById('feedScroll').style.display = 'flex';
+}
+
+/* ── progress messages ── */
+const MSGS = ['Sampling latents…','Refining details…','Decoding image…','Almost ready…'];
+let progTimer, progIdx = 0;
+let activeBatch = null;
+
+/* ── BUILD LOADING BATCH ── */
+function addLoadingBatch(promptText, imgW, imgH) {
+  showFeed();
+  const feed = document.getElementById('feedScroll');
+
+  const batch = document.createElement('div');
+  batch.className = 'batch';
+
+  /* header */
+  const bh = document.createElement('div');
+  bh.className = 'bh';
+  bh.innerHTML = `
+    <svg class="bh-img-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="3"/>
+      <circle cx="8.5" cy="8.5" r="1.5"/>
+      <path d="M21 15l-5-5L5 21"/>
+    </svg>
+    <div class="bh-divider"></div>
+    <div class="bh-badge hi">Breezyfy</div>
+    <div class="bh-badge">${imgW} × ${imgH}</div>
+    <div class="bh-prompt">${promptText}</div>
+  `;
+
+  /* loading card — height proportional to aspect ratio */
+  const imgArea = document.createElement('div');
+  imgArea.className = 'batch-img-area';
+
+  const loadCard = document.createElement('div');
+  loadCard.className = 'load-card';
+
+  // Set a reasonable loading height based on aspect ratio
+  const feedWidth = document.getElementById('feedCol').clientWidth - 40; // 20px padding each side
+  const loadH = Math.round(feedWidth * (imgH / imgW));
+  const clampedH = Math.max(200, Math.min(500, loadH));
+  loadCard.style.height = clampedH + 'px';
+
+  loadCard.innerHTML = `
+    <div class="load-dots"></div>
+    <div class="spinner" style="position:relative;z-index:1"></div>
+    <div class="pulse-dot" style="position:relative;z-index:1"></div>
+    <div class="load-row" style="position:relative;z-index:1">
+      <span class="load-lbl" id="loadTxt_${Date.now()}">Generating</span>
+      <div class="chevrons">
+        <span>›</span><span>›</span><span>›</span><span>›</span><span>›</span>
+      </div>
+    </div>
+  `;
+
+  imgArea.appendChild(loadCard);
+  batch.appendChild(bh);
+  batch.appendChild(imgArea);
+
+  // Insert at TOP of feed
+  feed.insertBefore(batch, feed.firstChild);
+  feed.scrollTop = 0;
+
+  activeBatch = { batch, bh, imgArea, loadCard, promptText, imgW, imgH };
+
+  // Progress text
+  progIdx = 0;
+  clearInterval(progTimer);
+  const txtEl = loadCard.querySelector('.load-lbl');
+  progTimer = setInterval(() => {
+    progIdx = (progIdx + 1) % MSGS.length;
+    if (txtEl) txtEl.textContent = MSGS[progIdx];
+  }, 2400);
+}
+
+/* ── RESOLVE LOADING → real image ── */
+function resolveLoading(src) {
+  clearInterval(progTimer);
+  if (!activeBatch) return;
+
+  const { batch, bh, imgArea, promptText, imgW, imgH } = activeBatch;
+  activeBatch = null;
+
+  // Update header with download
+  bh.innerHTML = `
+    <svg class="bh-img-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="3"/>
+      <circle cx="8.5" cy="8.5" r="1.5"/>
+      <path d="M21 15l-5-5L5 21"/>
+    </svg>
+    <div class="bh-divider"></div>
+    <div class="bh-badge hi">Breezyfy</div>
+    <div class="bh-badge">${imgW} × ${imgH}</div>
+    <div class="bh-prompt">${promptText}</div>
+    <div class="bh-actions">
+      <a class="bh-dl" href="${src}" download="breezyfy_${imgW}x${imgH}.png">↓ Download</a>
+    </div>
+  `;
+
+  // Replace loading card with image + download bar
+  imgArea.innerHTML = '';
+
+  const outer = document.createElement('div');
+  outer.className = 'result-img-outer';
+
+  const imgWrap = document.createElement('div');
+  imgWrap.className = 'result-img-wrap';
+  imgWrap.style.aspectRatio = `${imgW}/${imgH}`;
+
+  const img = document.createElement('img');
+  img.src = src;
+  img.alt = promptText;
+  img.style.opacity = '0';
+  img.style.transition = 'opacity .5s ease';
+  img.onload = () => { img.style.opacity = '1'; };
+
+  imgWrap.appendChild(img);
+
+  // Always-visible download bar below image
+  const dlBar = document.createElement('div');
+  dlBar.className = 'img-dl-bar';
+  dlBar.innerHTML = `
+    <a class="i-dl" href="${src}" download="breezyfy_${imgW}x${imgH}.png">↓ Download</a>
+    <span class="i-size-tag">${imgW} × ${imgH}</span>
+  `;
+
+  outer.appendChild(imgWrap);
+  outer.appendChild(dlBar);
+  imgArea.appendChild(outer);
+
+  // Add thumbnail to Recent strip
+  addToRecent(src, imgW, imgH);
+}
+
+/* ── ERROR ── */
+function errorLoading(msg) {
+  clearInterval(progTimer);
+  if (!activeBatch) return;
+  const { imgArea } = activeBatch;
+  activeBatch = null;
+  imgArea.innerHTML = `
+    <div class="err-card">
+      <div class="err-ico">⚠</div>
+      <div class="err-msg">${msg}</div>
+    </div>
+  `;
+}
+
+/* ── RECENT STRIP ── */
+const recentSrcs = [];
+function addToRecent(src, imgW, imgH) {
+  recentSrcs.unshift({ src, imgW, imgH });
+  if (recentSrcs.length > 40) recentSrcs.pop();
+  renderRecent();
+}
+function renderRecent() {
+  const strip = document.getElementById('rcScroll');
+  strip.innerHTML = '';
+  recentSrcs.forEach((item, idx) => {
+    const img = document.createElement('img');
+    img.className = 'rc-thumb' + (idx === 0 ? ' active' : '');
+    img.src = item.src;
+    img.alt = `${item.imgW}×${item.imgH}`;
+    img.title = `${item.imgW}×${item.imgH}`;
+    img.loading = 'lazy';
+    img.onclick = () => {
+      // scroll to corresponding batch
+      const batches = document.querySelectorAll('#feedScroll .batch');
+      const target = batches[idx];
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      document.querySelectorAll('.rc-thumb').forEach(t => t.classList.remove('active'));
+      img.classList.add('active');
+    };
+    strip.appendChild(img);
+  });
+}
+
+/* ─────────────────────────────────────────────
+   ⚙️  BACKEND URL — Apna Cloudflare tunnel URL yahan daalo
+   Mac Mini pe server.js chalane ke baad milega
+   Example: 'https://abc123.trycloudflare.com'
+   ───────────────────────────────────────────── */
+const API_URL = 'https://YOUR_TUNNEL_URL_HERE';
+
+/* ── GENERATE ── */
+async function generate() {
+  const promptText = document.getElementById('prompt').value.trim();
+  const negPrompt  = document.getElementById('neg').value.trim();
+  if (!promptText) { document.getElementById('prompt').focus(); return; }
+
+  if (API_URL === 'https://YOUR_TUNNEL_URL_HERE') {
+    errorLoading('Backend URL set nahi hai. server.js chalao aur API_URL update karo.');
+    return;
+  }
+
+  const [imgW, imgH] = getDims();
+
+  const btn = document.getElementById('genBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="shim"></span>Generating…';
+
+  addLoadingBatch(promptText, imgW, imgH);
+
+  const payload = { prompt: promptText, width: imgW, height: imgH };
+  if (negPrompt) payload.negative_prompt = negPrompt;
+
+  try {
+    const res = await fetch(`${API_URL}/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('Server error ' + res.status);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    if (!data.image) throw new Error('No image received');
+
+    const src = 'data:image/png;base64,' + data.image;
+    resolveLoading(src);
+
+  } catch (err) {
+    if (err.message.toLowerCase().includes('fetch') || err.message.toLowerCase().includes('failed to')) {
+      errorLoading('Server se connect nahi ho pa raha. Mac Mini aur Cloudflare tunnel check karo.');
+    } else {
+      errorLoading(err.message || 'Generation failed');
+    }
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span class="shim"></span>Generate';
+  }
+}
+
+/* Cmd/Ctrl + Enter */
+document.getElementById('prompt').addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') generate();
+});
+
+/* init */
+aspectRatio = parseFloat(document.getElementById('dimW').value) /
+              parseFloat(document.getElementById('dimH').value);
+</script>
+</body>
+</html>
