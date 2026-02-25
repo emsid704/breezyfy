@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Breezyfy — Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:     #05050d;
+  --surf:   #09091a;
+  --card:   #0d0d20;
+  --card2:  #111125;
+  --bdr:    rgba(255,255,255,.07);
+  --acc:    #6e50ff;
+  --alit:   #9b7dff;
+  --wh:     #ffffff;
+  --txt:    #d0d0e8;
+  --sub:    #7070a0;
+  --mut:    #383858;
+  --ok:     #00d97e;
+  --warn:   #f5a623;
+  --err:    #ff4757;
+  --live:   #00ff88;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Syne',sans-serif;overflow:hidden}
+
+/* noise overlay */
+body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.015'/%3E%3C/svg%3E");
+  background-size:160px;}
+
+/* ═══════════════════════════════════════════
+   LOGIN SCREEN
+═══════════════════════════════════════════ */
+#loginScreen{
+  position:fixed;inset:0;z-index:999;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--bg);
+}
+.login-box{
+  width:380px;background:var(--card);
+  border:1px solid var(--bdr);border-radius:20px;
+  padding:44px 40px;text-align:center;
+  box-shadow:0 0 80px rgba(110,80,255,.08);
+  position:relative;z-index:1;
+}
+.login-logo{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--wh);margin-bottom:4px}
+.login-logo span{color:var(--acc)}
+.login-tag{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--sub);margin-bottom:36px}
+.login-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--sub);text-align:left;margin-bottom:8px}
+#loginPwd{
+  width:100%;background:var(--card2);border:1px solid var(--bdr);
+  border-radius:10px;color:var(--wh);font-family:'DM Mono',monospace;
+  font-size:14px;padding:13px 16px;outline:none;
+  transition:border-color .2s;margin-bottom:16px;
+}
+#loginPwd:focus{border-color:rgba(110,80,255,.5)}
+#loginBtn{
+  width:100%;background:linear-gradient(135deg,var(--acc),#4a30c8);
+  border:none;border-radius:10px;color:#fff;font-family:'Syne',sans-serif;
+  font-size:14px;font-weight:700;padding:14px;cursor:pointer;
+  letter-spacing:.06em;transition:transform .2s,box-shadow .2s;
+}
+#loginBtn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(110,80,255,.4)}
+.login-err{font-family:'DM Mono',monospace;font-size:11px;color:var(--err);margin-top:12px;display:none}
+
+/* ═══════════════════════════════════════════
+   MAIN APP
+═══════════════════════════════════════════ */
+#app{display:none;height:100vh;flex-direction:column}
+
+/* ── TOP HEADER ── */
+.top-header{
+  height:54px;flex-shrink:0;
+  display:flex;align-items:center;padding:0 24px;gap:16px;
+  border-bottom:1px solid var(--bdr);
+  background:rgba(5,5,13,.96);backdrop-filter:blur(24px);
+  position:relative;z-index:50;
+}
+.adm-logo{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--wh)}
+.adm-logo span{color:var(--acc)}
+.adm-divider{width:1px;height:18px;background:var(--bdr)}
+.adm-tag{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:var(--sub)}
+.live-pill{
+  margin-left:auto;display:flex;align-items:center;gap:7px;
+  background:rgba(0,217,126,.07);border:1px solid rgba(0,217,126,.2);
+  border-radius:50px;padding:5px 14px;
+}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--live);animation:pulse-live 1.4s ease-in-out infinite}
+@keyframes pulse-live{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+.live-txt{font-family:'DM Mono',monospace;font-size:10px;color:var(--ok);letter-spacing:.1em}
+.refresh-txt{font-family:'DM Mono',monospace;font-size:9px;color:var(--mut)}
+.logout-btn{
+  background:transparent;border:1px solid var(--bdr);border-radius:8px;
+  color:var(--sub);font-family:'Syne',sans-serif;font-size:11px;font-weight:600;
+  letter-spacing:.08em;padding:7px 14px;cursor:pointer;transition:all .18s;
+  text-transform:uppercase;margin-left:8px;
+}
+.logout-btn:hover{border-color:var(--err);color:var(--err)}
+
+/* ── BODY LAYOUT ── */
+.app-body{display:flex;flex:1;overflow:hidden;position:relative;z-index:10}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  width:220px;flex-shrink:0;
+  background:var(--surf);border-right:1px solid var(--bdr);
+  display:flex;flex-direction:column;padding:20px 0;overflow-y:auto;
+}
+.nav-section-lbl{
+  font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--mut);padding:0 20px 8px;margin-top:8px;
+}
+.nav-item{
+  display:flex;align-items:center;gap:12px;
+  padding:11px 20px;cursor:pointer;
+  font-family:'Syne',sans-serif;font-size:13px;font-weight:600;
+  color:var(--sub);letter-spacing:.02em;
+  transition:all .18s;border-left:2px solid transparent;
+  text-transform:uppercase;letter-spacing:.06em;font-size:11px;
+}
+.nav-item:hover{color:var(--txt);background:rgba(255,255,255,.03)}
+.nav-item.active{color:var(--wh);background:rgba(110,80,255,.08);border-left-color:var(--acc)}
+.nav-ico{font-size:14px;width:18px;text-align:center;flex-shrink:0}
+.nav-badge{
+  margin-left:auto;font-family:'DM Mono',monospace;font-size:9px;
+  background:rgba(255,71,87,.15);border:1px solid rgba(255,71,87,.3);
+  color:var(--err);padding:2px 7px;border-radius:4px;
+}
+.nav-badge.ok{background:rgba(0,217,126,.1);border-color:rgba(0,217,126,.25);color:var(--ok)}
+
+.sidebar-bottom{margin-top:auto;padding:16px 20px;border-top:1px solid var(--bdr)}
+.server-status{display:flex;align-items:center;gap:8px}
+.srv-dot{width:8px;height:8px;border-radius:50%;background:var(--ok);animation:pulse-live 2s ease-in-out infinite;flex-shrink:0}
+.srv-dot.offline{background:var(--err);animation:none}
+.srv-lbl{font-family:'DM Mono',monospace;font-size:10px;color:var(--sub)}
+
+/* ── MAIN CONTENT ── */
+.main-content{flex:1;overflow-y:auto;overflow-x:hidden;padding:28px 28px;display:flex;flex-direction:column;gap:24px}
+.main-content::-webkit-scrollbar{width:4px}
+.main-content::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:2px}
+
+/* page sections */
+.page-section{display:none}
+.page-section.active{display:flex;flex-direction:column;gap:24px}
+
+/* section header */
+.sec-header{display:flex;align-items:center;gap:12px;margin-bottom:2px}
+.sec-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--wh)}
+.sec-sub{font-family:'DM Mono',monospace;font-size:11px;color:var(--sub)}
+
+/* ═══════════════════════════════════════════
+   STAT CARDS
+═══════════════════════════════════════════ */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.stat-card{
+  background:var(--card);border:1px solid var(--bdr);border-radius:14px;
+  padding:22px 20px;position:relative;overflow:hidden;
+  transition:border-color .2s;
+}
+.stat-card:hover{border-color:rgba(110,80,255,.25)}
+.stat-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(110,80,255,.03),transparent);z-index:0}
+.stat-card > *{position:relative;z-index:1}
+.stat-ico{font-size:20px;margin-bottom:12px;display:block}
+.stat-val{font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:var(--wh);line-height:1;margin-bottom:4px}
+.stat-lbl{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--sub)}
+.stat-card.s-live .stat-val{color:var(--live)}
+.stat-card.s-ok .stat-val{color:var(--ok)}
+.stat-card.s-warn .stat-val{color:var(--warn)}
+.stat-card.s-err .stat-val{color:var(--err)}
+
+/* ═══════════════════════════════════════════
+   CHARTS
+═══════════════════════════════════════════ */
+.chart-card{background:var(--card);border:1px solid var(--bdr);border-radius:14px;padding:22px 24px}
+.chart-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--wh);letter-spacing:.04em;margin-bottom:16px;text-transform:uppercase}
+.chart-wrap{height:120px;display:flex;align-items:flex-end;gap:4px;padding-bottom:4px}
+.chart-bar{
+  flex:1;border-radius:3px 3px 0 0;
+  background:linear-gradient(180deg,rgba(110,80,255,.7),rgba(110,80,255,.2));
+  transition:height .4s ease;min-height:2px;position:relative;
+}
+.chart-bar:hover{background:linear-gradient(180deg,var(--alit),rgba(155,125,255,.3))}
+.chart-bar .tip{
+  position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);
+  background:var(--card2);border:1px solid var(--bdr);border-radius:5px;
+  font-family:'DM Mono',monospace;font-size:9px;color:var(--wh);
+  padding:3px 7px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;
+}
+.chart-bar:hover .tip{opacity:1}
+.chart-labels{display:flex;gap:4px;margin-top:6px}
+.chart-labels span{flex:1;text-align:center;font-family:'DM Mono',monospace;font-size:8px;color:var(--mut)}
+
+/* ═══════════════════════════════════════════
+   TABLES
+═══════════════════════════════════════════ */
+.table-card{background:var(--card);border:1px solid var(--bdr);border-radius:14px;overflow:hidden}
+.table-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 20px;border-bottom:1px solid var(--bdr);
+}
+.table-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--wh);text-transform:uppercase;letter-spacing:.06em}
+.table-meta{font-family:'DM Mono',monospace;font-size:10px;color:var(--sub)}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{
+  font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--mut);padding:10px 20px;
+  text-align:left;border-bottom:1px solid var(--bdr);
+  background:rgba(255,255,255,.015);
+}
+.tbl td{
+  font-family:'DM Mono',monospace;font-size:11px;color:var(--txt);
+  padding:12px 20px;border-bottom:1px solid rgba(255,255,255,.04);
+  vertical-align:middle;
+}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:rgba(255,255,255,.025)}
+.tbl tr.blocked-row td{color:var(--mut)}
+.tbl tr.blocked-row .ip-cell{color:var(--err);text-decoration:line-through}
+
+/* badges */
+.badge{
+  display:inline-flex;align-items:center;gap:4px;
+  font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.08em;
+  text-transform:uppercase;padding:3px 9px;border-radius:5px;font-weight:500;
+}
+.badge-live{background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.22);color:var(--live)}
+.badge-idle{background:rgba(255,255,255,.05);border:1px solid var(--bdr);color:var(--sub)}
+.badge-ok{background:rgba(0,217,126,.1);border:1px solid rgba(0,217,126,.22);color:var(--ok)}
+.badge-fail{background:rgba(255,71,87,.1);border:1px solid rgba(255,71,87,.22);color:var(--err)}
+.badge-blocked{background:rgba(255,71,87,.12);border:1px solid rgba(255,71,87,.3);color:var(--err)}
+
+/* action buttons */
+.act-btn{
+  display:inline-flex;align-items:center;gap:5px;
+  font-family:'Syne',sans-serif;font-size:10px;font-weight:700;
+  letter-spacing:.07em;text-transform:uppercase;
+  padding:5px 12px;border-radius:7px;cursor:pointer;border:none;
+  transition:all .18s;white-space:nowrap;
+}
+.act-block{background:rgba(255,71,87,.12);color:var(--err);border:1px solid rgba(255,71,87,.25)}
+.act-block:hover{background:rgba(255,71,87,.22)}
+.act-unblock{background:rgba(0,217,126,.1);color:var(--ok);border:1px solid rgba(0,217,126,.25)}
+.act-unblock:hover{background:rgba(0,217,126,.2)}
+
+/* search/filter bar */
+.filter-bar{
+  display:flex;align-items:center;gap:10px;padding:14px 20px;
+  border-bottom:1px solid var(--bdr);
+}
+#userSearch,#logSearch{
+  flex:1;background:var(--card2);border:1px solid var(--bdr);border-radius:9px;
+  color:var(--wh);font-family:'DM Mono',monospace;font-size:12px;
+  padding:9px 14px;outline:none;transition:border-color .2s;
+}
+#userSearch:focus,#logSearch:focus{border-color:rgba(110,80,255,.4)}
+#userSearch::placeholder,#logSearch::placeholder{color:var(--mut)}
+
+/* empty state */
+.tbl-empty{padding:40px;text-align:center;font-family:'DM Mono',monospace;font-size:11px;color:var(--mut)}
+
+/* ═══════════════════════════════════════════
+   SYSTEM STATUS PAGE
+═══════════════════════════════════════════ */
+.sys-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.sys-card{
+  background:var(--card);border:1px solid var(--bdr);border-radius:14px;
+  padding:22px 20px;
+}
+.sys-title{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--sub);margin-bottom:14px}
+.sys-val{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--wh);margin-bottom:4px}
+.sys-sub{font-family:'DM Mono',monospace;font-size:10px;color:var(--sub)}
+.progress-bar{height:5px;background:var(--card2);border-radius:3px;margin-top:12px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--acc),var(--alit));border-radius:3px;transition:width .4s}
+
+/* api url input */
+.api-config{
+  background:var(--card);border:1px solid var(--bdr);border-radius:14px;padding:22px 24px;
+}
+.api-config-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--wh);letter-spacing:.04em;margin-bottom:14px;text-transform:uppercase}
+.api-row{display:flex;gap:10px;align-items:center}
+#apiUrlInput{
+  flex:1;background:var(--card2);border:1px solid var(--bdr);border-radius:9px;
+  color:var(--wh);font-family:'DM Mono',monospace;font-size:12px;
+  padding:11px 14px;outline:none;transition:border-color .2s;
+}
+#apiUrlInput:focus{border-color:rgba(110,80,255,.4)}
+.save-api-btn{
+  background:linear-gradient(135deg,var(--acc),#4a30c8);border:none;border-radius:9px;
+  color:#fff;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;
+  letter-spacing:.06em;padding:11px 20px;cursor:pointer;transition:opacity .18s;white-space:nowrap;
+}
+.save-api-btn:hover{opacity:.85}
+
+/* ═══════════════════════════════════════════
+   MODAL
+═══════════════════════════════════════════ */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;
+  display:none;align-items:center;justify-content:center;
+  backdrop-filter:blur(4px);
+}
+.modal-overlay.on{display:flex}
+.modal-box{
+  background:var(--card);border:1px solid var(--bdr);border-radius:16px;
+  padding:32px 28px;width:400px;text-align:center;
+  box-shadow:0 0 60px rgba(0,0,0,.5);
+}
+.modal-title{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;color:var(--wh);margin-bottom:10px}
+.modal-body{font-family:'DM Mono',monospace;font-size:12px;color:var(--sub);margin-bottom:24px;line-height:1.7}
+.modal-ip{font-family:'DM Mono',monospace;font-size:14px;color:var(--err);background:rgba(255,71,87,.1);border:1px solid rgba(255,71,87,.2);border-radius:8px;padding:8px 16px;display:inline-block;margin:8px 0 14px}
+.modal-reason{
+  width:100%;background:var(--card2);border:1px solid var(--bdr);border-radius:9px;
+  color:var(--wh);font-family:'DM Mono',monospace;font-size:12px;
+  padding:11px 14px;outline:none;margin-bottom:20px;
+  transition:border-color .2s;
+}
+.modal-reason:focus{border-color:rgba(255,71,87,.4)}
+.modal-actions{display:flex;gap:10px}
+.modal-cancel{
+  flex:1;background:transparent;border:1px solid var(--bdr);border-radius:9px;
+  color:var(--sub);font-family:'Syne',sans-serif;font-size:12px;font-weight:700;
+  letter-spacing:.07em;padding:12px;cursor:pointer;transition:all .18s;text-transform:uppercase;
+}
+.modal-cancel:hover{border-color:rgba(255,255,255,.2);color:var(--wh)}
+.modal-confirm{
+  flex:1;background:linear-gradient(135deg,#ff4757,#c0392b);border:none;border-radius:9px;
+  color:#fff;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;
+  letter-spacing:.07em;padding:12px;cursor:pointer;transition:opacity .18s;text-transform:uppercase;
+}
+.modal-confirm:hover{opacity:.85}
+
+/* toast */
+.toast{
+  position:fixed;bottom:24px;right:24px;z-index:999;
+  background:var(--card2);border:1px solid var(--bdr);border-radius:10px;
+  padding:12px 20px;font-family:'DM Mono',monospace;font-size:12px;color:var(--wh);
+  transform:translateY(80px);opacity:0;transition:all .3s ease;
+  pointer-events:none;max-width:320px;
+}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.ok{border-color:rgba(0,217,126,.35);color:var(--ok)}
+.toast.fail{border-color:rgba(255,71,87,.35);color:var(--err)}
+
+/* connection indicator in sidebar */
+.conn-bar{
+  padding:10px 20px;margin-bottom:4px;
+  display:flex;align-items:center;gap:8px;
+  background:rgba(255,71,87,.06);border-top:1px solid rgba(255,71,87,.15);
+  font-family:'DM Mono',monospace;font-size:9px;color:var(--err);
+  display:none;
+}
+.conn-bar.show{display:flex}
+</style>
+</head>
+<body>
+
+<!-- ══ LOGIN ══ -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo"><span>B</span>reezyfy</div>
+    <div class="login-tag" style="margin-bottom:32px">Admin Panel</div>
+    <div class="login-label">Password</div>
+    <input type="password" id="loginPwd" placeholder="Enter admin password…" autocomplete="off"/>
+    <button id="loginBtn" onclick="doLogin()">Access Dashboard →</button>
+    <div class="login-err" id="loginErr">⚠ Wrong password. Try again.</div>
+  </div>
+</div>
+
+<!-- ══ MAIN APP ══ -->
+<div id="app" style="display:none;height:100vh;display:none;flex-direction:column">
+
+  <!-- TOP HEADER -->
+  <div class="top-header">
+    <div class="adm-logo"><span>B</span>reezyfy</div>
+    <div class="adm-divider"></div>
+    <div class="adm-tag">Admin Panel</div>
+    <div class="live-pill" style="margin-left:auto">
+      <div class="live-dot"></div>
+      <span class="live-txt">LIVE</span>
+    </div>
+    <span class="refresh-txt" id="lastRefresh" style="margin-left:12px">—</span>
+    <button class="logout-btn" onclick="doLogout()">Logout</button>
+  </div>
+
+  <div class="app-body">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="nav-section-lbl">Dashboard</div>
+      <div class="nav-item active" onclick="showPage('overview',this)">
+        <span class="nav-ico">◈</span> Overview
+      </div>
+
+      <div class="nav-section-lbl" style="margin-top:8px">Monitoring</div>
+      <div class="nav-item" onclick="showPage('users',this)">
+        <span class="nav-ico">◎</span> Live Users
+        <span class="nav-badge ok" id="liveCount">0</span>
+      </div>
+      <div class="nav-item" onclick="showPage('logs',this)">
+        <span class="nav-ico">≡</span> Image Logs
+      </div>
+
+      <div class="nav-section-lbl" style="margin-top:8px">Security</div>
+      <div class="nav-item" onclick="showPage('blocked',this)">
+        <span class="nav-ico">⊘</span> Blocked IPs
+        <span class="nav-badge" id="blockedCount">0</span>
+      </div>
+
+      <div class="nav-section-lbl" style="margin-top:8px">Server</div>
+      <div class="nav-item" onclick="showPage('system',this)">
+        <span class="nav-ico">⬡</span> System Status
+      </div>
+
+      <div class="sidebar-bottom">
+        <div class="server-status">
+          <div class="srv-dot" id="srvDot"></div>
+          <span class="srv-lbl" id="srvLbl">Checking…</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+
+      <!-- ── OVERVIEW PAGE ── -->
+      <div class="page-section active" id="page-overview">
+
+        <div class="sec-header">
+          <div>
+            <div class="sec-title">Overview</div>
+            <div class="sec-sub" style="margin-top:4px">Real-time analytics for Breezyfy</div>
+          </div>
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat-card s-live">
+            <span class="stat-ico">◎</span>
+            <div class="stat-val" id="s-live">0</div>
+            <div class="stat-lbl">Live Users (5 min)</div>
+          </div>
+          <div class="stat-card">
+            <span class="stat-ico">◈</span>
+            <div class="stat-val" id="s-total">0</div>
+            <div class="stat-lbl">Total Unique IPs</div>
+          </div>
+          <div class="stat-card s-ok">
+            <span class="stat-ico">✓</span>
+            <div class="stat-val" id="s-images">0</div>
+            <div class="stat-lbl">Images Generated</div>
+          </div>
+          <div class="stat-card s-err">
+            <span class="stat-ico">⊘</span>
+            <div class="stat-val" id="s-blocked">0</div>
+            <div class="stat-lbl">Blocked IPs</div>
+          </div>
+        </div>
+
+        <!-- Hourly chart -->
+        <div class="chart-card">
+          <div class="chart-title">Generations — Last 24 Hours</div>
+          <div class="chart-wrap" id="hourlyChart"></div>
+          <div class="chart-labels" id="hourlyLabels"></div>
+        </div>
+
+        <!-- Recent logs preview -->
+        <div class="table-card">
+          <div class="table-header">
+            <div class="table-title">Recent Generations</div>
+            <div class="table-meta" id="logCount">—</div>
+          </div>
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>IP Address</th>
+                <th>Prompt</th>
+                <th>Size</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="overviewLogBody">
+              <tr><td colspan="5" class="tbl-empty">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+
+      <!-- ── USERS PAGE ── -->
+      <div class="page-section" id="page-users">
+        <div class="sec-header">
+          <div>
+            <div class="sec-title">Live Users</div>
+            <div class="sec-sub" style="margin-top:4px">All tracked IPs — real-time</div>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="filter-bar">
+            <input type="text" id="userSearch" placeholder="Search IP address…" oninput="filterUsers()"/>
+            <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--sub)" id="userTotal">— users</span>
+          </div>
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th>IP Address</th>
+                <th>Status</th>
+                <th>First Seen</th>
+                <th>Last Active</th>
+                <th>Images</th>
+                <th>Success / Fail</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="usersBody">
+              <tr><td colspan="7" class="tbl-empty">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── LOGS PAGE ── -->
+      <div class="page-section" id="page-logs">
+        <div class="sec-header">
+          <div>
+            <div class="sec-title">Image Logs</div>
+            <div class="sec-sub" style="margin-top:4px">Last 500 generation requests</div>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="filter-bar">
+            <input type="text" id="logSearch" placeholder="Search by IP or prompt…" oninput="filterLogs()"/>
+            <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--sub)" id="logsTotal">— logs</span>
+          </div>
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>IP Address</th>
+                <th>Prompt</th>
+                <th>Size</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="logsBody">
+              <tr><td colspan="5" class="tbl-empty">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── BLOCKED IPs PAGE ── -->
+      <div class="page-section" id="page-blocked">
+        <div class="sec-header">
+          <div>
+            <div class="sec-title">Blocked IPs</div>
+            <div class="sec-sub" style="margin-top:4px">These IPs cannot access the generator</div>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="table-header">
+            <div class="table-title">Blocked List</div>
+            <div class="table-meta" id="blockedTotal">— blocked</div>
+          </div>
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th>IP Address</th>
+                <th>Blocked At</th>
+                <th>Reason</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="blockedBody">
+              <tr><td colspan="4" class="tbl-empty">No blocked IPs</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── SYSTEM PAGE ── -->
+      <div class="page-section" id="page-system">
+        <div class="sec-header">
+          <div>
+            <div class="sec-title">System Status</div>
+            <div class="sec-sub" style="margin-top:4px">Mac Mini server health</div>
+          </div>
+        </div>
+
+        <!-- API URL config -->
+        <div class="api-config">
+          <div class="api-config-title">Backend API URL</div>
+          <div class="api-row">
+            <input type="text" id="apiUrlInput" placeholder="https://your-tunnel.trycloudflare.com"/>
+            <button class="save-api-btn" onclick="saveApiUrl()">Save & Reconnect</button>
+          </div>
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--sub);margin-top:10px">
+            Cloudflare tunnel URL — update jab bhi tunnel restart ho
+          </div>
+        </div>
+
+        <div class="sys-grid">
+          <div class="sys-card">
+            <div class="sys-title">Node.js Version</div>
+            <div class="sys-val" id="sys-node">—</div>
+            <div class="sys-sub">Runtime</div>
+          </div>
+          <div class="sys-card">
+            <div class="sys-title">Server Uptime</div>
+            <div class="sys-val" id="sys-uptime">—</div>
+            <div class="sys-sub">Since last restart</div>
+          </div>
+          <div class="sys-card">
+            <div class="sys-title">Platform</div>
+            <div class="sys-val" id="sys-platform">—</div>
+            <div class="sys-sub">OS</div>
+          </div>
+          <div class="sys-card">
+            <div class="sys-title">Memory Used</div>
+            <div class="sys-val" id="sys-memUsed">—</div>
+            <div class="sys-sub" id="sys-memTotal">of — MB heap</div>
+            <div class="progress-bar">
+              <div class="progress-fill" id="sys-memBar" style="width:0%"></div>
+            </div>
+          </div>
+          <div class="sys-card">
+            <div class="sys-title">Users Tracked</div>
+            <div class="sys-val" id="sys-users">—</div>
+            <div class="sys-sub">In memory</div>
+          </div>
+          <div class="sys-card">
+            <div class="sys-title">Logs Stored</div>
+            <div class="sys-val" id="sys-logs">—</div>
+            <div class="sys-sub">Last 500 max</div>
+          </div>
+        </div>
+
+        <!-- Setup instructions -->
+        <div class="table-card">
+          <div class="table-header">
+            <div class="table-title">Mac Mini Setup Instructions</div>
+          </div>
+          <div style="padding:20px 24px;font-family:'DM Mono',monospace;font-size:11px;color:var(--sub);line-height:2">
+            <div style="color:var(--alit);margin-bottom:6px">1. analytics.js ko server.js ke saath same folder mein rakho</div>
+            <div style="background:var(--card2);border:1px solid var(--bdr);border-radius:8px;padding:12px 16px;margin-bottom:12px;color:var(--txt)">
+              const analytics = require('./analytics');<br>
+              app.use(analytics.middleware);<br>
+              app.use('/admin', analytics.adminRouter);
+            </div>
+            <div style="color:var(--alit);margin-bottom:6px">2. /generate route mein yeh add karo (success aur failure dono ke liye):</div>
+            <div style="background:var(--card2);border:1px solid var(--bdr);border-radius:8px;padding:12px 16px;margin-bottom:12px;color:var(--txt)">
+              const ip = analytics.getIP(req);<br>
+              analytics.trackGeneration(ip, prompt, width, height, true); // success<br>
+              analytics.trackGeneration(ip, prompt, width, height, false); // fail
+            </div>
+            <div style="color:var(--ok)">3. Server restart karo — admin panel automatically connect ho jaayega ✓</div>
+          </div>
+        </div>
+
+      </div>
+
+    </div><!-- /main-content -->
+  </div><!-- /app-body -->
+</div><!-- /app -->
+
+<!-- BLOCK MODAL -->
+<div class="modal-overlay" id="blockModal">
+  <div class="modal-box">
+    <div class="modal-title">⊘ Block IP Address</div>
+    <div class="modal-body">Is IP ko block karne par wo website use nahi kar payega</div>
+    <div class="modal-ip" id="modalIP">—</div>
+    <input type="text" class="modal-reason" id="blockReason" placeholder="Reason (optional)…"/>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeModal()">Cancel</button>
+      <button class="modal-confirm" onclick="confirmBlock()">Block IP</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONFIG ───────────────────────────────────────────────────────────────────
+const ADMIN_PASS = 'breezyfy@admin2024'; // <— apna password yahan change karo
+let API_URL = localStorage.getItem('bzfy_api') || 'https://calendar-lifestyle-moral-estimated.trycloudflare.com';
+
+// ── STATE ────────────────────────────────────────────────────────────────────
+let allUsers = [], allLogs = [], allBlocked = [];
+let pendingBlockIP = '';
+let refreshTimer = null;
+
+// ── LOGIN ────────────────────────────────────────────────────────────────────
+function doLogin() {
+  const pwd = document.getElementById('loginPwd').value;
+  if (pwd === ADMIN_PASS) {
+    document.getElementById('loginScreen').style.display = 'none';
+    const app = document.getElementById('app');
+    app.style.display = 'flex';
+    document.getElementById('apiUrlInput').value = API_URL;
+    startRefresh();
+    fetchAll();
+  } else {
+    document.getElementById('loginErr').style.display = 'block';
+    document.getElementById('loginPwd').value = '';
+    document.getElementById('loginPwd').focus();
+  }
+}
+document.getElementById('loginPwd').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+function doLogout() {
+  clearInterval(refreshTimer);
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('loginPwd').value = '';
+}
+
+// ── NAVIGATION ───────────────────────────────────────────────────────────────
+function showPage(id, el) {
+  document.querySelectorAll('.page-section').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  el.classList.add('active');
+}
+
+// ── API CALLS ─────────────────────────────────────────────────────────────────
+async function apiFetch(path, opts={}) {
+  try {
+    const res = await fetch(`${API_URL}/admin${path}`, {
+      ...opts,
+      headers: { 'x-admin-token': ADMIN_PASS, 'Content-Type':'application/json', ...(opts.headers||{}) }
+    });
+    if (!res.ok) throw new Error(res.status);
+    return await res.json();
+  } catch(e) {
+    return null;
+  }
+}
+
+async function fetchAll() {
+  const [stats, users, logs, blocked, sys] = await Promise.all([
+    apiFetch('/stats'),
+    apiFetch('/users'),
+    apiFetch('/logs?limit=200'),
+    apiFetch('/blocked'),
+    apiFetch('/system')
+  ]);
+
+  updateServerStatus(stats !== null);
+  if (stats) updateStats(stats);
+  if (users) { allUsers = users; renderUsers(); updateUserBadge(users); }
+  if (logs)  { allLogs = logs;  renderLogs(); renderOverviewLogs(); }
+  if (blocked){ allBlocked = blocked; renderBlocked(); updateBlockedBadge(blocked); }
+  if (sys)   updateSystem(sys);
+
+  document.getElementById('lastRefresh').textContent = 'Updated ' + new Date().toLocaleTimeString();
+}
+
+// ── AUTO REFRESH ──────────────────────────────────────────────────────────────
+function startRefresh() {
+  clearInterval(refreshTimer);
+  refreshTimer = setInterval(fetchAll, 6000);
+}
+
+// ── SERVER STATUS ─────────────────────────────────────────────────────────────
+function updateServerStatus(online) {
+  const dot = document.getElementById('srvDot');
+  const lbl = document.getElementById('srvLbl');
+  if (online) {
+    dot.className = 'srv-dot';
+    lbl.textContent = 'Server Online';
+    lbl.style.color = 'var(--ok)';
+  } else {
+    dot.className = 'srv-dot offline';
+    lbl.textContent = 'Server Offline';
+    lbl.style.color = 'var(--err)';
+  }
+}
+
+// ── STATS ─────────────────────────────────────────────────────────────────────
+function updateStats(s) {
+  document.getElementById('s-live').textContent    = s.liveUsers || 0;
+  document.getElementById('s-total').textContent   = s.totalUsers || 0;
+  document.getElementById('s-images').textContent  = s.totalImages || 0;
+  document.getElementById('s-blocked').textContent = s.blockedCount || 0;
+  document.getElementById('logCount').textContent  = (s.totalImages||0) + ' total generations';
+
+  if (s.hourly) renderHourlyChart(s.hourly);
+}
+
+// ── HOURLY CHART ──────────────────────────────────────────────────────────────
+function renderHourlyChart(data) {
+  const wrap = document.getElementById('hourlyChart');
+  const lbls = document.getElementById('hourlyLabels');
+  const max = Math.max(...data, 1);
+  const now = new Date().getHours();
+
+  wrap.innerHTML = '';
+  lbls.innerHTML = '';
+
+  data.forEach((val, h) => {
+    const pct = (val / max) * 100;
+    const bar = document.createElement('div');
+    bar.className = 'chart-bar' + (h === now ? ' current' : '');
+    bar.style.height = pct + '%';
+    if (h === now) bar.style.background = 'linear-gradient(180deg,var(--live),rgba(0,255,136,.2))';
+    bar.innerHTML = `<span class="tip">${val} imgs @ ${h}:00</span>`;
+    wrap.appendChild(bar);
+
+    const lbl = document.createElement('span');
+    lbl.textContent = h % 3 === 0 ? h+'h' : '';
+    lbls.appendChild(lbl);
+  });
+}
+
+// ── USERS ─────────────────────────────────────────────────────────────────────
+function renderUsers(filter='') {
+  const body = document.getElementById('usersBody');
+  const now = Date.now();
+  const filtered = allUsers.filter(u =>
+    !filter || u.ip.includes(filter)
+  );
+  document.getElementById('userTotal').textContent = filtered.length + ' users';
+
+  if (!filtered.length) {
+    body.innerHTML = `<tr><td colspan="7" class="tbl-empty">No users tracked yet</td></tr>`;
+    return;
+  }
+
+  body.innerHTML = filtered.map(u => {
+    const live = now - u.lastSeen < 5*60*1000;
+    const badge = u.blocked
+      ? `<span class="badge badge-blocked">Blocked</span>`
+      : live
+        ? `<span class="badge badge-live">● Live</span>`
+        : `<span class="badge badge-idle">Idle</span>`;
+    const actionBtn = u.blocked
+      ? `<button class="act-btn act-unblock" onclick="unblockIP('${u.ip}')">✓ Unblock</button>`
+      : `<button class="act-btn act-block" onclick="openBlockModal('${u.ip}')">⊘ Block</button>`;
+    const rowClass = u.blocked ? 'blocked-row' : '';
+
+    return `<tr class="${rowClass}">
+      <td class="ip-cell" style="font-weight:500;color:${u.blocked?'var(--err)':'var(--wh)'}">${u.ip}</td>
+      <td>${badge}</td>
+      <td>${fmtTime(u.firstSeen)}</td>
+      <td>${fmtAgo(u.lastSeen)}</td>
+      <td style="color:var(--wh);font-weight:600">${u.count || 0}</td>
+      <td><span style="color:var(--ok)">${u.success||0}</span> / <span style="color:var(--err)">${u.fail||0}</span></td>
+      <td>${actionBtn}</td>
+    </tr>`;
+  }).join('');
+}
+
+function filterUsers() {
+  renderUsers(document.getElementById('userSearch').value.trim());
+}
+
+function updateUserBadge(users) {
+  const live = users.filter(u => Date.now() - u.lastSeen < 5*60*1000).length;
+  document.getElementById('liveCount').textContent = live;
+}
+
+// ── LOGS ──────────────────────────────────────────────────────────────────────
+function renderLogs(filter='') {
+  const body = document.getElementById('logsBody');
+  const filtered = allLogs.filter(l =>
+    !filter || l.ip.includes(filter) || (l.prompt||'').toLowerCase().includes(filter.toLowerCase())
+  );
+  document.getElementById('logsTotal').textContent = filtered.length + ' logs';
+
+  if (!filtered.length) {
+    body.innerHTML = `<tr><td colspan="5" class="tbl-empty">No logs yet</td></tr>`;
+    return;
+  }
+  body.innerHTML = filtered.slice(0,200).map(l => `
+    <tr>
+      <td style="white-space:nowrap">${fmtTime(l.ts)}</td>
+      <td style="color:var(--alit)">${l.ip}</td>
+      <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--txt)" title="${escHtml(l.prompt||'')}">${escHtml((l.prompt||'').slice(0,80))}${l.prompt?.length>80?'…':''}</td>
+      <td>${l.width||'?'}×${l.height||'?'}</td>
+      <td><span class="badge ${l.success?'badge-ok':'badge-fail'}">${l.success?'OK':'FAIL'}</span></td>
+    </tr>`).join('');
+}
+
+function filterLogs() {
+  renderLogs(document.getElementById('logSearch').value.trim());
+}
+
+function renderOverviewLogs() {
+  const body = document.getElementById('overviewLogBody');
+  if (!allLogs.length) {
+    body.innerHTML = `<tr><td colspan="5" class="tbl-empty">No generations yet</td></tr>`;
+    return;
+  }
+  body.innerHTML = allLogs.slice(0,15).map(l => `
+    <tr>
+      <td style="white-space:nowrap">${fmtTime(l.ts)}</td>
+      <td style="color:var(--alit)">${l.ip}</td>
+      <td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--txt)">${escHtml((l.prompt||'').slice(0,60))}…</td>
+      <td>${l.width||'?'}×${l.height||'?'}</td>
+      <td><span class="badge ${l.success?'badge-ok':'badge-fail'}">${l.success?'OK':'FAIL'}</span></td>
+    </tr>`).join('');
+}
+
+// ── BLOCKED ───────────────────────────────────────────────────────────────────
+function renderBlocked() {
+  const body = document.getElementById('blockedBody');
+  document.getElementById('blockedTotal').textContent = allBlocked.length + ' blocked';
+  if (!allBlocked.length) {
+    body.innerHTML = `<tr><td colspan="4" class="tbl-empty">No blocked IPs 🟢</td></tr>`;
+    return;
+  }
+  body.innerHTML = allBlocked.map(b => `
+    <tr>
+      <td style="color:var(--err);font-weight:600">${b.ip}</td>
+      <td>${fmtTime(b.at)}</td>
+      <td style="color:var(--sub)">${escHtml(b.reason||'Admin action')}</td>
+      <td><button class="act-btn act-unblock" onclick="unblockIP('${b.ip}')">✓ Unblock</button></td>
+    </tr>`).join('');
+}
+
+function updateBlockedBadge(blocked) {
+  const el = document.getElementById('blockedCount');
+  el.textContent = blocked.length;
+  el.className = 'nav-badge' + (blocked.length > 0 ? '' : ' ok');
+}
+
+// ── BLOCK / UNBLOCK ───────────────────────────────────────────────────────────
+function openBlockModal(ip) {
+  pendingBlockIP = ip;
+  document.getElementById('modalIP').textContent = ip;
+  document.getElementById('blockReason').value = '';
+  document.getElementById('blockModal').classList.add('on');
+}
+function closeModal() {
+  document.getElementById('blockModal').classList.remove('on');
+}
+async function confirmBlock() {
+  const reason = document.getElementById('blockReason').value.trim() || 'Admin action';
+  closeModal();
+  const res = await apiFetch('/block', { method:'POST', body: JSON.stringify({ ip: pendingBlockIP, reason }) });
+  if (res?.success) {
+    showToast('⊘ IP blocked: ' + pendingBlockIP, 'fail');
+    fetchAll();
+  } else {
+    showToast('Error: Could not block IP', 'fail');
+  }
+}
+async function unblockIP(ip) {
+  const res = await apiFetch('/unblock', { method:'POST', body: JSON.stringify({ ip }) });
+  if (res?.success) {
+    showToast('✓ IP unblocked: ' + ip, 'ok');
+    fetchAll();
+  } else {
+    showToast('Error: Could not unblock IP', 'fail');
+  }
+}
+
+// ── SYSTEM ────────────────────────────────────────────────────────────────────
+function updateSystem(s) {
+  document.getElementById('sys-node').textContent     = s.node || '—';
+  document.getElementById('sys-platform').textContent = s.platform || '—';
+  document.getElementById('sys-uptime').textContent   = fmtUptime(s.uptime || 0);
+  document.getElementById('sys-memUsed').textContent  = (s.memUsedMB||0) + ' MB';
+  document.getElementById('sys-memTotal').textContent = 'of ' + (s.memTotalMB||0) + ' MB heap';
+  document.getElementById('sys-users').textContent    = s.usersTracked || 0;
+  document.getElementById('sys-logs').textContent     = s.logsStored || 0;
+  const pct = s.memTotalMB ? Math.round((s.memUsedMB/s.memTotalMB)*100) : 0;
+  document.getElementById('sys-memBar').style.width   = pct + '%';
+}
+
+function saveApiUrl() {
+  const val = document.getElementById('apiUrlInput').value.trim();
+  if (!val) return;
+  API_URL = val;
+  localStorage.setItem('bzfy_api', val);
+  showToast('✓ API URL saved — reconnecting…', 'ok');
+  fetchAll();
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function fmtTime(ts) {
+  if (!ts) return '—';
+  return new Date(ts).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+function fmtAgo(ts) {
+  if (!ts) return '—';
+  const d = Date.now() - ts;
+  if (d < 60000)  return Math.floor(d/1000) + 's ago';
+  if (d < 3600000) return Math.floor(d/60000) + 'm ago';
+  return Math.floor(d/3600000) + 'h ago';
+}
+function fmtUptime(s) {
+  const h = Math.floor(s/3600), m = Math.floor((s%3600)/60);
+  return h + 'h ' + m + 'm';
+}
+function escHtml(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showToast(msg, type='ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + type;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>
