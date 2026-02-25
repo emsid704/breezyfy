@@ -56,37 +56,27 @@
       color:var(--sub);white-space:nowrap;
     }
 
-    /* ── 3-COLUMN SHELL ── */
+    /* ══ DESKTOP: 3-COLUMN SHELL ══ */
     .shell{
       display:flex;
       height:calc(100vh - 52px);
       position:relative;z-index:10;
     }
 
-    /* ══════════════════════════════════════
-       LEFT SIDEBAR
-    ══════════════════════════════════════ */
+    /* ── SIDEBAR ── */
     .sidebar{
-      width:480px;
-      min-width:460px;
-      flex-shrink:0;
-      height:100%;
-      overflow-y:auto;
-      overflow-x:hidden;
-      background:var(--surf);
-      border-right:1px solid var(--bdr);
-      display:flex;
-      flex-direction:column;
+      width:480px;min-width:460px;flex-shrink:0;
+      height:100%;overflow-y:auto;overflow-x:hidden;
+      background:var(--surf);border-right:1px solid var(--bdr);
+      display:flex;flex-direction:column;
     }
     .sidebar::-webkit-scrollbar{width:4px}
     .sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}
 
     .sec{padding:20px 24px;border-bottom:1px solid var(--bdr)}
-
     .slbl{
       font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
-      color:var(--wh);margin-bottom:12px;
-      display:flex;align-items:center;gap:10px;
+      color:var(--wh);margin-bottom:12px;display:flex;align-items:center;gap:10px;
     }
     .slbl::after{content:'';flex:1;height:1px;background:var(--bdr)}
 
@@ -95,15 +85,11 @@
       width:100%;background:var(--card);border:1px solid var(--bdr);
       color:var(--wh);padding:13px 15px 32px;border-radius:12px;
       font-family:'DM Mono',monospace;font-size:13px;line-height:1.75;
-      resize:none;height:130px;outline:none;
-      transition:border-color .2s,box-shadow .2s;
+      resize:none;height:130px;outline:none;transition:border-color .2s,box-shadow .2s;
     }
     #prompt::placeholder{color:var(--mut)}
     #prompt:focus{border-color:var(--bact);box-shadow:0 0 0 3px rgba(110,80,255,.09)}
-    .cc{
-      position:absolute;bottom:9px;right:12px;
-      font-family:'DM Mono',monospace;font-size:9.5px;color:var(--mut);
-    }
+    .cc{position:absolute;bottom:9px;right:12px;font-family:'DM Mono',monospace;font-size:9.5px;color:var(--mut)}
 
     #neg{
       width:100%;background:var(--card);border:1px solid var(--bdr);
@@ -151,15 +137,11 @@
     .cgrp.on{display:flex}
     .crow{display:grid;grid-template-columns:1fr 36px 1fr 36px;gap:8px;align-items:center}
     .diw{position:relative}
-    .dilbl{
-      position:absolute;left:11px;top:50%;transform:translateY(-50%);
-      font-size:10px;color:var(--sub);pointer-events:none;font-weight:600;
-    }
+    .dilbl{position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--sub);pointer-events:none;font-weight:600}
     .diin{
       width:100%;background:var(--card);border:1px solid var(--bdr);border-radius:9px;
       color:var(--wh);font-family:'DM Mono',monospace;font-size:14px;
-      padding:10px 9px 10px 26px;outline:none;transition:border-color .2s;
-      -moz-appearance:textfield;
+      padding:10px 9px 10px 26px;outline:none;transition:border-color .2s;-moz-appearance:textfield;
     }
     .diin::-webkit-outer-spin-button,.diin::-webkit-inner-spin-button{-webkit-appearance:none}
     .diin:focus{border-color:var(--bact)}
@@ -198,31 +180,21 @@
     }
     @keyframes shim{to{left:200%}}
 
-    /* ══════════════════════════════════════
-       CENTER FEED
-    ══════════════════════════════════════ */
+    /* ── CENTER FEED ── */
     .feed-col{
       flex:1;min-width:0;height:100%;
       display:flex;flex-direction:column;
       border-right:1px solid var(--bdr);overflow:hidden;
     }
-
     .feed-empty{
       flex:1;display:flex;flex-direction:column;
       align-items:center;justify-content:center;
       gap:18px;text-align:center;padding:40px;
     }
-    .fe-ico{
-      width:72px;height:72px;border:1px solid var(--bdr);border-radius:18px;
-      display:flex;align-items:center;justify-content:center;
-      font-size:28px;background:var(--card);
-    }
+    .fe-ico{width:72px;height:72px;border:1px solid var(--bdr);border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:28px;background:var(--card)}
     .fe-title{font-size:22px;font-weight:300;font-family:'DM Mono',monospace;color:var(--wh);letter-spacing:.03em}
     .fe-sub{font-family:'DM Mono',monospace;font-size:11px;color:var(--sub);line-height:1.8}
-
-    .feed-scroll{
-      flex:1;overflow-y:auto;overflow-x:hidden;display:none;flex-direction:column;
-    }
+    .feed-scroll{flex:1;overflow-y:auto;overflow-x:hidden;display:none;flex-direction:column}
     .feed-scroll::-webkit-scrollbar{width:5px}
     .feed-scroll::-webkit-scrollbar-track{background:transparent}
     .feed-scroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:3px}
@@ -249,7 +221,6 @@
     .bh-dl:hover{background:rgba(52,211,153,.16)}
 
     .batch-img-area{padding:0 20px 20px}
-
     .load-card{
       width:100%;border-radius:12px;border:1px solid var(--bdr);background:var(--card);
       overflow:hidden;position:relative;min-height:260px;
@@ -257,11 +228,7 @@
     }
     .load-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,#0a0f20,#050812);z-index:0}
     .load-card > *{position:relative;z-index:1}
-    .load-dots{
-      position:absolute;inset:0;z-index:0;
-      background-image:radial-gradient(circle,rgba(110,80,255,.18) 1px,transparent 1px);
-      background-size:24px 24px;opacity:.5;
-    }
+    .load-dots{position:absolute;inset:0;z-index:0;background-image:radial-gradient(circle,rgba(110,80,255,.18) 1px,transparent 1px);background-size:24px 24px;opacity:.5}
     .spinner{width:44px;height:44px;border:3px solid rgba(110,80,255,.18);border-top-color:var(--acc);border-radius:50%;animation:spin .85s linear infinite}
     @keyframes spin{to{transform:rotate(360deg)}}
     .pulse-dot{width:9px;height:9px;border-radius:50%;background:var(--acc);box-shadow:0 0 0 0 rgba(110,80,255,.5);animation:plsr 1.2s ease-in-out infinite}
@@ -296,9 +263,7 @@
     .err-ico{font-size:26px}
     .err-msg{font-family:'DM Mono',monospace;font-size:12px;color:var(--err);text-align:center}
 
-    /* ══════════════════════════════════════
-       RIGHT RECENT
-    ══════════════════════════════════════ */
+    /* ── RIGHT RECENT ── */
     .recent-col{width:76px;flex-shrink:0;height:100%;background:var(--surf);display:flex;flex-direction:column;overflow:hidden}
     .rc-hdr{height:52px;flex-shrink:0;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:center}
     .rc-lbl{font-family:'Syne',sans-serif;font-size:8px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--sub)}
@@ -319,68 +284,61 @@
 
     /* ══════════════════════════════════════
        MOBILE ≤767px
-       Two full-screen "pages":
-       Page 1 = Controls (sidebar)  — default
-       Page 2 = Feed                — after generate
+       Single scrollable page:
+       Controls on top → Images below
+       No separate screens, no extra buttons
     ══════════════════════════════════════ */
     @media(max-width:767px){
 
+      /* Allow full page scroll on mobile */
       html,body{height:100%;overflow:hidden}
 
+      /* Shell = single full-height scrollable column */
       .shell{
         flex-direction:column;
         height:calc(100vh - 52px);
-        overflow:hidden;
-        position:relative;
+        overflow-y:auto;
+        overflow-x:hidden;
+        -webkit-overflow-scrolling:touch;
       }
 
-      /* Hide recent */
+      /* Hide recent strip */
       .recent-col{display:none}
 
-      /* ── SIDEBAR = Page 1, full screen ── */
+      /* Sidebar = normal flow block, auto height */
       .sidebar{
-        position:absolute;
-        inset:0;
         width:100%;
         min-width:0;
-        height:100%;
+        height:auto;          /* not fixed height */
+        flex-shrink:0;
         border-right:none;
-        z-index:10;
-        transform:translateX(0);
-        transition:transform .3s cubic-bezier(.4,0,.2,1);
-        overflow-y:auto;
-        -webkit-overflow-scrolling:touch;
-        padding-bottom:env(safe-area-inset-bottom,16px);
+        border-bottom:1px solid var(--bdr);
+        overflow:visible;     /* no internal scroll */
       }
 
-      /* Slide out when feed shown */
-      .shell.show-feed .sidebar{
-        transform:translateX(-100%);
-        pointer-events:none;
-      }
-
-      /* ── FEED COL = Page 2, full screen ── */
+      /* Feed col = normal flow block below sidebar */
       .feed-col{
-        position:absolute;
-        inset:0;
         width:100%;
-        height:100%;
+        min-width:0;
+        height:auto;          /* not fixed height */
+        flex-shrink:0;
         border-right:none;
-        z-index:10;
-        transform:translateX(100%);
-        transition:transform .3s cubic-bezier(.4,0,.2,1);
+        overflow:visible;     /* no internal scroll — shell scrolls */
         display:flex;
         flex-direction:column;
       }
 
-      /* Slide in when feed shown */
-      .shell.show-feed .feed-col{
-        transform:translateX(0);
+      /* Feed empty state: reasonable height */
+      .feed-empty{
+        min-height:260px;
+        flex:none;
       }
 
+      /* Feed scroll: no internal scroll, just natural height */
       .feed-scroll{
-        overflow-y:auto;
-        -webkit-overflow-scrolling:touch;
+        overflow:visible;
+        height:auto;
+        flex:none;
       }
 
       /* Header */
@@ -391,26 +349,24 @@
       /* Sections */
       .sec{padding:16px 18px}
 
-      /* Generate button sticky */
+      /* Generate button — normal flow, not sticky */
       .gsec{
-        position:sticky;
-        bottom:0;
-        background:rgba(12,12,28,.98);
-        backdrop-filter:blur(16px);
-        border-top:1px solid var(--bdr);
         padding:14px 18px 18px;
         margin-top:0;
+        border-top:1px solid var(--bdr);
+        background:var(--surf);
       }
 
-      /* Size grids: 2 col */
+      /* Size grids: 2 cols */
       .sgrp.on{grid-template-columns:repeat(2,1fr)}
       .sgrp4.on{grid-template-columns:repeat(2,1fr)}
 
       /* Batch */
       .batch-img-area{padding:0 14px 16px}
-      .bh{padding:12px 14px 10px;gap:7px}
+      .bh{padding:12px 14px 10px;gap:7px;flex-wrap:wrap}
       .bh-badge{font-size:9px;padding:2px 7px}
-      .bh-prompt{font-size:11px}
+      .bh-prompt{font-size:11px;min-width:0}
+      .bh-actions{flex-wrap:wrap}
 
       /* Full-width images */
       .result-img-wrap{
@@ -430,46 +386,6 @@
       .fe-title{font-size:18px}
       .fe-sub{font-size:10px}
       .fe-ico{width:58px;height:58px;font-size:22px}
-
-      /* ── Top bar inside feed page ── */
-      .mob-feed-topbar{
-        display:flex;
-        align-items:center;
-        gap:10px;
-        padding:10px 14px;
-        border-bottom:1px solid var(--bdr);
-        background:rgba(8,8,16,.97);
-        backdrop-filter:blur(20px);
-        flex-shrink:0;
-        z-index:5;
-      }
-      .mob-back-btn{
-        display:flex;align-items:center;gap:6px;
-        background:transparent;
-        border:1px solid var(--bdr);
-        border-radius:9px;
-        color:var(--sub);
-        font-family:'Syne',sans-serif;font-size:11px;font-weight:700;
-        letter-spacing:.08em;text-transform:uppercase;
-        padding:8px 14px;cursor:pointer;transition:all .18s;
-        white-space:nowrap;
-      }
-      .mob-back-btn:active{border-color:var(--bact);color:var(--wh)}
-      .mob-new-btn{
-        flex:1;
-        display:flex;align-items:center;justify-content:center;gap:6px;
-        background:linear-gradient(135deg,var(--acc),#4a30c8);
-        border:none;border-radius:9px;color:#fff;
-        font-family:'Syne',sans-serif;font-size:11px;font-weight:700;
-        letter-spacing:.08em;text-transform:uppercase;
-        padding:9px 16px;cursor:pointer;transition:opacity .18s;
-      }
-      .mob-new-btn:active{opacity:.8}
-    }
-
-    /* Desktop: hide mobile top bar */
-    @media(min-width:768px){
-      .mob-feed-topbar{display:none!important}
     }
   </style>
 </head>
@@ -485,7 +401,7 @@
 
 <div class="shell" id="shell">
 
-  <!-- ══ SIDEBAR / MOBILE PAGE 1: CONTROLS ══ -->
+  <!-- ══ SIDEBAR ══ -->
   <aside class="sidebar" id="sidebar">
 
     <div class="sec">
@@ -605,23 +521,15 @@
 
   </aside>
 
-  <!-- ══ FEED / MOBILE PAGE 2: IMAGES ══ -->
+  <!-- ══ FEED ══ -->
   <div class="feed-col" id="feedCol">
 
-    <!-- Mobile top bar (hidden on desktop) -->
-    <div class="mob-feed-topbar">
-      <button class="mob-back-btn" onclick="goToControls()">← Back</button>
-      <button class="mob-new-btn" onclick="goToControls()">+ New Image</button>
-    </div>
-
-    <!-- Empty state -->
     <div class="feed-empty" id="feedEmpty">
       <div class="fe-ico">◈</div>
       <div class="fe-title">Canvas awaits</div>
       <div class="fe-sub">Write a prompt and press Generate<br/>Your images will appear here</div>
     </div>
 
-    <!-- Feed scroll container -->
     <div class="feed-scroll" id="feedScroll"></div>
 
   </div>
@@ -665,19 +573,18 @@ function toggleLock() {
   btn.textContent = aspectLocked ? '🔒' : '🔓';
   btn.classList.toggle('lk', aspectLocked);
   if (aspectLocked) {
-    const wv = parseFloat(document.getElementById('dimW').value) || 512;
-    const hv = parseFloat(document.getElementById('dimH').value) || 512;
-    aspectRatio = wv / hv;
+    aspectRatio = (parseFloat(document.getElementById('dimW').value)||512) /
+                  (parseFloat(document.getElementById('dimH').value)||512);
   }
 }
 document.getElementById('dimW').addEventListener('input', function () {
   if (!aspectLocked) return;
-  document.getElementById('dimH').value = Math.round((parseFloat(this.value) || 512) / aspectRatio);
+  document.getElementById('dimH').value = Math.round((parseFloat(this.value)||512) / aspectRatio);
   resetApply();
 });
 document.getElementById('dimH').addEventListener('input', function () {
   if (!aspectLocked) return;
-  document.getElementById('dimW').value = Math.round((parseFloat(this.value) || 512) * aspectRatio);
+  document.getElementById('dimW').value = Math.round((parseFloat(this.value)||512) * aspectRatio);
   resetApply();
 });
 function resetApply() {
@@ -697,47 +604,42 @@ function applyCustom() {
   b.classList.add('done'); b.textContent = '✓ Applied';
 }
 
-/* get dimensions */
 function getDims() {
   const tab = document.querySelector('.stab.on').textContent.trim().toLowerCase();
   if (tab === 'custom') {
     if (!customApplied) applyCustom();
     return [
-      Math.max(256, Math.min(2048, parseInt(document.getElementById('dimW').value) || 512)),
-      Math.max(256, Math.min(2048, parseInt(document.getElementById('dimH').value) || 512))
+      Math.max(256, Math.min(2048, parseInt(document.getElementById('dimW').value)||512)),
+      Math.max(256, Math.min(2048, parseInt(document.getElementById('dimH').value)||512))
     ];
   }
   return document.querySelector('input[name="sz"]:checked').value.split(',').map(Number);
 }
 
-/* mobile check */
-function isMobile() { return window.innerWidth <= 767; }
+function isMobile(){ return window.innerWidth <= 767; }
 
-/* switch to feed page (mobile only) */
-function goToFeed() {
-  if (!isMobile()) return;
-  document.getElementById('shell').classList.add('show-feed');
+/* Scroll helper — scrolls the right container */
+function scrollToEl(el) {
+  if (isMobile()) {
+    // On mobile, shell itself scrolls
+    const shell = document.getElementById('shell');
+    const top = el.getBoundingClientRect().top + shell.scrollTop - 12;
+    shell.scrollTo({ top, behavior: 'smooth' });
+  } else {
+    // On desktop, feed-scroll scrolls
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 }
 
-/* switch back to controls page (mobile only) */
-function goToControls() {
-  if (!isMobile()) return;
-  document.getElementById('shell').classList.remove('show-feed');
-  setTimeout(() => { document.getElementById('sidebar').scrollTop = 0; }, 50);
-}
-
-/* show feed area (desktop) */
 function showFeed() {
   document.getElementById('feedEmpty').style.display  = 'none';
   document.getElementById('feedScroll').style.display = 'flex';
 }
 
-/* progress messages */
 const MSGS = ['Sampling latents…','Refining details…','Decoding image…','Almost ready…'];
 let progTimer, progIdx = 0;
 let activeBatch = null;
 
-/* BUILD LOADING BATCH */
 function addLoadingBatch(promptText, imgW, imgH) {
   showFeed();
   const feed = document.getElementById('feedScroll');
@@ -765,9 +667,9 @@ function addLoadingBatch(promptText, imgW, imgH) {
   const loadCard = document.createElement('div');
   loadCard.className = 'load-card';
 
+  // Height based on aspect ratio
   const feedWidth = document.getElementById('feedCol').clientWidth - 40;
-  const loadH = Math.round(feedWidth * (imgH / imgW));
-  const clampedH = Math.max(200, Math.min(500, loadH));
+  const clampedH = Math.max(200, Math.min(480, Math.round(feedWidth * (imgH / imgW))));
   loadCard.style.height = clampedH + 'px';
 
   loadCard.innerHTML = `
@@ -775,22 +677,20 @@ function addLoadingBatch(promptText, imgW, imgH) {
     <div class="spinner" style="position:relative;z-index:1"></div>
     <div class="pulse-dot" style="position:relative;z-index:1"></div>
     <div class="load-row" style="position:relative;z-index:1">
-      <span class="load-lbl" id="loadTxt_${Date.now()}">Generating</span>
-      <div class="chevrons">
-        <span>›</span><span>›</span><span>›</span><span>›</span><span>›</span>
-      </div>
+      <span class="load-lbl">Generating</span>
+      <div class="chevrons"><span>›</span><span>›</span><span>›</span><span>›</span><span>›</span></div>
     </div>
   `;
 
   imgArea.appendChild(loadCard);
   batch.appendChild(bh);
   batch.appendChild(imgArea);
+
+  // Insert at top of feed
   feed.insertBefore(batch, feed.firstChild);
 
-  // Auto scroll to top where new batch is
-  setTimeout(() => {
-    feed.scrollTop = 0;
-  }, 60);
+  // Auto-scroll to the new batch
+  setTimeout(() => scrollToEl(batch), 80);
 
   activeBatch = { batch, bh, imgArea, loadCard, promptText, imgW, imgH };
 
@@ -803,7 +703,6 @@ function addLoadingBatch(promptText, imgW, imgH) {
   }, 2400);
 }
 
-/* RESOLVE → real image */
 function resolveLoading(src) {
   clearInterval(progTimer);
   if (!activeBatch) return;
@@ -839,7 +738,6 @@ function resolveLoading(src) {
   img.style.opacity = '0';
   img.style.transition = 'opacity .5s ease';
   img.onload = () => { img.style.opacity = '1'; };
-
   imgWrap.appendChild(img);
 
   const dlBar = document.createElement('div');
@@ -855,7 +753,6 @@ function resolveLoading(src) {
   addToRecent(src, imgW, imgH);
 }
 
-/* ERROR */
 function errorLoading(msg) {
   clearInterval(progTimer);
   if (!activeBatch) return;
@@ -869,7 +766,6 @@ function errorLoading(msg) {
   `;
 }
 
-/* RECENT STRIP */
 const recentSrcs = [];
 function addToRecent(src, imgW, imgH) {
   recentSrcs.unshift({ src, imgW, imgH });
@@ -882,14 +778,11 @@ function renderRecent() {
   recentSrcs.forEach((item, idx) => {
     const img = document.createElement('img');
     img.className = 'rc-thumb' + (idx === 0 ? ' active' : '');
-    img.src = item.src;
-    img.alt = `${item.imgW}×${item.imgH}`;
-    img.title = `${item.imgW}×${item.imgH}`;
-    img.loading = 'lazy';
+    img.src = item.src; img.alt = `${item.imgW}×${item.imgH}`;
+    img.title = `${item.imgW}×${item.imgH}`; img.loading = 'lazy';
     img.onclick = () => {
       const batches = document.querySelectorAll('#feedScroll .batch');
-      const target = batches[idx];
-      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (batches[idx]) batches[idx].scrollIntoView({ behavior:'smooth', block:'start' });
       document.querySelectorAll('.rc-thumb').forEach(t => t.classList.remove('active'));
       img.classList.add('active');
     };
@@ -897,26 +790,17 @@ function renderRecent() {
   });
 }
 
-/* BACKEND URL */
 const API_URL = 'https://calendar-lifestyle-moral-estimated.trycloudflare.com';
 
-/* GENERATE */
 async function generate() {
   const promptText = document.getElementById('prompt').value.trim();
   const negPrompt  = document.getElementById('neg').value.trim();
   if (!promptText) { document.getElementById('prompt').focus(); return; }
 
   const [imgW, imgH] = getDims();
-
   const btn = document.getElementById('genBtn');
   btn.disabled = true;
   btn.innerHTML = '<span class="shim"></span>Generating…';
-
-  // Mobile: switch to feed page, wait for animation
-  if (isMobile()) {
-    goToFeed();
-    await new Promise(r => setTimeout(r, 340));
-  }
 
   addLoadingBatch(promptText, imgW, imgH);
 
@@ -933,10 +817,7 @@ async function generate() {
     const data = await res.json();
     if (data.error) throw new Error(data.error);
     if (!data.image) throw new Error('No image received');
-
-    const src = 'data:image/png;base64,' + data.image;
-    resolveLoading(src);
-
+    resolveLoading('data:image/png;base64,' + data.image);
   } catch (err) {
     if (err.message.toLowerCase().includes('fetch') || err.message.toLowerCase().includes('failed to')) {
       errorLoading('Server se connect nahi ho pa raha. Mac Mini aur Cloudflare tunnel check karo.');
@@ -949,12 +830,10 @@ async function generate() {
   }
 }
 
-/* Cmd/Ctrl + Enter */
 document.getElementById('prompt').addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') generate();
 });
 
-/* init */
 aspectRatio = parseFloat(document.getElementById('dimW').value) /
               parseFloat(document.getElementById('dimH').value);
 </script>
