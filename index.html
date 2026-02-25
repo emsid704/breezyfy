@@ -243,7 +243,7 @@
       flex:1;
       overflow-y:auto;
       overflow-x:hidden;
-      display:none;   /* toggled via JS */
+      display:none;
       flex-direction:column;
     }
     .feed-scroll::-webkit-scrollbar{width:5px}
@@ -318,7 +318,6 @@
       background:var(--card);
       overflow:hidden;
       position:relative;
-      /* height set via JS to match aspect ratio */
       min-height:260px;
       display:flex;
       flex-direction:column;
@@ -326,7 +325,6 @@
       justify-content:center;
       gap:16px;
     }
-    /* dark tinted gradient bg like KlingAI */
     .load-card::before{
       content:'';position:absolute;inset:0;
       background:linear-gradient(135deg,#0a0f20,#050812);
@@ -334,7 +332,6 @@
     }
     .load-card > *{position:relative;z-index:1}
 
-    /* subtle dot pattern like KlingAI loading */
     .load-dots{
       position:absolute;inset:0;z-index:0;
       background-image:radial-gradient(circle,rgba(110,80,255,.18) 1px,transparent 1px);
@@ -367,7 +364,6 @@
       font-family:'DM Mono',monospace;font-size:11.5px;
       color:var(--sub);letter-spacing:.09em;
     }
-    /* animated chevrons like KlingAI */
     .chevrons{
       display:flex;gap:2px;
     }
@@ -384,24 +380,21 @@
       50%    {opacity:1}
     }
 
-    /* Result image — constrained, centered */
+    /* Result image */
     .result-img-outer{
       display:flex;
       flex-direction:column;
-      align-items:flex-start;   /* left-align like KlingAI */
+      align-items:flex-start;
       gap:10px;
     }
     .result-img-wrap{
-      /* Max height so portrait images don't go crazy tall */
       max-height:420px;
-      /* Width auto from aspect-ratio + max-height */
       width:auto;
       border-radius:12px;
       overflow:hidden;
       position:relative;
       border:1px solid var(--bdr);
       background:var(--card);
-      /* aspect-ratio set inline via JS */
       flex-shrink:0;
     }
     .result-img-wrap img{
@@ -412,7 +405,6 @@
       border-radius:12px;
       transition:opacity .5s ease;
     }
-    /* Always-visible download bar below the image */
     .img-dl-bar{
       display:flex;align-items:center;gap:10px;
     }
@@ -483,7 +475,7 @@
       box-shadow:0 0 0 2px rgba(155,125,255,.3);
     }
 
-    /* responsive */
+    /* responsive — tablet */
     @media(max-width:1100px){
       .sidebar{width:380px;min-width:360px}
     }
@@ -492,11 +484,213 @@
       .recent-col{width:62px}
       .rc-thumb{width:46px;height:46px}
     }
+
+    /* ══════════════════════════════════════
+       MOBILE — max 767px
+       Sidebar → slide-up drawer
+       Feed → full width, scrollable
+       Recent → hidden
+    ══════════════════════════════════════ */
+    @media(max-width:767px){
+
+      /* Allow body to function on mobile */
+      html, body { height:100%; overflow:hidden; }
+
+      /* Shell becomes single column, full height */
+      .shell{
+        flex-direction:column;
+        height:calc(100vh - 52px);
+        overflow:hidden;
+      }
+
+      /* Feed takes all space */
+      .feed-col{
+        flex:1;
+        width:100%;
+        min-width:0;
+        height:100%;
+        border-right:none;
+        overflow:hidden;
+      }
+
+      /* Feed scroll works normally */
+      .feed-scroll{
+        overflow-y:auto;
+        -webkit-overflow-scrolling:touch;
+      }
+
+      /* Hide recent strip on mobile */
+      .recent-col{ display:none; }
+
+      /* Sidebar becomes fixed bottom drawer — hidden by default */
+      .sidebar{
+        position:fixed;
+        left:0;
+        bottom:0;
+        width:100%;
+        min-width:0;
+        height:auto;
+        max-height:88vh;
+        border-right:none;
+        border-top:1px solid rgba(110,80,255,.35);
+        border-radius:20px 20px 0 0;
+        background:rgba(12,12,28,.98);
+        backdrop-filter:blur(28px);
+        z-index:200;
+        transform:translateY(100%);
+        transition:transform .32s cubic-bezier(.4,0,.2,1);
+        overflow-y:auto;
+        -webkit-overflow-scrolling:touch;
+        padding-bottom:env(safe-area-inset-bottom, 16px);
+      }
+
+      /* When drawer is open */
+      .sidebar.mob-open{
+        transform:translateY(0);
+      }
+
+      /* Drag handle pill at top of drawer */
+      .mob-drag-handle{
+        display:flex;
+        justify-content:center;
+        padding:12px 0 4px;
+        flex-shrink:0;
+      }
+      .mob-drag-handle::after{
+        content:'';
+        width:36px;height:4px;
+        border-radius:3px;
+        background:rgba(255,255,255,.18);
+      }
+
+      /* Generate button stays at bottom of drawer */
+      .gsec{
+        position:sticky;
+        bottom:0;
+        background:rgba(12,12,28,.98);
+        backdrop-filter:blur(16px);
+        border-top:1px solid var(--bdr);
+        padding:14px 20px 16px;
+        margin-top:0;
+      }
+
+      /* Header mobile tweaks */
+      header{ padding:0 16px; gap:12px; }
+      .logo{ font-size:19px; }
+      .htag{ display:none; }
+
+      /* Batch image area padding */
+      .batch-img-area{ padding:0 14px 16px; }
+      .bh{ padding:12px 14px 10px; gap:7px; }
+      .bh-badge{ font-size:9px; padding:2px 7px; }
+      .bh-prompt{ font-size:11px; }
+
+      /* Result image — full width on mobile */
+      .result-img-wrap{
+        max-height:none;
+        width:100% !important;
+        aspect-ratio:unset !important;
+      }
+      .result-img-wrap img{
+        width:100% !important;
+        height:auto !important;
+        max-height:none;
+      }
+
+      /* Load card height on mobile */
+      .load-card{ min-height:220px; }
+
+      /* Size grid — 2 cols on mobile */
+      .sgrp.on{ grid-template-columns:repeat(2,1fr); }
+      .sgrp4.on{ grid-template-columns:repeat(2,1fr); }
+
+      /* Sec padding tighter on mobile */
+      .sec{ padding:16px 18px; }
+
+      /* Overlay — dims background when drawer open */
+      #mobOverlay{
+        display:none;
+        position:fixed;
+        inset:0;
+        background:rgba(0,0,0,.55);
+        z-index:190;
+        backdrop-filter:blur(2px);
+      }
+      #mobOverlay.on{ display:block; }
+
+      /* Floating Controls button */
+      #mobCtrlBtn{
+        display:flex;
+        align-items:center;
+        gap:8px;
+        position:fixed;
+        bottom:24px;
+        right:20px;
+        z-index:150;
+        background:linear-gradient(135deg,var(--acc),#4a30c8);
+        border:none;
+        border-radius:50px;
+        color:#fff;
+        font-family:'Syne',sans-serif;
+        font-size:13px;
+        font-weight:700;
+        letter-spacing:.05em;
+        padding:13px 22px;
+        cursor:pointer;
+        box-shadow:0 8px 28px rgba(110,80,255,.55);
+        transition:transform .2s, box-shadow .2s;
+      }
+      #mobCtrlBtn:active{ transform:scale(.96); }
+      #mobCtrlBtn svg{ width:16px;height:16px;flex-shrink:0; }
+
+      /* Mobile close button inside drawer */
+      #mobCloseBtn{
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        gap:6px;
+        width:calc(100% - 36px);
+        margin:0 18px 4px;
+        padding:11px;
+        background:transparent;
+        border:1px solid var(--bdr);
+        border-radius:10px;
+        color:var(--sub);
+        font-family:'Syne',sans-serif;
+        font-size:11px;
+        font-weight:700;
+        letter-spacing:.1em;
+        text-transform:uppercase;
+        cursor:pointer;
+        transition:all .18s;
+      }
+      #mobCloseBtn:active{ border-color:var(--bact);color:var(--wh); }
+
+      /* Empty state text size on mobile */
+      .fe-title{ font-size:18px; }
+      .fe-sub{ font-size:10px; }
+      .fe-ico{ width:58px;height:58px;font-size:22px; }
+
+      /* Hide controls btn when drawer open */
+      .sidebar.mob-open ~ #mobCtrlBtn,
+      body.mob-drawer-open #mobCtrlBtn{ display:none; }
+    }
+
+    /* Desktop — hide mobile-only elements */
+    @media(min-width:768px){
+      #mobCtrlBtn{ display:none; }
+      #mobOverlay{ display:none !important; }
+      #mobCloseBtn{ display:none; }
+      .mob-drag-handle{ display:none; }
+    }
   </style>
 </head>
 <body>
 <div class="orb o1"></div>
 <div class="orb o2"></div>
+
+<!-- Mobile overlay (dims background when drawer open) -->
+<div id="mobOverlay" onclick="closeMobileDrawer()"></div>
 
 <header>
   <a class="logo" href="#"><span>B</span>reezyfy</a>
@@ -507,7 +701,16 @@
 <div class="shell">
 
   <!-- ══ LEFT SIDEBAR ══ -->
-  <aside class="sidebar">
+  <aside class="sidebar" id="sidebar">
+
+    <!-- Mobile drag handle (hidden on desktop) -->
+    <div class="mob-drag-handle"></div>
+
+    <!-- Mobile close button (hidden on desktop) -->
+    <button id="mobCloseBtn" onclick="closeMobileDrawer()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      Close
+    </button>
 
     <div class="sec">
       <div class="slbl">Prompt</div>
@@ -651,6 +854,16 @@
 
 </div><!-- /shell -->
 
+<!-- Mobile floating Controls button (hidden on desktop via CSS) -->
+<button id="mobCtrlBtn" onclick="openMobileDrawer()">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="3" y1="6" x2="21" y2="6"/>
+    <line x1="3" y1="12" x2="21" y2="12"/>
+    <line x1="3" y1="18" x2="21" y2="18"/>
+  </svg>
+  Controls
+</button>
+
 <script>
 /* ── char count ── */
 function uc(el){ document.getElementById('cn').textContent = el.value.length; }
@@ -761,15 +974,14 @@ function addLoadingBatch(promptText, imgW, imgH) {
     <div class="bh-prompt">${promptText}</div>
   `;
 
-  /* loading card — height proportional to aspect ratio */
+  /* loading card */
   const imgArea = document.createElement('div');
   imgArea.className = 'batch-img-area';
 
   const loadCard = document.createElement('div');
   loadCard.className = 'load-card';
 
-  // Set a reasonable loading height based on aspect ratio
-  const feedWidth = document.getElementById('feedCol').clientWidth - 40; // 20px padding each side
+  const feedWidth = document.getElementById('feedCol').clientWidth - 40;
   const loadH = Math.round(feedWidth * (imgH / imgW));
   const clampedH = Math.max(200, Math.min(500, loadH));
   loadCard.style.height = clampedH + 'px';
@@ -790,13 +1002,11 @@ function addLoadingBatch(promptText, imgW, imgH) {
   batch.appendChild(bh);
   batch.appendChild(imgArea);
 
-  // Insert at TOP of feed
   feed.insertBefore(batch, feed.firstChild);
   feed.scrollTop = 0;
 
   activeBatch = { batch, bh, imgArea, loadCard, promptText, imgW, imgH };
 
-  // Progress text
   progIdx = 0;
   clearInterval(progTimer);
   const txtEl = loadCard.querySelector('.load-lbl');
@@ -814,7 +1024,6 @@ function resolveLoading(src) {
   const { batch, bh, imgArea, promptText, imgW, imgH } = activeBatch;
   activeBatch = null;
 
-  // Update header with download
   bh.innerHTML = `
     <svg class="bh-img-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
       <rect x="3" y="3" width="18" height="18" rx="3"/>
@@ -830,7 +1039,6 @@ function resolveLoading(src) {
     </div>
   `;
 
-  // Replace loading card with image + download bar
   imgArea.innerHTML = '';
 
   const outer = document.createElement('div');
@@ -849,7 +1057,6 @@ function resolveLoading(src) {
 
   imgWrap.appendChild(img);
 
-  // Always-visible download bar below image
   const dlBar = document.createElement('div');
   dlBar.className = 'img-dl-bar';
   dlBar.innerHTML = `
@@ -861,7 +1068,6 @@ function resolveLoading(src) {
   outer.appendChild(dlBar);
   imgArea.appendChild(outer);
 
-  // Add thumbnail to Recent strip
   addToRecent(src, imgW, imgH);
 }
 
@@ -897,7 +1103,6 @@ function renderRecent() {
     img.title = `${item.imgW}×${item.imgH}`;
     img.loading = 'lazy';
     img.onclick = () => {
-      // scroll to corresponding batch
       const batches = document.querySelectorAll('#feedScroll .batch');
       const target = batches[idx];
       if (target) {
@@ -911,9 +1116,7 @@ function renderRecent() {
 }
 
 /* ─────────────────────────────────────────────
-   ⚙️  BACKEND URL — Apna Cloudflare tunnel URL yahan daalo
-   Mac Mini pe server.js chalane ke baad milega
-   Example: 'https://abc123.trycloudflare.com'
+   ⚙️  BACKEND URL
    ───────────────────────────────────────────── */
 const API_URL = 'https://calendar-lifestyle-moral-estimated.trycloudflare.com';
 
@@ -933,6 +1136,9 @@ async function generate() {
   const btn = document.getElementById('genBtn');
   btn.disabled = true;
   btn.innerHTML = '<span class="shim"></span>Generating…';
+
+  /* Close mobile drawer when generating starts */
+  closeMobileDrawer();
 
   addLoadingBatch(promptText, imgW, imgH);
 
@@ -963,6 +1169,18 @@ async function generate() {
     btn.disabled = false;
     btn.innerHTML = '<span class="shim"></span>Generate';
   }
+}
+
+/* ── MOBILE DRAWER ── */
+function openMobileDrawer() {
+  document.getElementById('sidebar').classList.add('mob-open');
+  document.getElementById('mobOverlay').classList.add('on');
+  document.body.classList.add('mob-drawer-open');
+}
+function closeMobileDrawer() {
+  document.getElementById('sidebar').classList.remove('mob-open');
+  document.getElementById('mobOverlay').classList.remove('on');
+  document.body.classList.remove('mob-drawer-open');
 }
 
 /* Cmd/Ctrl + Enter */
