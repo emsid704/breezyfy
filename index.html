@@ -158,7 +158,6 @@
     .appbtn:hover{border-color:var(--bact);color:var(--wh)}
     .appbtn.done{border-color:var(--acc);color:var(--alit);background:rgba(110,80,255,.08)}
 
-    /* ad slot */
     .ad-slot{
       padding:16px 24px 0;
       display:flex;flex-direction:column;align-items:center;gap:8px;
@@ -234,7 +233,6 @@
     .bh-dl:hover{background:rgba(52,211,153,.16)}
 
     .batch-img-area{padding:0 20px 20px}
-    /* ══ STUNNING LOAD CARD ══ */
     .load-card{
       width:100%;border-radius:16px;
       border:1px solid rgba(110,80,255,.15);
@@ -242,8 +240,6 @@
       overflow:hidden;position:relative;min-height:320px;
       display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;
     }
-
-    /* Animated grid background */
     .load-grid{
       position:absolute;inset:0;z-index:0;
       background-image:
@@ -253,16 +249,12 @@
       animation:gridPan 8s linear infinite;
     }
     @keyframes gridPan{from{background-position:0 0}to{background-position:40px 40px}}
-
-    /* Radial glow */
     .load-glow{
       position:absolute;inset:0;z-index:0;
       background:radial-gradient(ellipse 60% 50% at 50% 50%, rgba(110,80,255,.12), transparent 70%);
       animation:glowPulse 3s ease-in-out infinite;
     }
     @keyframes glowPulse{0%,100%{opacity:.6}50%{opacity:1}}
-
-    /* Queue badge */
     .queue-badge{
       position:relative;z-index:2;
       font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.2em;
@@ -271,15 +263,11 @@
       padding:5px 16px;border-radius:50px;margin-bottom:28px;
       transition:all .4s ease;
     }
-
-    /* Main orb container */
     .orb-wrap{
       position:relative;z-index:2;
       width:140px;height:140px;
       display:flex;align-items:center;justify-content:center;
     }
-
-    /* Outer ring — queue waiting */
     .ring-outer{
       position:absolute;inset:0;border-radius:50%;
       border:1px solid rgba(110,80,255,.2);
@@ -292,8 +280,6 @@
       transform:translateX(-50%);
     }
     @keyframes ringRotate{to{transform:rotate(360deg)}}
-
-    /* Middle ring */
     .ring-mid{
       position:absolute;inset:14px;border-radius:50%;
       border:1px solid rgba(110,80,255,.15);
@@ -305,17 +291,13 @@
       background:rgba(110,80,255,.8);box-shadow:0 0 8px rgba(110,80,255,.8);
       transform:translateX(-50%);
     }
-
-    /* Progress SVG ring */
     .progress-ring{
       position:absolute;inset:0;
       transform:rotate(-90deg);
       opacity:0;transition:opacity .5s ease;
     }
     .progress-ring.visible{opacity:1}
-    .progress-ring circle.track{
-      fill:none;stroke:rgba(110,80,255,.1);stroke-width:3;
-    }
+    .progress-ring circle.track{fill:none;stroke:rgba(110,80,255,.1);stroke-width:3;}
     .progress-ring circle.fill{
       fill:none;stroke:url(#progGrad);stroke-width:3;
       stroke-linecap:round;
@@ -323,8 +305,6 @@
       stroke-dashoffset:376;
       transition:stroke-dashoffset .8s cubic-bezier(.4,0,.2,1);
     }
-
-    /* Inner orb */
     .orb-inner{
       width:80px;height:80px;border-radius:50%;
       background:radial-gradient(circle at 35% 35%, rgba(155,125,255,.3), rgba(110,80,255,.1) 50%, transparent);
@@ -333,12 +313,7 @@
       animation:orbFloat 4s ease-in-out infinite;
       box-shadow:0 0 30px rgba(110,80,255,.15), inset 0 0 20px rgba(110,80,255,.05);
     }
-    @keyframes orbFloat{
-      0%,100%{transform:translateY(0) scale(1)}
-      50%{transform:translateY(-6px) scale(1.03)}
-    }
-
-    /* Percent text inside orb */
+    @keyframes orbFloat{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-6px) scale(1.03)}}
     .pct-text{
       font-family:'DM Mono',monospace;font-size:18px;font-weight:400;
       color:var(--wh);letter-spacing:-.02em;
@@ -347,8 +322,6 @@
     }
     .pct-text.visible{opacity:1}
     .pct-sub{font-size:8px;letter-spacing:.1em;color:var(--sub);display:block;margin-top:2px}
-
-    /* Floating particles */
     .particles{position:absolute;inset:0;z-index:1;pointer-events:none}
     .particle{
       position:absolute;border-radius:50%;
@@ -358,29 +331,12 @@
     }
     @keyframes particleDrift{
       0%{transform:translate(0,0) scale(1);opacity:0}
-      20%{opacity:1}
-      80%{opacity:.5}
+      20%{opacity:1}80%{opacity:.5}
       100%{transform:translate(var(--tx),var(--ty)) scale(0);opacity:0}
     }
-
-    /* Status text below orb */
-    .load-status{
-      position:relative;z-index:2;
-      margin-top:24px;text-align:center;
-    }
-    .load-lbl{
-      font-family:'DM Mono',monospace;font-size:12px;
-      color:var(--sub);letter-spacing:.08em;
-      transition:all .3s ease;
-    }
-    .load-sublbl{
-      font-family:'DM Mono',monospace;font-size:10px;
-      color:var(--mut);letter-spacing:.05em;
-      margin-top:6px;
-      transition:all .3s ease;
-    }
-
-    /* ── DOWNLOAD BUTTON WITH FORMAT OPTIONS ── */
+    .load-status{position:relative;z-index:2;margin-top:24px;text-align:center;}
+    .load-lbl{font-family:'DM Mono',monospace;font-size:12px;color:var(--sub);letter-spacing:.08em;transition:all .3s ease;}
+    .load-sublbl{font-family:'DM Mono',monospace;font-size:10px;color:var(--mut);letter-spacing:.05em;margin-top:6px;transition:all .3s ease;}
     .dl-wrap{position:relative;display:inline-flex;align-items:center}
     .i-dl{
       font-family:'Syne',sans-serif;font-size:11px;font-weight:700;
@@ -394,8 +350,7 @@
     .dl-fmt-btn{
       background:rgba(110,80,255,.75);border:none;border-left:1px solid rgba(255,255,255,.15);
       border-radius:0 8px 8px 0;padding:7px 9px;
-      color:#fff;cursor:pointer;font-size:11px;
-      transition:background .18s;
+      color:#fff;cursor:pointer;font-size:11px;transition:background .18s;
     }
     .dl-fmt-btn:hover{background:rgba(110,80,255,1)}
     .dl-dropdown{
@@ -414,15 +369,10 @@
       text-align:left;width:100%;
     }
     .dl-opt:hover{background:rgba(110,80,255,.15);color:#fff}
-    .dl-opt .fmt-badge{
-      font-size:9px;font-weight:700;letter-spacing:.1em;
-      padding:2px 7px;border-radius:4px;
-    }
+    .dl-opt .fmt-badge{font-size:9px;font-weight:700;letter-spacing:.1em;padding:2px 7px;border-radius:4px;}
     .dl-opt.png .fmt-badge{background:rgba(52,211,153,.15);color:#34d399}
     .dl-opt.jpg .fmt-badge{background:rgba(251,191,36,.15);color:#fbbf24}
     .dl-opt-desc{font-size:9px;color:var(--sub);display:block;margin-top:1px}
-
-    /* ── CLEAR ALL BUTTON ── */
     .clear-btn{
       font-family:'Syne',sans-serif;font-size:11px;font-weight:700;
       letter-spacing:.08em;text-transform:uppercase;
@@ -433,8 +383,6 @@
       transition:all .2s;flex-shrink:0;
     }
     .clear-btn:hover{background:rgba(248,113,113,.18);border-color:rgba(248,113,113,.5)}
-
-    /* ── SHARE BUTTON ── */
     .i-share{
       font-family:'Syne',sans-serif;font-size:11px;font-weight:700;
       letter-spacing:.07em;text-transform:uppercase;
@@ -444,29 +392,14 @@
       transition:all .18s;display:flex;align-items:center;gap:6px;
     }
     .i-share:hover{background:rgba(52,211,153,.35)}
-
-    /* ── BLINK ANIMATION for "You are next" ── */
     @keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
     .blink-txt{animation:blink 1.1s ease-in-out infinite}
-
-    /* Old unused */
     .load-dots,.spinner,.pulse-dot,.load-row,.chevrons{display:none}
-    @keyframes spin{to{transform:rotate(360deg)}}
-    @keyframes plsr{}
-    @keyframes chev{}
-
     .result-img-outer{display:flex;flex-direction:column;align-items:flex-start;gap:10px}
     .result-img-wrap{max-height:420px;width:auto;border-radius:12px;overflow:hidden;position:relative;border:1px solid var(--bdr);background:var(--card);flex-shrink:0}
     .result-img-wrap img{height:100%;width:auto;max-height:420px;display:block;border-radius:12px;transition:opacity .5s ease}
     .img-dl-bar{display:flex;align-items:center;gap:10px}
-    .i-dl{
-      font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
-      color:#fff;background:rgba(110,80,255,.75);padding:7px 16px;border-radius:8px;
-      text-decoration:none;cursor:pointer;border:none;transition:background .18s;
-    }
-    .i-dl:hover{background:rgba(110,80,255,1)}
     .i-size-tag{font-family:'DM Mono',monospace;font-size:10px;color:var(--sub);background:var(--card);border:1px solid var(--bdr);padding:6px 12px;border-radius:8px}
-
     .err-card{
       width:100%;min-height:120px;border-radius:12px;
       border:1px solid rgba(248,113,113,.2);background:rgba(248,113,113,.05);
@@ -474,7 +407,6 @@
     }
     .err-ico{font-size:26px}
     .err-msg{font-family:'DM Mono',monospace;font-size:12px;color:var(--err);text-align:center}
-
     .recent-col{width:76px;flex-shrink:0;height:100%;background:var(--surf);display:flex;flex-direction:column;overflow:hidden}
     .rc-hdr{height:52px;flex-shrink:0;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:center}
     .rc-lbl{font-family:'Syne',sans-serif;font-size:8px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--sub)}
@@ -484,36 +416,14 @@
     .rc-thumb{width:56px;height:56px;border-radius:8px;object-fit:cover;border:2px solid var(--bdr);cursor:pointer;flex-shrink:0;transition:all .2s;display:block}
     .rc-thumb:hover{border-color:var(--acc);transform:scale(1.06)}
     .rc-thumb.active{border-color:var(--alit);box-shadow:0 0 0 2px rgba(155,125,255,.3)}
-
     @media(max-width:1100px){.sidebar{width:380px;min-width:360px}}
-    @media(max-width:860px){
-      .sidebar{width:300px;min-width:280px}
-      .recent-col{width:62px}
-      .rc-thumb{width:46px;height:46px}
-    }
-
-    /* ══ MOBILE ≤767px ══ */
+    @media(max-width:860px){.sidebar{width:300px;min-width:280px}.recent-col{width:62px}.rc-thumb{width:46px;height:46px}}
     @media(max-width:767px){
       html,body{height:100%;overflow:hidden}
-      .shell{
-        flex-direction:column;
-        height:calc(100vh - 52px);
-        overflow-y:auto;
-        overflow-x:hidden;
-        -webkit-overflow-scrolling:touch;
-      }
+      .shell{flex-direction:column;height:calc(100vh - 52px);overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
       .recent-col{display:none}
-      .sidebar{
-        width:100%;min-width:0;height:auto;
-        flex-shrink:0;border-right:none;
-        border-bottom:1px solid var(--bdr);
-        overflow:visible;
-      }
-      .feed-col{
-        width:100%;min-width:0;height:auto;
-        flex-shrink:0;border-right:none;
-        overflow:visible;display:flex;flex-direction:column;
-      }
+      .sidebar{width:100%;min-width:0;height:auto;flex-shrink:0;border-right:none;border-bottom:1px solid var(--bdr);overflow:visible;}
+      .feed-col{width:100%;min-width:0;height:auto;flex-shrink:0;border-right:none;overflow:visible;display:flex;flex-direction:column;}
       .feed-empty{min-height:260px;flex:none}
       .feed-scroll{overflow:visible;height:auto;flex:none}
       header{padding:0 16px;gap:12px}
@@ -522,10 +432,7 @@
       .sec{padding:16px 18px}
       .ad-slot{padding:12px 18px 0}
       .ad-box{width:100%;max-width:300px}
-      .gsec{
-        padding:14px 18px 18px;margin-top:0;
-        border-top:1px solid var(--bdr);background:var(--surf);
-      }
+      .gsec{padding:14px 18px 18px;margin-top:0;border-top:1px solid var(--bdr);background:var(--surf);}
       .sgrp.on{grid-template-columns:repeat(2,1fr)}
       .sgrp4.on{grid-template-columns:repeat(2,1fr)}
       .batch-img-area{padding:0 14px 16px}
@@ -558,24 +465,18 @@
 </header>
 
 <div class="shell" id="shell">
-
   <aside class="sidebar" id="sidebar">
-
     <div class="sec">
       <div class="slbl">Prompt</div>
       <div class="pw">
-        <textarea id="prompt"
-          placeholder="Describe your image — subject, style, lighting, mood…"
-          maxlength="800" oninput="uc(this)"></textarea>
+        <textarea id="prompt" placeholder="Describe your image — subject, style, lighting, mood…" maxlength="800" oninput="uc(this)"></textarea>
         <span class="cc"><span id="cn">0</span>/800</span>
       </div>
     </div>
-
     <div class="sec">
       <div class="slbl">Negative Prompt</div>
       <textarea id="neg">ugly, blurry, low quality, deformed, bad anatomy, extra limbs, watermark, text, signature, cropped, worst quality, jpeg artifacts, noise, overexposed, underexposed</textarea>
     </div>
-
     <div class="sec">
       <div class="slbl">Canvas Size</div>
       <div class="stabs">
@@ -584,112 +485,49 @@
         <button class="stab" onclick="st('la',this)">Landscape</button>
         <button class="stab" onclick="st('cu',this)">Custom</button>
       </div>
-
       <div class="sgrp on" id="g-sq">
         <input type="radio" name="sz" id="sq1" value="512,512" checked>
-        <label class="scard" for="sq1">
-          <div class="svis"><div class="srect" style="width:21px;height:21px"></div></div>
-          <div class="srat">1:1</div><div class="spx">512 px</div>
-        </label>
+        <label class="scard" for="sq1"><div class="svis"><div class="srect" style="width:21px;height:21px"></div></div><div class="srat">1:1</div><div class="spx">512 px</div></label>
         <input type="radio" name="sz" id="sq2" value="768,768">
-        <label class="scard" for="sq2">
-          <div class="svis"><div class="srect" style="width:25px;height:25px"></div></div>
-          <div class="srat">1:1</div><div class="spx">768 px</div>
-        </label>
+        <label class="scard" for="sq2"><div class="svis"><div class="srect" style="width:25px;height:25px"></div></div><div class="srat">1:1</div><div class="spx">768 px</div></label>
         <input type="radio" name="sz" id="sq3" value="1024,1024">
-        <label class="scard" for="sq3">
-          <div class="svis"><div class="srect" style="width:29px;height:29px"></div></div>
-          <div class="srat">1:1</div><div class="spx">1024 px</div>
-        </label>
+        <label class="scard" for="sq3"><div class="svis"><div class="srect" style="width:29px;height:29px"></div></div><div class="srat">1:1</div><div class="spx">1024 px</div></label>
       </div>
-
       <div class="sgrp4" id="g-po">
         <input type="radio" name="sz" id="po1" value="512,768">
-        <label class="scard" for="po1">
-          <div class="svis"><div class="srect" style="width:16px;height:24px"></div></div>
-          <div class="srat">2:3</div><div class="spx">512×768</div>
-        </label>
+        <label class="scard" for="po1"><div class="svis"><div class="srect" style="width:16px;height:24px"></div></div><div class="srat">2:3</div><div class="spx">512×768</div></label>
         <input type="radio" name="sz" id="po2" value="576,1024">
-        <label class="scard" for="po2">
-          <div class="svis"><div class="srect" style="width:14px;height:25px"></div></div>
-          <div class="srat">9:16</div><div class="spx">576×1024</div>
-        </label>
+        <label class="scard" for="po2"><div class="svis"><div class="srect" style="width:14px;height:25px"></div></div><div class="srat">9:16</div><div class="spx">576×1024</div></label>
         <input type="radio" name="sz" id="po3" value="768,1024">
-        <label class="scard" for="po3">
-          <div class="svis"><div class="srect" style="width:18px;height:24px"></div></div>
-          <div class="srat">3:4</div><div class="spx">768×1024</div>
-        </label>
+        <label class="scard" for="po3"><div class="svis"><div class="srect" style="width:18px;height:24px"></div></div><div class="srat">3:4</div><div class="spx">768×1024</div></label>
         <input type="radio" name="sz" id="po4" value="832,1216">
-        <label class="scard" for="po4">
-          <div class="svis"><div class="srect" style="width:16px;height:23px"></div></div>
-          <div class="srat">2:3</div><div class="spx">832×1216</div>
-        </label>
+        <label class="scard" for="po4"><div class="svis"><div class="srect" style="width:16px;height:23px"></div></div><div class="srat">2:3</div><div class="spx">832×1216</div></label>
       </div>
-
       <div class="sgrp4" id="g-la">
         <input type="radio" name="sz" id="la1" value="768,512">
-        <label class="scard" for="la1">
-          <div class="svis"><div class="srect" style="width:25px;height:17px"></div></div>
-          <div class="srat">3:2</div><div class="spx">768×512</div>
-        </label>
+        <label class="scard" for="la1"><div class="svis"><div class="srect" style="width:25px;height:17px"></div></div><div class="srat">3:2</div><div class="spx">768×512</div></label>
         <input type="radio" name="sz" id="la2" value="1024,576">
-        <label class="scard" for="la2">
-          <div class="svis"><div class="srect" style="width:27px;height:15px"></div></div>
-          <div class="srat">16:9</div><div class="spx">1024×576</div>
-        </label>
+        <label class="scard" for="la2"><div class="svis"><div class="srect" style="width:27px;height:15px"></div></div><div class="srat">16:9</div><div class="spx">1024×576</div></label>
         <input type="radio" name="sz" id="la3" value="1024,768">
-        <label class="scard" for="la3">
-          <div class="svis"><div class="srect" style="width:25px;height:19px"></div></div>
-          <div class="srat">4:3</div><div class="spx">1024×768</div>
-        </label>
+        <label class="scard" for="la3"><div class="svis"><div class="srect" style="width:25px;height:19px"></div></div><div class="srat">4:3</div><div class="spx">1024×768</div></label>
         <input type="radio" name="sz" id="la4" value="1280,720">
-        <label class="scard" for="la4">
-          <div class="svis"><div class="srect" style="width:28px;height:16px"></div></div>
-          <div class="srat">16:9</div><div class="spx">1280×720</div>
-        </label>
+        <label class="scard" for="la4"><div class="svis"><div class="srect" style="width:28px;height:16px"></div></div><div class="srat">16:9</div><div class="spx">1280×720</div></label>
       </div>
-
       <div class="cgrp" id="g-cu">
         <div class="crow">
-          <div class="diw">
-            <span class="dilbl">W</span>
-            <input class="diin" type="number" id="dimW" value="872" min="256" max="2048" step="64">
-          </div>
+          <div class="diw"><span class="dilbl">W</span><input class="diin" type="number" id="dimW" value="872" min="256" max="2048" step="64"></div>
           <button class="ibtn lk" id="lkBtn" onclick="toggleLock()">🔒</button>
-          <div class="diw">
-            <span class="dilbl">H</span>
-            <input class="diin" type="number" id="dimH" value="1024" min="256" max="2048" step="64">
-          </div>
+          <div class="diw"><span class="dilbl">H</span><input class="diin" type="number" id="dimH" value="1024" min="256" max="2048" step="64"></div>
           <button class="ibtn" onclick="swapDims()">⇅</button>
         </div>
         <button class="appbtn" id="appBtn" onclick="applyCustom()">Apply Custom Size</button>
       </div>
     </div>
-
-    <!-- ══ ADSTERRA AD — OFF (remove these comment tags to enable) ══
-    <div class="ad-slot">
-      <div class="ad-lbl">Sponsored</div>
-      <div class="ad-box">
-        <script>
-          atOptions = {
-            'key' : '0325a81b241fbcfb35505509e36ae469',
-            'format' : 'iframe',
-            'height' : 250,
-            'width' : 300,
-            'params' : {}
-          };
-        </script>
-        <script src="https://www.highperformanceformat.com/0325a81b241fbcfb35505509e36ae469/invoke.js"></script>
-      </div>
-    </div>
-    ══ END AD ══ -->
-
     <div class="gsec">
       <button id="genBtn" onclick="generate()">
         <span class="shim"></span>Generate
       </button>
     </div>
-
   </aside>
 
   <div class="feed-col" id="feedCol">
@@ -705,7 +543,6 @@
     <div class="rc-hdr"><span class="rc-lbl">Recent</span></div>
     <div class="rc-scroll" id="rcScroll"></div>
   </aside>
-
 </div>
 
 <script>
@@ -727,16 +564,12 @@ function st(tab, btn) {
 }
 
 let aspectLocked = true, aspectRatio = 872/1024, customApplied = false;
-
 function toggleLock() {
   aspectLocked = !aspectLocked;
   const btn = document.getElementById('lkBtn');
   btn.textContent = aspectLocked ? '🔒' : '🔓';
   btn.classList.toggle('lk', aspectLocked);
-  if (aspectLocked) {
-    aspectRatio = (parseFloat(document.getElementById('dimW').value)||512) /
-                  (parseFloat(document.getElementById('dimH').value)||512);
-  }
+  if (aspectLocked) aspectRatio = (parseFloat(document.getElementById('dimW').value)||512) / (parseFloat(document.getElementById('dimH').value)||512);
 }
 document.getElementById('dimW').addEventListener('input', function () {
   if (!aspectLocked) return;
@@ -748,30 +581,14 @@ document.getElementById('dimH').addEventListener('input', function () {
   document.getElementById('dimW').value = Math.round((parseFloat(this.value)||512) * aspectRatio);
   resetApply();
 });
-function resetApply() {
-  customApplied = false;
-  const b = document.getElementById('appBtn');
-  b.classList.remove('done'); b.textContent = 'Apply Custom Size';
-}
-function swapDims() {
-  const wEl = document.getElementById('dimW'), hEl = document.getElementById('dimH');
-  [wEl.value, hEl.value] = [hEl.value, wEl.value];
-  if (aspectLocked) aspectRatio = parseFloat(wEl.value) / parseFloat(hEl.value);
-  resetApply();
-}
-function applyCustom() {
-  customApplied = true;
-  const b = document.getElementById('appBtn');
-  b.classList.add('done'); b.textContent = '✓ Applied';
-}
+function resetApply() { customApplied = false; const b = document.getElementById('appBtn'); b.classList.remove('done'); b.textContent = 'Apply Custom Size'; }
+function swapDims() { const wEl = document.getElementById('dimW'), hEl = document.getElementById('dimH'); [wEl.value, hEl.value] = [hEl.value, wEl.value]; if (aspectLocked) aspectRatio = parseFloat(wEl.value) / parseFloat(hEl.value); resetApply(); }
+function applyCustom() { customApplied = true; const b = document.getElementById('appBtn'); b.classList.add('done'); b.textContent = '✓ Applied'; }
 function getDims() {
   const tab = document.querySelector('.stab.on').textContent.trim().toLowerCase();
   if (tab === 'custom') {
     if (!customApplied) applyCustom();
-    return [
-      Math.max(256, Math.min(2048, parseInt(document.getElementById('dimW').value)||512)),
-      Math.max(256, Math.min(2048, parseInt(document.getElementById('dimH').value)||512))
-    ];
+    return [Math.max(256, Math.min(2048, parseInt(document.getElementById('dimW').value)||512)), Math.max(256, Math.min(2048, parseInt(document.getElementById('dimH').value)||512))];
   }
   return document.querySelector('input[name="sz"]:checked').value.split(',').map(Number);
 }
@@ -793,7 +610,6 @@ function showFeed() {
 const MSGS = ['Sampling latents…','Refining details…','Decoding image…','Almost ready…'];
 let progTimer, progIdx = 0, activeBatch = null;
 
-// Update loading card ka message
 function updateLoadingMsg(msg, sublbl, queueNum, pct) {
   try {
     if (!activeBatch) return;
@@ -803,10 +619,8 @@ function updateLoadingMsg(msg, sublbl, queueNum, pct) {
     const badge  = card.querySelector('#lc-badge');
     const pctNum = card.querySelector('#lc-pct-num');
     const pctSub = card.querySelector('#lc-pct-sub');
-
     if (lbl && msg) lbl.innerHTML = msg;
     if (sub && sublbl !== undefined) sub.textContent = sublbl;
-
     if (queueNum !== undefined && queueNum > 0) {
       if (badge) { badge.textContent = 'Queue #' + queueNum; badge.style.color = 'rgba(155,125,255,.8)'; }
       if (pctNum) pctNum.textContent = '#' + queueNum;
@@ -814,7 +628,6 @@ function updateLoadingMsg(msg, sublbl, queueNum, pct) {
     } else if (queueNum === 0) {
       if (badge) { badge.textContent = 'Generating ✨'; badge.style.color = 'rgba(52,211,153,.9)'; }
     }
-
     if (pct !== undefined) {
       const ring = card.querySelector('#lc-ring');
       const fill = card.querySelector('#lc-ring-fill');
@@ -892,8 +705,6 @@ function addLoadingBatch(promptText, imgW, imgH) {
       <div class="load-lbl" id="lc-lbl">In queue...</div>
       <div class="load-sublbl" id="lc-sublbl">please wait</div>
     </div>`;
-
-  // Spawn floating particles
   const pCont = loadCard.querySelector('#lc-particles');
   for(let i=0;i<14;i++){
     const p = document.createElement('div');
@@ -904,12 +715,7 @@ function addLoadingBatch(promptText, imgW, imgH) {
     p.style.cssText = 'width:'+size+'px;height:'+size+'px;left:'+(42+Math.random()*16)+'%;top:'+(42+Math.random()*16)+'%;--dur:'+(2+Math.random()*3)+'s;--del:'+(Math.random()*2)+'s;--tx:'+(Math.cos(angle)*dist)+'px;--ty:'+(Math.sin(angle)*dist)+'px';
     pCont.appendChild(p);
   }
-
-  // Show pct text
-  setTimeout(() => {
-    const pt = loadCard.querySelector('#lc-pct');
-    if(pt) pt.classList.add('visible');
-  }, 300);
+  setTimeout(() => { const pt = loadCard.querySelector('#lc-pct'); if(pt) pt.classList.add('visible'); }, 300);
   imgArea.appendChild(loadCard);
   batch.appendChild(bh);
   batch.appendChild(imgArea);
@@ -919,10 +725,7 @@ function addLoadingBatch(promptText, imgW, imgH) {
   progIdx = 0;
   clearInterval(progTimer);
   const txtEl = loadCard.querySelector('.load-lbl');
-  progTimer = setInterval(() => {
-    progIdx = (progIdx + 1) % MSGS.length;
-    if (txtEl) txtEl.textContent = MSGS[progIdx];
-  }, 2400);
+  progTimer = setInterval(() => { progIdx = (progIdx + 1) % MSGS.length; if (txtEl) txtEl.textContent = MSGS[progIdx]; }, 2400);
 }
 
 function resolveLoading(src) {
@@ -968,7 +771,6 @@ function errorLoading(msg) {
 }
 
 const recentSrcs = [];
-// ── Clear all images
 function clearAllImages() {
   if (!confirm('Clear all generated images? This cannot be undone.')) return;
   localStorage.removeItem('breezyfy_images');
@@ -980,39 +782,24 @@ function clearAllImages() {
   document.getElementById('clearBtn').style.display   = 'none';
 }
 
-// ── Share image (Web Share API on mobile, copy link on desktop)
 async function shareImage(src, imgW, imgH) {
-  // Convert base64 to blob
   try {
     const res   = await fetch(src);
     const blob  = await res.blob();
     const file  = new File([blob], `breezyfy_${imgW}x${imgH}.png`, { type: 'image/png' });
-
-    // Mobile: native share sheet
     if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({
-        title: 'Breezyfy AI Image',
-        text:  'Created with Breezyfy — AI Image Generator',
-        files: [file]
-      });
+      await navigator.share({ title: 'Breezyfy AI Image', text: 'Created with Breezyfy — AI Image Generator', files: [file] });
       return;
     }
-
-    // Desktop: copy image to clipboard
     if (navigator.clipboard && window.ClipboardItem) {
       await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
       showToast('Image copied to clipboard!');
       return;
     }
-
-    // Fallback: open in new tab
     window.open(src, '_blank');
-  } catch(e) {
-    if (e.name !== 'AbortError') showToast('Could not share image');
-  }
+  } catch(e) { if (e.name !== 'AbortError') showToast('Could not share image'); }
 }
 
-// ── Toast notification
 function showToast(msg) {
   let t = document.getElementById('bfy-toast');
   if (!t) {
@@ -1025,13 +812,9 @@ function showToast(msg) {
   t.style.opacity = '1';
   t.style.transform = 'translateX(-50%) translateY(0)';
   clearTimeout(t._timer);
-  t._timer = setTimeout(() => {
-    t.style.opacity = '0';
-    t.style.transform = 'translateX(-50%) translateY(20px)';
-  }, 2500);
+  t._timer = setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(-50%) translateY(20px)'; }, 2500);
 }
 
-// ── Convert base64 PNG to JPG and download
 function downloadAs(src, fmt, imgW, imgH) {
   const canvas = document.createElement('canvas');
   const img    = new Image();
@@ -1039,20 +822,18 @@ function downloadAs(src, fmt, imgW, imgH) {
     canvas.width  = img.naturalWidth  || imgW;
     canvas.height = img.naturalHeight || imgH;
     const ctx = canvas.getContext('2d');
-    // White background for JPG
     if (fmt === 'jpg') { ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height); }
     ctx.drawImage(img, 0, 0);
     const mimeType = fmt === 'jpg' ? 'image/jpeg' : 'image/png';
     const quality  = fmt === 'jpg' ? 0.95 : 1.0;
     const a = document.createElement('a');
-    a.href     = canvas.toDataURL(mimeType, quality);
+    a.href = canvas.toDataURL(mimeType, quality);
     a.download = `breezyfy_${imgW}x${imgH}.${fmt}`;
     a.click();
   };
   img.src = src;
 }
 
-// ── Build download bar HTML (PNG default + dropdown)
 function buildDlBar(src, imgW, imgH) {
   const id = 'dd_' + Math.random().toString(36).slice(2,7);
   setTimeout(() => {
@@ -1062,36 +843,19 @@ function buildDlBar(src, imgW, imgH) {
     btn.onclick = (e) => { e.stopPropagation(); dd.classList.toggle('open'); };
     document.addEventListener('click', () => dd.classList.remove('open'));
     dd.querySelectorAll('.dl-opt').forEach(opt => {
-      opt.onclick = (e) => {
-        e.stopPropagation();
-        downloadAs(src, opt.dataset.fmt, imgW, imgH);
-        dd.classList.remove('open');
-      };
+      opt.onclick = (e) => { e.stopPropagation(); downloadAs(src, opt.dataset.fmt, imgW, imgH); dd.classList.remove('open'); };
     });
-    // Default PNG download
     const dlA = document.getElementById('dla_' + id);
     if (dlA) dlA.onclick = () => downloadAs(src, 'png', imgW, imgH);
   }, 100);
-
-  // Setup share button
-  setTimeout(() => {
-    const shareBtn = document.getElementById('share_' + id);
-    if (shareBtn) shareBtn.onclick = () => shareImage(src, imgW, imgH);
-  }, 100);
-
+  setTimeout(() => { const shareBtn = document.getElementById('share_' + id); if (shareBtn) shareBtn.onclick = () => shareImage(src, imgW, imgH); }, 100);
   return `
     <div class="dl-wrap">
       <a class="i-dl" id="dla_${id}" href="javascript:void(0)">↓ Download PNG</a>
       <button class="dl-fmt-btn" id="fmtbtn_${id}" title="Choose format">▾</button>
       <div class="dl-dropdown" id="dd_${id}">
-        <button class="dl-opt png" data-fmt="png">
-          <span class="fmt-badge">PNG</span>
-          <span><span style="display:block">Lossless quality</span><span class="dl-opt-desc">Best for AI art</span></span>
-        </button>
-        <button class="dl-opt jpg" data-fmt="jpg">
-          <span class="fmt-badge">JPG</span>
-          <span><span style="display:block">Smaller file size</span><span class="dl-opt-desc">95% quality</span></span>
-        </button>
+        <button class="dl-opt png" data-fmt="png"><span class="fmt-badge">PNG</span><span><span style="display:block">Lossless quality</span><span class="dl-opt-desc">Best for AI art</span></span></button>
+        <button class="dl-opt jpg" data-fmt="jpg"><span class="fmt-badge">JPG</span><span><span style="display:block">Smaller file size</span><span class="dl-opt-desc">95% quality</span></span></button>
       </div>
     </div>
     <button class="i-share" id="share_${id}">
@@ -1101,13 +865,9 @@ function buildDlBar(src, imgW, imgH) {
     <span class="i-size-tag">${imgW} × ${imgH}</span>`;
 }
 
-// ── Build simple bh-dl button
 function buildBhDl(src, imgW, imgH) {
   const id = 'bh_' + Math.random().toString(36).slice(2,7);
-  setTimeout(() => {
-    const el = document.getElementById(id);
-    if (el) el.onclick = () => downloadAs(src, 'png', imgW, imgH);
-  }, 100);
+  setTimeout(() => { const el = document.getElementById(id); if (el) el.onclick = () => downloadAs(src, 'png', imgW, imgH); }, 100);
   return `<a class="bh-dl" href="javascript:void(0)" id="${id}">↓ Download</a>`;
 }
 
@@ -1115,12 +875,10 @@ function addToRecent(src, imgW, imgH) {
   recentSrcs.unshift({ src, imgW, imgH });
   if (recentSrcs.length > 40) recentSrcs.pop();
   renderRecent();
-  // LocalStorage mein save karo
   try {
     const toSave = recentSrcs.map(i => ({ src: i.src, imgW: i.imgW, imgH: i.imgH }));
     localStorage.setItem('breezyfy_images', JSON.stringify(toSave));
   } catch(e) { console.warn('Image save error:', e.message); }
-  // Clear button show karo
   const cb = document.getElementById('clearBtn');
   if (cb) cb.style.display = 'flex';
 }
@@ -1142,21 +900,13 @@ function renderRecent() {
   });
 }
 
-/* ── BACKEND URL — Cloudflare tunnel URL yahan update karo ── */
-const API_URL = 'https://matt-discussing-opinions-week.trycloudflare.com';
+/* ── BACKEND URL — sirf yeh line update karo jab tunnel badle ── */
+const API_URL = 'https://causes-easily-hygiene-cheers.trycloudflare.com';
 
-// ── Queue polling system ──
 let pollTimer = null;
-
-function stopPolling() {
-  try { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } } catch(e) {}
-}
-
+function stopPolling() { try { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } } catch(e) {} }
 function resetBtn() {
-  try {
-    const btn = document.getElementById('genBtn');
-    if (btn) { btn.disabled = false; btn.innerHTML = '<span class="shim"></span>Generate'; }
-  } catch(e) {}
+  try { const btn = document.getElementById('genBtn'); if (btn) { btn.disabled = false; btn.innerHTML = '<span class="shim"></span>Generate'; } } catch(e) {}
 }
 
 let wasProcessing = false;
@@ -1166,45 +916,33 @@ async function pollJobStatus(jobId) {
     const res  = await fetch(`${API_URL}/job/${jobId}`);
     if (!res.ok) return;
     const data = await res.json();
-
     if (data.status === 'queued') {
       const pos  = data.position || 1;
       const secs = data.estimatedSeconds || 0;
       const timeStr = secs >= 60 ? Math.ceil(secs/60) + ' min' : secs + ' sec';
       let msg, sub;
-      if (pos === 1) {
-        msg = 'You're next!';
-        sub = 'almost your turn';
-      } else if (pos === 2) {
-        msg = '<span class="blink-txt">You are next in queue...</span>';
-        sub = '';
-      } else {
-        msg = pos + ' ahead in queue';
-        sub = '~' + timeStr + ' estimated';
-      }
+      if (pos === 1) { msg = 'You\'re next!'; sub = 'almost your turn'; }
+      else if (pos === 2) { msg = '<span class="blink-txt">You are next in queue...</span>'; sub = ''; }
+      else { msg = pos + ' ahead in queue'; sub = '~' + timeStr + ' estimated'; }
       updateLoadingMsg(msg, sub, pos);
       wasProcessing = false;
-
     } else if (data.status === 'processing') {
       const realPct = data.progress || 0;
       if (!wasProcessing) {
         wasProcessing = true;
         if (fakeProgressTimer) { clearInterval(fakeProgressTimer); fakeProgressTimer = null; }
-        startFakeProgress(); // blink stops, progress ring starts
+        startFakeProgress();
       }
       updateLoadingMsg('Creating your image...', 'almost there', 0, realPct > 0 ? realPct : undefined);
-
     } else if (data.status === 'done') {
       stopPolling();
       localStorage.removeItem('breezyfy_jobId');
-      // Real 100% show karo phir image
       updateLoadingMsg('Image ready!', '', 0, 100);
       setTimeout(() => {
         if (data.image) resolveLoading('data:image/png;base64,' + data.image);
         else errorLoading('No image received');
         resetBtn();
       }, 500);
-
     } else if (data.status === 'error') {
       stopPolling();
       localStorage.removeItem('breezyfy_jobId');
@@ -1212,9 +950,7 @@ async function pollJobStatus(jobId) {
       errorLoading(data.error || 'Generation failed');
       resetBtn();
     }
-  } catch (err) {
-    console.warn('[Poll] Retry:', err.message);
-  }
+  } catch (err) { console.warn('[Poll] Retry:', err.message); }
 }
 
 async function generate() {
@@ -1222,80 +958,58 @@ async function generate() {
     const promptText = document.getElementById('prompt').value.trim();
     const negPrompt  = document.getElementById('neg').value.trim();
     if (!promptText) { document.getElementById('prompt').focus(); return; }
-
     const [imgW, imgH] = getDims();
     const btn = document.getElementById('genBtn');
     btn.disabled = true;
     btn.innerHTML = '<span class="shim"></span>Generating…';
-
     addLoadingBatch(promptText, imgW, imgH);
-
     const payload = { prompt: promptText, width: imgW, height: imgH };
     if (negPrompt) payload.negative_prompt = negPrompt;
-
     const res = await fetch(`${API_URL}/generate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
-
     if (!res.ok) throw new Error('Server error ' + res.status);
     const data = await res.json();
     if (data.error) throw new Error(data.error);
     if (!data.jobId) throw new Error('No job ID received from server');
-
-    // LocalStorage mein save karo — refresh ke baad bhi kaam karega
     localStorage.setItem('breezyfy_jobId', data.jobId);
     localStorage.setItem('breezyfy_prompt', promptText);
     localStorage.setItem('breezyfy_w', imgW);
     localStorage.setItem('breezyfy_h', imgH);
-
-    // Queue position dikhao
     const pos  = data.position || 1;
     const secs = data.estimatedSeconds || 0;
     const timeStr = secs >= 60 ? Math.ceil(secs/60) + ' min' : secs + ' sec';
-    const initMsg = pos === 1 ? 'You're next!' : (pos) + ' ahead in queue';
+    const initMsg = pos === 1 ? 'You\'re next!' : (pos) + ' ahead in queue';
     const initSub = pos === 1 ? 'almost your turn' : '~' + timeStr + ' estimated';
     updateLoadingMsg(initMsg, initSub, pos);
-
-    // Polling shuru karo
     stopPolling();
     const jobId = data.jobId;
     pollTimer = setInterval(() => pollJobStatus(jobId), 2000);
-
   } catch (err) {
     stopPolling();
     console.error('[Generate] Error:', err.message);
-    const msg = (err.message.includes('fetch') || err.message.includes('Failed'))
-      ? 'Unable to connect to server. Please try again.'
-      : (err.message || 'Generation failed');
+    const msg = (err.message.includes('fetch') || err.message.includes('Failed')) ? 'Unable to connect to server. Please try again.' : (err.message || 'Generation failed');
     errorLoading(msg);
     resetBtn();
   }
 }
 
-document.getElementById('prompt').addEventListener('keydown', e => {
-  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') generate();
-});
+document.getElementById('prompt').addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') generate(); });
+aspectRatio = parseFloat(document.getElementById('dimW').value) / parseFloat(document.getElementById('dimH').value);
 
-aspectRatio = parseFloat(document.getElementById('dimW').value) /
-              parseFloat(document.getElementById('dimH').value);
-
-// ── PAGE LOAD: Saved images restore karo
 (function restoreSavedImages() {
   try {
     const saved = localStorage.getItem('breezyfy_images');
     if (!saved) return;
     const images = JSON.parse(saved);
     if (!images || !images.length) return;
-
     showFeed();
-    // Reverse order mein add karo (oldest first, newest on top)
     [...images].reverse().forEach(item => {
       const feed = document.getElementById('feedScroll');
       const batch = document.createElement('div');
       batch.className = 'batch';
-
       const bh = document.createElement('div');
       bh.className = 'bh';
       bh.innerHTML = `
@@ -1306,85 +1020,54 @@ aspectRatio = parseFloat(document.getElementById('dimW').value) /
         <div class="bh-badge hi">Breezyfy</div>
         <div class="bh-badge">${item.imgW} × ${item.imgH}</div>
         <div class="bh-actions">${buildBhDl(item.src, item.imgW, item.imgH)}</div>`;
-
       const imgArea = document.createElement('div');
       imgArea.className = 'batch-img-area';
-
       const outer = document.createElement('div');
       outer.className = 'result-img-outer';
       const imgWrap = document.createElement('div');
       imgWrap.className = 'result-img-wrap';
       imgWrap.style.aspectRatio = item.imgW + '/' + item.imgH;
       const img = document.createElement('img');
-      img.src = item.src;
-      img.style.opacity = '1';
+      img.src = item.src; img.style.opacity = '1';
       imgWrap.appendChild(img);
-
       const dlBar = document.createElement('div');
       dlBar.className = 'img-dl-bar';
       dlBar.innerHTML = buildDlBar(item.src, item.imgW, item.imgH);
-
-      outer.appendChild(imgWrap);
-      outer.appendChild(dlBar);
-      imgArea.appendChild(outer);
-      batch.appendChild(bh);
-      batch.appendChild(imgArea);
+      outer.appendChild(imgWrap); outer.appendChild(dlBar);
+      imgArea.appendChild(outer); batch.appendChild(bh); batch.appendChild(imgArea);
       feed.insertBefore(batch, feed.firstChild);
     });
-
-    // Recent strip bhi restore karo
-    images.forEach(item => {
-      recentSrcs.push(item);
-    });
+    images.forEach(item => { recentSrcs.push(item); });
     renderRecent();
     const cb = document.getElementById('clearBtn');
     if (cb) cb.style.display = 'flex';
   } catch(e) { console.warn('Restore error:', e.message); }
 })();
 
-// ── PAGE LOAD: check karo koi pending job hai?
 (async function resumeIfPending() {
   const savedJobId = localStorage.getItem('breezyfy_jobId');
   if (!savedJobId) return;
-
   const savedPrompt = localStorage.getItem('breezyfy_prompt') || '...';
   const savedW = parseInt(localStorage.getItem('breezyfy_w')) || 512;
   const savedH = parseInt(localStorage.getItem('breezyfy_h')) || 512;
-
-  // Check karo job abhi bhi alive hai?
   try {
     const res  = await fetch(`${API_URL}/job/${savedJobId}`);
     if (!res.ok) { localStorage.removeItem('breezyfy_jobId'); return; }
     const data = await res.json();
-
     if (data.status === 'done') {
-      // Image already ban gayi thi — seedha dikhao
       localStorage.removeItem('breezyfy_jobId');
       addLoadingBatch(savedPrompt, savedW, savedH);
       updateLoadingMsg('Image ready!', 'was generated before refresh', 0, 100);
-      setTimeout(() => {
-        if (data.image) resolveLoading('data:image/png;base64,' + data.image);
-        resetBtn();
-      }, 800);
-
+      setTimeout(() => { if (data.image) resolveLoading('data:image/png;base64,' + data.image); resetBtn(); }, 800);
     } else if (data.status === 'queued' || data.status === 'processing') {
-      // Abhi bhi chal rahi hai — resume karo
       const btn = document.getElementById('genBtn');
-      btn.disabled = true;
-      btn.innerHTML = '<span class="shim"></span>Generating…';
+      btn.disabled = true; btn.innerHTML = '<span class="shim"></span>Generating…';
       addLoadingBatch(savedPrompt, savedW, savedH);
       updateLoadingMsg('Resuming your session...', 'aapka kaam chal raha tha', data.position || 1);
-      wasProcessing = false;
-      stopPolling();
+      wasProcessing = false; stopPolling();
       pollTimer = setInterval(() => pollJobStatus(savedJobId), 2000);
-
-    } else {
-      // Error ya expire — clear karo
-      localStorage.removeItem('breezyfy_jobId');
-    }
-  } catch(e) {
-    localStorage.removeItem('breezyfy_jobId');
-  }
+    } else { localStorage.removeItem('breezyfy_jobId'); }
+  } catch(e) { localStorage.removeItem('breezyfy_jobId'); }
 })();
 </script>
 </body>
