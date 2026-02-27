@@ -234,27 +234,157 @@
     .bh-dl:hover{background:rgba(52,211,153,.16)}
 
     .batch-img-area{padding:0 20px 20px}
+    /* ══ STUNNING LOAD CARD ══ */
     .load-card{
-      width:100%;border-radius:12px;border:1px solid var(--bdr);background:var(--card);
-      overflow:hidden;position:relative;min-height:260px;
-      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+      width:100%;border-radius:16px;
+      border:1px solid rgba(110,80,255,.15);
+      background:linear-gradient(135deg,#07071a,#0a0820);
+      overflow:hidden;position:relative;min-height:320px;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;
     }
-    .load-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,#0a0f20,#050812);z-index:0}
-    .load-card > *{position:relative;z-index:1}
-    .load-dots{position:absolute;inset:0;z-index:0;background-image:radial-gradient(circle,rgba(110,80,255,.18) 1px,transparent 1px);background-size:24px 24px;opacity:.5}
-    .spinner{width:44px;height:44px;border:3px solid rgba(110,80,255,.18);border-top-color:var(--acc);border-radius:50%;animation:spin .85s linear infinite}
+
+    /* Animated grid background */
+    .load-grid{
+      position:absolute;inset:0;z-index:0;
+      background-image:
+        linear-gradient(rgba(110,80,255,.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(110,80,255,.06) 1px, transparent 1px);
+      background-size:40px 40px;
+      animation:gridPan 8s linear infinite;
+    }
+    @keyframes gridPan{from{background-position:0 0}to{background-position:40px 40px}}
+
+    /* Radial glow */
+    .load-glow{
+      position:absolute;inset:0;z-index:0;
+      background:radial-gradient(ellipse 60% 50% at 50% 50%, rgba(110,80,255,.12), transparent 70%);
+      animation:glowPulse 3s ease-in-out infinite;
+    }
+    @keyframes glowPulse{0%,100%{opacity:.6}50%{opacity:1}}
+
+    /* Queue badge */
+    .queue-badge{
+      position:relative;z-index:2;
+      font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.2em;
+      text-transform:uppercase;color:rgba(155,125,255,.7);
+      background:rgba(110,80,255,.1);border:1px solid rgba(110,80,255,.2);
+      padding:5px 16px;border-radius:50px;margin-bottom:28px;
+      transition:all .4s ease;
+    }
+
+    /* Main orb container */
+    .orb-wrap{
+      position:relative;z-index:2;
+      width:140px;height:140px;
+      display:flex;align-items:center;justify-content:center;
+    }
+
+    /* Outer ring — queue waiting */
+    .ring-outer{
+      position:absolute;inset:0;border-radius:50%;
+      border:1px solid rgba(110,80,255,.2);
+      animation:ringRotate 8s linear infinite;
+    }
+    .ring-outer::before{
+      content:'';position:absolute;top:-3px;left:50%;
+      width:6px;height:6px;border-radius:50%;
+      background:var(--alit);box-shadow:0 0 10px var(--alit);
+      transform:translateX(-50%);
+    }
+    @keyframes ringRotate{to{transform:rotate(360deg)}}
+
+    /* Middle ring */
+    .ring-mid{
+      position:absolute;inset:14px;border-radius:50%;
+      border:1px solid rgba(110,80,255,.15);
+      animation:ringRotate 5s linear infinite reverse;
+    }
+    .ring-mid::before{
+      content:'';position:absolute;bottom:-3px;left:50%;
+      width:5px;height:5px;border-radius:50%;
+      background:rgba(110,80,255,.8);box-shadow:0 0 8px rgba(110,80,255,.8);
+      transform:translateX(-50%);
+    }
+
+    /* Progress SVG ring */
+    .progress-ring{
+      position:absolute;inset:0;
+      transform:rotate(-90deg);
+      opacity:0;transition:opacity .5s ease;
+    }
+    .progress-ring.visible{opacity:1}
+    .progress-ring circle.track{
+      fill:none;stroke:rgba(110,80,255,.1);stroke-width:3;
+    }
+    .progress-ring circle.fill{
+      fill:none;stroke:url(#progGrad);stroke-width:3;
+      stroke-linecap:round;
+      stroke-dasharray:376;
+      stroke-dashoffset:376;
+      transition:stroke-dashoffset .8s cubic-bezier(.4,0,.2,1);
+    }
+
+    /* Inner orb */
+    .orb-inner{
+      width:80px;height:80px;border-radius:50%;
+      background:radial-gradient(circle at 35% 35%, rgba(155,125,255,.3), rgba(110,80,255,.1) 50%, transparent);
+      border:1px solid rgba(110,80,255,.3);
+      display:flex;align-items:center;justify-content:center;
+      animation:orbFloat 4s ease-in-out infinite;
+      box-shadow:0 0 30px rgba(110,80,255,.15), inset 0 0 20px rgba(110,80,255,.05);
+    }
+    @keyframes orbFloat{
+      0%,100%{transform:translateY(0) scale(1)}
+      50%{transform:translateY(-6px) scale(1.03)}
+    }
+
+    /* Percent text inside orb */
+    .pct-text{
+      font-family:'DM Mono',monospace;font-size:18px;font-weight:400;
+      color:var(--wh);letter-spacing:-.02em;
+      opacity:0;transition:opacity .4s ease;
+      text-align:center;line-height:1;
+    }
+    .pct-text.visible{opacity:1}
+    .pct-sub{font-size:8px;letter-spacing:.1em;color:var(--sub);display:block;margin-top:2px}
+
+    /* Floating particles */
+    .particles{position:absolute;inset:0;z-index:1;pointer-events:none}
+    .particle{
+      position:absolute;border-radius:50%;
+      background:rgba(110,80,255,.6);
+      animation:particleDrift var(--dur) ease-in-out infinite;
+      animation-delay:var(--del);
+    }
+    @keyframes particleDrift{
+      0%{transform:translate(0,0) scale(1);opacity:0}
+      20%{opacity:1}
+      80%{opacity:.5}
+      100%{transform:translate(var(--tx),var(--ty)) scale(0);opacity:0}
+    }
+
+    /* Status text below orb */
+    .load-status{
+      position:relative;z-index:2;
+      margin-top:24px;text-align:center;
+    }
+    .load-lbl{
+      font-family:'DM Mono',monospace;font-size:12px;
+      color:var(--sub);letter-spacing:.08em;
+      transition:all .3s ease;
+    }
+    .load-sublbl{
+      font-family:'DM Mono',monospace;font-size:10px;
+      color:var(--mut);letter-spacing:.05em;
+      margin-top:6px;
+      transition:all .3s ease;
+    }
+
+    /* Old unused */
+    .load-dots,.spinner,.pulse-dot,.load-row,.chevrons{display:none}
     @keyframes spin{to{transform:rotate(360deg)}}
-    .pulse-dot{width:9px;height:9px;border-radius:50%;background:var(--acc);box-shadow:0 0 0 0 rgba(110,80,255,.5);animation:plsr 1.2s ease-in-out infinite}
-    @keyframes plsr{0%{box-shadow:0 0 0 0 rgba(110,80,255,.5)}70%{box-shadow:0 0 0 13px rgba(110,80,255,0)}100%{box-shadow:0 0 0 0 rgba(110,80,255,0)}}
-    .load-row{display:flex;align-items:center;gap:10px}
-    .load-lbl{font-family:'DM Mono',monospace;font-size:11.5px;color:var(--sub);letter-spacing:.09em}
-    .chevrons{display:flex;gap:2px}
-    .chevrons span{color:var(--acc);font-size:11px;animation:chev .6s ease-in-out infinite}
-    .chevrons span:nth-child(2){animation-delay:.1s}
-    .chevrons span:nth-child(3){animation-delay:.2s}
-    .chevrons span:nth-child(4){animation-delay:.3s}
-    .chevrons span:nth-child(5){animation-delay:.4s}
-    @keyframes chev{0%,100%{opacity:.2}50%{opacity:1}}
+    @keyframes plsr{}
+    @keyframes chev{}
 
     .result-img-outer{display:flex;flex-direction:column;align-items:flex-start;gap:10px}
     .result-img-wrap{max-height:420px;width:auto;border-radius:12px;overflow:hidden;position:relative;border:1px solid var(--bdr);background:var(--card);flex-shrink:0}
@@ -590,10 +720,52 @@ const MSGS = ['Sampling latents…','Refining details…','Decoding image…','A
 let progTimer, progIdx = 0, activeBatch = null;
 
 // Update loading card ka message
-function updateLoadingMsg(msg) {
-  if (!activeBatch) return;
-  const lbl = activeBatch.loadCard.querySelector('.load-lbl');
-  if (lbl) lbl.textContent = msg;
+function updateLoadingMsg(msg, sublbl, queueNum, pct) {
+  try {
+    if (!activeBatch) return;
+    const card = activeBatch.loadCard;
+    const lbl    = card.querySelector('#lc-lbl');
+    const sub    = card.querySelector('#lc-sublbl');
+    const badge  = card.querySelector('#lc-badge');
+    const pctNum = card.querySelector('#lc-pct-num');
+    const pctSub = card.querySelector('#lc-pct-sub');
+
+    if (lbl && msg) lbl.textContent = msg;
+    if (sub && sublbl !== undefined) sub.textContent = sublbl;
+
+    if (queueNum !== undefined && queueNum > 0) {
+      if (badge) { badge.textContent = 'Queue #' + queueNum; badge.style.color = 'rgba(155,125,255,.8)'; }
+      if (pctNum) pctNum.textContent = '#' + queueNum;
+      if (pctSub) pctSub.textContent = 'QUEUE';
+    } else if (queueNum === 0) {
+      if (badge) { badge.textContent = 'Generating ✨'; badge.style.color = 'rgba(52,211,153,.9)'; }
+    }
+
+    if (pct !== undefined) {
+      const ring = card.querySelector('#lc-ring');
+      const fill = card.querySelector('#lc-ring-fill');
+      if (ring) ring.classList.add('visible');
+      if (fill) fill.style.strokeDashoffset = 376 - (376 * pct / 100);
+      if (pctNum) pctNum.textContent = Math.round(pct);
+      if (pctSub) pctSub.textContent = '%';
+    }
+  } catch(e) { console.warn('updateMsg err:', e.message); }
+}
+
+let fakeProgressTimer = null, fakeProgressVal = 0;
+function startFakeProgress() {
+  fakeProgressVal = 0;
+  if (fakeProgressTimer) clearInterval(fakeProgressTimer);
+  fakeProgressTimer = setInterval(() => {
+    const remaining = 95 - fakeProgressVal;
+    fakeProgressVal = Math.min(95, fakeProgressVal + remaining * 0.05 + 0.4);
+    updateLoadingMsg('Image ban rahi hai...', 'almost there', 0, fakeProgressVal);
+  }, 700);
+}
+function completeFakeProgress(cb) {
+  if (fakeProgressTimer) { clearInterval(fakeProgressTimer); fakeProgressTimer = null; }
+  updateLoadingMsg('Image ready!', '', 0, 100);
+  setTimeout(cb, 400);
 }
 
 function addLoadingBatch(promptText, imgW, imgH) {
@@ -618,13 +790,52 @@ function addLoadingBatch(promptText, imgW, imgH) {
   const feedWidth = document.getElementById('feedCol').clientWidth - 40;
   loadCard.style.height = Math.max(200, Math.min(480, Math.round(feedWidth * (imgH/imgW)))) + 'px';
   loadCard.innerHTML = `
-    <div class="load-dots"></div>
-    <div class="spinner" style="position:relative;z-index:1"></div>
-    <div class="pulse-dot" style="position:relative;z-index:1"></div>
-    <div class="load-row" style="position:relative;z-index:1">
-      <span class="load-lbl">Generating</span>
-      <div class="chevrons"><span>›</span><span>›</span><span>›</span><span>›</span><span>›</span></div>
+    <div class="load-grid"></div>
+    <div class="load-glow"></div>
+    <div class="particles" id="lc-particles"></div>
+    <div class="queue-badge" id="lc-badge">Preparing…</div>
+    <div class="orb-wrap">
+      <svg class="progress-ring" id="lc-ring" viewBox="0 0 140 140">
+        <defs>
+          <linearGradient id="progGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:#6e50ff"/>
+            <stop offset="100%" style="stop-color:#9b7dff"/>
+          </linearGradient>
+        </defs>
+        <circle class="track" cx="70" cy="70" r="60"/>
+        <circle class="fill" id="lc-ring-fill" cx="70" cy="70" r="60"/>
+      </svg>
+      <div class="ring-outer"></div>
+      <div class="ring-mid"></div>
+      <div class="orb-inner">
+        <div class="pct-text" id="lc-pct">
+          <span id="lc-pct-num">–</span>
+          <span class="pct-sub" id="lc-pct-sub">QUEUE</span>
+        </div>
+      </div>
+    </div>
+    <div class="load-status">
+      <div class="load-lbl" id="lc-lbl">Queue mein hai…</div>
+      <div class="load-sublbl" id="lc-sublbl">thoda wait karo</div>
     </div>`;
+
+  // Spawn floating particles
+  const pCont = loadCard.querySelector('#lc-particles');
+  for(let i=0;i<14;i++){
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const size = Math.random()*3+2;
+    const angle = Math.random()*Math.PI*2;
+    const dist = 50+Math.random()*70;
+    p.style.cssText = 'width:'+size+'px;height:'+size+'px;left:'+(42+Math.random()*16)+'%;top:'+(42+Math.random()*16)+'%;--dur:'+(2+Math.random()*3)+'s;--del:'+(Math.random()*2)+'s;--tx:'+(Math.cos(angle)*dist)+'px;--ty:'+(Math.sin(angle)*dist)+'px';
+    pCont.appendChild(p);
+  }
+
+  // Show pct text
+  setTimeout(() => {
+    const pt = loadCard.querySelector('#lc-pct');
+    if(pt) pt.classList.add('visible');
+  }, 300);
   imgArea.appendChild(loadCard);
   batch.appendChild(bh);
   batch.appendChild(imgArea);
@@ -723,35 +934,46 @@ function resetBtn() {
   } catch(e) {}
 }
 
+let wasProcessing = false;
+
 async function pollJobStatus(jobId) {
   try {
     const res  = await fetch(`${API_URL}/job/${jobId}`);
-    if (!res.ok) return; // retry next tick
+    if (!res.ok) return;
     const data = await res.json();
 
     if (data.status === 'queued') {
       const pos  = data.position || 1;
       const secs = data.estimatedSeconds || 0;
       const timeStr = secs >= 60 ? Math.ceil(secs/60) + ' min' : secs + ' sec';
-      const msg = pos === 1 ? 'Aap next hain… taiyar raho!' : `Queue: ${pos} number (~${timeStr})`;
-      updateLoadingMsg(msg);
+      const msg = pos === 1 ? 'Aap next hain!' : `${pos} log pehle hain`;
+      const sub = pos === 1 ? 'almost your turn' : '~' + timeStr + ' estimated';
+      updateLoadingMsg(msg, sub, pos);
+      wasProcessing = false;
 
     } else if (data.status === 'processing') {
-      updateLoadingMsg('Image ban rahi hai ✨');
+      if (!wasProcessing) {
+        wasProcessing = true;
+        startFakeProgress();
+      }
+      updateLoadingMsg('Image ban rahi hai...', 'almost there', 0);
 
     } else if (data.status === 'done') {
       stopPolling();
-      if (data.image) resolveLoading('data:image/png;base64,' + data.image);
-      else errorLoading('Image nahi mili');
-      resetBtn();
+      completeFakeProgress(() => {
+        if (data.image) resolveLoading('data:image/png;base64,' + data.image);
+        else errorLoading('Image nahi mili');
+        resetBtn();
+      });
 
     } else if (data.status === 'error') {
       stopPolling();
+      if (fakeProgressTimer) { clearInterval(fakeProgressTimer); fakeProgressTimer = null; }
       errorLoading(data.error || 'Generation failed');
       resetBtn();
     }
   } catch (err) {
-    console.warn('[Poll] Retry karega:', err.message);
+    console.warn('[Poll] Retry:', err.message);
   }
 }
 
@@ -786,7 +1008,9 @@ async function generate() {
     const pos  = data.position || 1;
     const secs = data.estimatedSeconds || 0;
     const timeStr = secs >= 60 ? Math.ceil(secs/60) + ' min' : secs + ' sec';
-    updateLoadingMsg(pos === 1 ? 'Aap next hain!' : `Queue: ${pos} number (~${timeStr})`);
+    const initMsg = pos === 1 ? 'Aap next hain!' : (pos) + ' log pehle hain';
+    const initSub = pos === 1 ? 'almost your turn' : '~' + timeStr + ' estimated';
+    updateLoadingMsg(initMsg, initSub, pos);
 
     // Polling shuru karo
     stopPolling();
