@@ -630,7 +630,7 @@ function addLoadingBatch(promptText, imgW, imgH) {
   batch.appendChild(imgArea);
   feed.insertBefore(batch, feed.firstChild);
   setTimeout(() => scrollToEl(batch), 80);
-  activeBatch = { batch, bh, imgArea, promptText, imgW, imgH };
+  activeBatch = { batch, bh, imgArea, loadCard, promptText, imgW, imgH };
   progIdx = 0;
   clearInterval(progTimer);
   const txtEl = loadCard.querySelector('.load-lbl');
