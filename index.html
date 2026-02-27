@@ -422,6 +422,33 @@
     .dl-opt.jpg .fmt-badge{background:rgba(251,191,36,.15);color:#fbbf24}
     .dl-opt-desc{font-size:9px;color:var(--sub);display:block;margin-top:1px}
 
+    /* ── CLEAR ALL BUTTON ── */
+    .clear-btn{
+      font-family:'Syne',sans-serif;font-size:11px;font-weight:700;
+      letter-spacing:.08em;text-transform:uppercase;
+      color:var(--err);background:rgba(248,113,113,.08);
+      border:1px solid rgba(248,113,113,.2);
+      border-radius:8px;padding:7px 14px;cursor:pointer;
+      display:flex;align-items:center;gap:7px;
+      transition:all .2s;flex-shrink:0;
+    }
+    .clear-btn:hover{background:rgba(248,113,113,.18);border-color:rgba(248,113,113,.5)}
+
+    /* ── SHARE BUTTON ── */
+    .i-share{
+      font-family:'Syne',sans-serif;font-size:11px;font-weight:700;
+      letter-spacing:.07em;text-transform:uppercase;
+      color:var(--wh);background:rgba(52,211,153,.2);
+      border:1px solid rgba(52,211,153,.3);
+      padding:7px 14px;border-radius:8px;cursor:pointer;
+      transition:all .18s;display:flex;align-items:center;gap:6px;
+    }
+    .i-share:hover{background:rgba(52,211,153,.35)}
+
+    /* ── BLINK ANIMATION for "You are next" ── */
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+    .blink-txt{animation:blink 1.1s ease-in-out infinite}
+
     /* Old unused */
     .load-dots,.spinner,.pulse-dot,.load-row,.chevrons{display:none}
     @keyframes spin{to{transform:rotate(360deg)}}
@@ -523,6 +550,11 @@
   <a class="logo" href="#"><span>B</span>reezyfy</a>
   <div class="hd"></div>
   <span class="htag">Create without Limits</span>
+  <div style="flex:1"></div>
+  <button class="clear-btn" id="clearBtn" onclick="clearAllImages()" style="display:none">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+    Clear All
+  </button>
 </header>
 
 <div class="shell" id="shell">
@@ -772,7 +804,7 @@ function updateLoadingMsg(msg, sublbl, queueNum, pct) {
     const pctNum = card.querySelector('#lc-pct-num');
     const pctSub = card.querySelector('#lc-pct-sub');
 
-    if (lbl && msg) lbl.textContent = msg;
+    if (lbl && msg) lbl.innerHTML = msg;
     if (sub && sublbl !== undefined) sub.textContent = sublbl;
 
     if (queueNum !== undefined && queueNum > 0) {
@@ -801,7 +833,7 @@ function startFakeProgress() {
   fakeProgressTimer = setInterval(() => {
     const remaining = 95 - fakeProgressVal;
     fakeProgressVal = Math.min(95, fakeProgressVal + remaining * 0.05 + 0.4);
-    updateLoadingMsg('Image ban rahi hai...', 'almost there', 0, fakeProgressVal);
+    updateLoadingMsg('Creating your image...', 'almost there', 0, fakeProgressVal);
   }, 700);
 }
 function completeFakeProgress(cb) {
@@ -835,7 +867,7 @@ function addLoadingBatch(promptText, imgW, imgH) {
     <div class="load-grid"></div>
     <div class="load-glow"></div>
     <div class="particles" id="lc-particles"></div>
-    <div class="queue-badge" id="lc-badge">Preparing…</div>
+    <div class="queue-badge" id="lc-badge">Preparing...</div>
     <div class="orb-wrap">
       <svg class="progress-ring" id="lc-ring" viewBox="0 0 140 140">
         <defs>
@@ -857,8 +889,8 @@ function addLoadingBatch(promptText, imgW, imgH) {
       </div>
     </div>
     <div class="load-status">
-      <div class="load-lbl" id="lc-lbl">Queue mein hai…</div>
-      <div class="load-sublbl" id="lc-sublbl">thoda wait karo</div>
+      <div class="load-lbl" id="lc-lbl">In queue...</div>
+      <div class="load-sublbl" id="lc-sublbl">please wait</div>
     </div>`;
 
   // Spawn floating particles
@@ -936,6 +968,69 @@ function errorLoading(msg) {
 }
 
 const recentSrcs = [];
+// ── Clear all images
+function clearAllImages() {
+  if (!confirm('Clear all generated images? This cannot be undone.')) return;
+  localStorage.removeItem('breezyfy_images');
+  recentSrcs.length = 0;
+  document.getElementById('rcScroll').innerHTML = '';
+  document.getElementById('feedScroll').innerHTML = '';
+  document.getElementById('feedScroll').style.display = 'none';
+  document.getElementById('feedEmpty').style.display  = 'flex';
+  document.getElementById('clearBtn').style.display   = 'none';
+}
+
+// ── Share image (Web Share API on mobile, copy link on desktop)
+async function shareImage(src, imgW, imgH) {
+  // Convert base64 to blob
+  try {
+    const res   = await fetch(src);
+    const blob  = await res.blob();
+    const file  = new File([blob], `breezyfy_${imgW}x${imgH}.png`, { type: 'image/png' });
+
+    // Mobile: native share sheet
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        title: 'Breezyfy AI Image',
+        text:  'Created with Breezyfy — AI Image Generator',
+        files: [file]
+      });
+      return;
+    }
+
+    // Desktop: copy image to clipboard
+    if (navigator.clipboard && window.ClipboardItem) {
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      showToast('Image copied to clipboard!');
+      return;
+    }
+
+    // Fallback: open in new tab
+    window.open(src, '_blank');
+  } catch(e) {
+    if (e.name !== 'AbortError') showToast('Could not share image');
+  }
+}
+
+// ── Toast notification
+function showToast(msg) {
+  let t = document.getElementById('bfy-toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'bfy-toast';
+    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a1a2e;border:1px solid rgba(110,80,255,.4);color:#e4e4f0;font-family:DM Mono,monospace;font-size:12px;padding:10px 20px;border-radius:10px;z-index:9999;opacity:0;transition:all .3s ease;pointer-events:none;white-space:nowrap;';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  t.style.transform = 'translateX(-50%) translateY(0)';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => {
+    t.style.opacity = '0';
+    t.style.transform = 'translateX(-50%) translateY(20px)';
+  }, 2500);
+}
+
 // ── Convert base64 PNG to JPG and download
 function downloadAs(src, fmt, imgW, imgH) {
   const canvas = document.createElement('canvas');
@@ -978,6 +1073,12 @@ function buildDlBar(src, imgW, imgH) {
     if (dlA) dlA.onclick = () => downloadAs(src, 'png', imgW, imgH);
   }, 100);
 
+  // Setup share button
+  setTimeout(() => {
+    const shareBtn = document.getElementById('share_' + id);
+    if (shareBtn) shareBtn.onclick = () => shareImage(src, imgW, imgH);
+  }, 100);
+
   return `
     <div class="dl-wrap">
       <a class="i-dl" id="dla_${id}" href="javascript:void(0)">↓ Download PNG</a>
@@ -993,6 +1094,10 @@ function buildDlBar(src, imgW, imgH) {
         </button>
       </div>
     </div>
+    <button class="i-share" id="share_${id}">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      Share
+    </button>
     <span class="i-size-tag">${imgW} × ${imgH}</span>`;
 }
 
@@ -1015,6 +1120,9 @@ function addToRecent(src, imgW, imgH) {
     const toSave = recentSrcs.map(i => ({ src: i.src, imgW: i.imgW, imgH: i.imgH }));
     localStorage.setItem('breezyfy_images', JSON.stringify(toSave));
   } catch(e) { console.warn('Image save error:', e.message); }
+  // Clear button show karo
+  const cb = document.getElementById('clearBtn');
+  if (cb) cb.style.display = 'flex';
 }
 function renderRecent() {
   const strip = document.getElementById('rcScroll');
@@ -1065,13 +1173,13 @@ async function pollJobStatus(jobId) {
       const timeStr = secs >= 60 ? Math.ceil(secs/60) + ' min' : secs + ' sec';
       let msg, sub;
       if (pos === 1) {
-        msg = 'Aap next hain!';
+        msg = 'You're next!';
         sub = 'almost your turn';
       } else if (pos === 2) {
-        msg = 'You are next in queue...';
-        sub = 'ek aur image ban rahi hai';
+        msg = '<span class="blink-txt">You are next in queue...</span>';
+        sub = '';
       } else {
-        msg = pos + ' log pehle hain';
+        msg = pos + ' ahead in queue';
         sub = '~' + timeStr + ' estimated';
       }
       updateLoadingMsg(msg, sub, pos);
@@ -1082,9 +1190,9 @@ async function pollJobStatus(jobId) {
       if (!wasProcessing) {
         wasProcessing = true;
         if (fakeProgressTimer) { clearInterval(fakeProgressTimer); fakeProgressTimer = null; }
+        startFakeProgress(); // blink stops, progress ring starts
       }
-      // Real progress use karo Draw Things se
-      updateLoadingMsg('Image ban rahi hai...', 'almost there', 0, realPct > 0 ? realPct : undefined);
+      updateLoadingMsg('Creating your image...', 'almost there', 0, realPct > 0 ? realPct : undefined);
 
     } else if (data.status === 'done') {
       stopPolling();
@@ -1093,7 +1201,7 @@ async function pollJobStatus(jobId) {
       updateLoadingMsg('Image ready!', '', 0, 100);
       setTimeout(() => {
         if (data.image) resolveLoading('data:image/png;base64,' + data.image);
-        else errorLoading('Image nahi mili');
+        else errorLoading('No image received');
         resetBtn();
       }, 500);
 
@@ -1134,7 +1242,7 @@ async function generate() {
     if (!res.ok) throw new Error('Server error ' + res.status);
     const data = await res.json();
     if (data.error) throw new Error(data.error);
-    if (!data.jobId) throw new Error('jobId nahi mila server se');
+    if (!data.jobId) throw new Error('No job ID received from server');
 
     // LocalStorage mein save karo — refresh ke baad bhi kaam karega
     localStorage.setItem('breezyfy_jobId', data.jobId);
@@ -1146,7 +1254,7 @@ async function generate() {
     const pos  = data.position || 1;
     const secs = data.estimatedSeconds || 0;
     const timeStr = secs >= 60 ? Math.ceil(secs/60) + ' min' : secs + ' sec';
-    const initMsg = pos === 1 ? 'Aap next hain!' : (pos) + ' log pehle hain';
+    const initMsg = pos === 1 ? 'You're next!' : (pos) + ' ahead in queue';
     const initSub = pos === 1 ? 'almost your turn' : '~' + timeStr + ' estimated';
     updateLoadingMsg(initMsg, initSub, pos);
 
@@ -1159,7 +1267,7 @@ async function generate() {
     stopPolling();
     console.error('[Generate] Error:', err.message);
     const msg = (err.message.includes('fetch') || err.message.includes('Failed'))
-      ? 'Server se connect nahi ho pa raha. Mac Mini check karo.'
+      ? 'Unable to connect to server. Please try again.'
       : (err.message || 'Generation failed');
     errorLoading(msg);
     resetBtn();
@@ -1229,6 +1337,8 @@ aspectRatio = parseFloat(document.getElementById('dimW').value) /
       recentSrcs.push(item);
     });
     renderRecent();
+    const cb = document.getElementById('clearBtn');
+    if (cb) cb.style.display = 'flex';
   } catch(e) { console.warn('Restore error:', e.message); }
 })();
 
@@ -1251,7 +1361,7 @@ aspectRatio = parseFloat(document.getElementById('dimW').value) /
       // Image already ban gayi thi — seedha dikhao
       localStorage.removeItem('breezyfy_jobId');
       addLoadingBatch(savedPrompt, savedW, savedH);
-      updateLoadingMsg('Image ready!', 'refresh se pehle ban gayi thi', 0, 100);
+      updateLoadingMsg('Image ready!', 'was generated before refresh', 0, 100);
       setTimeout(() => {
         if (data.image) resolveLoading('data:image/png;base64,' + data.image);
         resetBtn();
@@ -1263,7 +1373,7 @@ aspectRatio = parseFloat(document.getElementById('dimW').value) /
       btn.disabled = true;
       btn.innerHTML = '<span class="shim"></span>Generating…';
       addLoadingBatch(savedPrompt, savedW, savedH);
-      updateLoadingMsg('Resume ho raha hai...', 'aapka kaam chal raha tha', data.position || 1);
+      updateLoadingMsg('Resuming your session...', 'aapka kaam chal raha tha', data.position || 1);
       wasProcessing = false;
       stopPolling();
       pollTimer = setInterval(() => pollJobStatus(savedJobId), 2000);
