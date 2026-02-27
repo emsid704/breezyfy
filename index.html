@@ -713,93 +713,94 @@ const API_URL = 'https://matt-discussing-opinions-week.trycloudflare.com';
 let pollTimer = null;
 
 function stopPolling() {
-  if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+  try { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } } catch(e) {}
 }
 
-async function pollJobStatus(jobId, imgW, imgH) {
+function resetBtn() {
+  try {
+    const btn = document.getElementById('genBtn');
+    if (btn) { btn.disabled = false; btn.innerHTML = '<span class="shim"></span>Generate'; }
+  } catch(e) {}
+}
+
+async function pollJobStatus(jobId) {
   try {
     const res  = await fetch(`${API_URL}/job/${jobId}`);
+    if (!res.ok) return; // retry next tick
     const data = await res.json();
 
     if (data.status === 'queued') {
-      const pos  = data.position;
-      const secs = data.estimatedSeconds;
-      const mins = secs >= 60 ? Math.ceil(secs/60) + ' min' : secs + ' sec';
-      const msg  = pos === 1
-        ? 'Aap next hain… taiyar raho!'
-        : `Queue mein ${pos}rd number pe hain`;
-      updateLoadingMsg(msg + (secs > 0 ? ` (~${mins})` : ''));
+      const pos  = data.position || 1;
+      const secs = data.estimatedSeconds || 0;
+      const timeStr = secs >= 60 ? Math.ceil(secs/60) + ' min' : secs + ' sec';
+      const msg = pos === 1 ? 'Aap next hain… taiyar raho!' : `Queue: ${pos} number (~${timeStr})`;
+      updateLoadingMsg(msg);
 
     } else if (data.status === 'processing') {
-      updateLoadingMsg('Aapki image ban rahi hai ✨');
+      updateLoadingMsg('Image ban rahi hai ✨');
 
     } else if (data.status === 'done') {
       stopPolling();
-      resolveLoading('data:image/png;base64,' + data.image);
-      document.getElementById('genBtn').disabled = false;
-      document.getElementById('genBtn').innerHTML = '<span class="shim"></span>Generate';
+      if (data.image) resolveLoading('data:image/png;base64,' + data.image);
+      else errorLoading('Image nahi mili');
+      resetBtn();
 
     } else if (data.status === 'error') {
       stopPolling();
       errorLoading(data.error || 'Generation failed');
-      document.getElementById('genBtn').disabled = false;
-      document.getElementById('genBtn').innerHTML = '<span class="shim"></span>Generate';
+      resetBtn();
     }
   } catch (err) {
-    // network error during polling — retry karega
-    console.warn('Poll error:', err.message);
+    console.warn('[Poll] Retry karega:', err.message);
   }
 }
 
 async function generate() {
-  const promptText = document.getElementById('prompt').value.trim();
-  const negPrompt  = document.getElementById('neg').value.trim();
-  if (!promptText) { document.getElementById('prompt').focus(); return; }
-
-  const [imgW, imgH] = getDims();
-  const btn = document.getElementById('genBtn');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="shim"></span>Generating…';
-
-  addLoadingBatch(promptText, imgW, imgH);
-
-  const payload = { prompt: promptText, width: imgW, height: imgH };
-  if (negPrompt) payload.negative_prompt = negPrompt;
-
   try {
-    // Step 1: Job submit karo — turant jobId milega
+    const promptText = document.getElementById('prompt').value.trim();
+    const negPrompt  = document.getElementById('neg').value.trim();
+    if (!promptText) { document.getElementById('prompt').focus(); return; }
+
+    const [imgW, imgH] = getDims();
+    const btn = document.getElementById('genBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="shim"></span>Generating…';
+
+    addLoadingBatch(promptText, imgW, imgH);
+
+    const payload = { prompt: promptText, width: imgW, height: imgH };
+    if (negPrompt) payload.negative_prompt = negPrompt;
+
     const res = await fetch(`${API_URL}/generate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
+
     if (!res.ok) throw new Error('Server error ' + res.status);
     const data = await res.json();
     if (data.error) throw new Error(data.error);
+    if (!data.jobId) throw new Error('jobId nahi mila server se');
 
-    // Step 2: Queue position dikhao
-    const pos  = data.position;
-    const secs = data.estimatedSeconds;
-    const mins = secs >= 60 ? Math.ceil(secs/60) + ' min' : secs + ' sec';
-    updateLoadingMsg(
-      pos === 1
-        ? 'Aap next hain… taiyar raho!'
-        : `Queue mein ${pos}nd number pe hain (~${mins})`
-    );
+    // Queue position dikhao
+    const pos  = data.position || 1;
+    const secs = data.estimatedSeconds || 0;
+    const timeStr = secs >= 60 ? Math.ceil(secs/60) + ' min' : secs + ' sec';
+    updateLoadingMsg(pos === 1 ? 'Aap next hain!' : `Queue: ${pos} number (~${timeStr})`);
 
-    // Step 3: Har 2 second mein status check karo
+    // Polling shuru karo
     stopPolling();
-    pollTimer = setInterval(() => pollJobStatus(data.jobId, imgW, imgH), 2000);
+    const jobId = data.jobId;
+    pollTimer = setInterval(() => pollJobStatus(jobId), 2000);
 
   } catch (err) {
     stopPolling();
-    if (err.message.toLowerCase().includes('fetch') || err.message.toLowerCase().includes('failed to')) {
-      errorLoading('Server se connect nahi ho pa raha. Mac Mini aur Cloudflare tunnel check karo.');
-    } else {
-      errorLoading(err.message || 'Generation failed');
-    }
-    btn.disabled = false;
-    btn.innerHTML = '<span class="shim"></span>Generate';
+    console.error('[Generate] Error:', err.message);
+    const msg = (err.message.includes('fetch') || err.message.includes('Failed'))
+      ? 'Server se connect nahi ho pa raha. Mac Mini check karo.'
+      : (err.message || 'Generation failed');
+    errorLoading(msg);
+    resetBtn();
   }
 }
 
