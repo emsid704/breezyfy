@@ -41,6 +41,20 @@
     #prompt::placeholder{color:var(--mut)}
     #prompt:focus{border-color:var(--bact);box-shadow:0 0 0 3px rgba(110,80,255,.09)}
     .cc{position:absolute;bottom:9px;right:12px;font-family:'DM Mono',monospace;font-size:9.5px;color:var(--mut)}
+    /* Magic prompt button */
+    .magic-btn{
+      position:absolute;top:10px;right:10px;
+      width:28px;height:28px;border-radius:8px;
+      background:rgba(110,80,255,.15);
+      border:1px solid rgba(110,80,255,.3);
+      color:var(--alit);font-size:14px;
+      display:flex;align-items:center;justify-content:center;
+      cursor:pointer;transition:all .2s;z-index:2;
+      user-select:none;
+    }
+    .magic-btn:hover{background:rgba(110,80,255,.35);border-color:var(--acc);transform:scale(1.1)}
+    .magic-btn.spin{animation:magicSpin .4s ease}
+    @keyframes magicSpin{0%{transform:scale(1) rotate(0)}50%{transform:scale(1.2) rotate(180deg)}100%{transform:scale(1) rotate(360deg)}}
     #neg{width:100%;background:var(--card);border:1px solid var(--bdr);color:var(--sub);padding:11px 14px;border-radius:12px;font-family:'DM Mono',monospace;font-size:11px;line-height:1.65;resize:none;height:76px;outline:none;transition:border-color .2s}
     #neg:focus{border-color:rgba(248,113,113,.3);color:var(--wh)}
     .stabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
@@ -286,34 +300,27 @@
 
     /* Actions */
     .lb-actions{display:flex;flex-direction:column;gap:10px}
-    .lb-action-row{display:flex;gap:8px}
-    .lb-dl-main{
-      flex:1;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;
+    /* Format selector pills */
+    .lb-fmt-row{display:flex;gap:6px;margin-bottom:2px}
+    .lb-fmt-pill{
+      font-family:'DM Mono',monospace;font-size:11px;font-weight:400;
+      letter-spacing:.1em;text-transform:uppercase;
+      border-radius:8px;padding:7px 18px;cursor:pointer;
+      border:1px solid rgba(255,255,255,.12);background:transparent;
+      color:var(--sub);transition:all .18s;flex:1;text-align:center;
+    }
+    .lb-fmt-pill:hover{border-color:rgba(110,80,255,.4);color:var(--txt)}
+    .lb-fmt-pill.active.png{border-color:#34d399;background:rgba(52,211,153,.12);color:#34d399}
+    .lb-fmt-pill.active.jpg{border-color:#fbbf24;background:rgba(251,191,36,.1);color:#fbbf24}
+    .lb-dl-btn{
+      width:100%;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;
       letter-spacing:.06em;text-transform:uppercase;
-      color:#fff;background:rgba(110,80,255,.8);
-      border:none;border-radius:10px 0 0 10px;
-      padding:11px 14px;cursor:pointer;transition:background .18s;
+      color:#fff;background:rgba(110,80,255,.85);
+      border:none;border-radius:10px;
+      padding:13px 14px;cursor:pointer;transition:background .18s;
+      display:flex;align-items:center;justify-content:center;gap:8px;
     }
-    .lb-dl-main:hover{background:var(--acc)}
-    .lb-dl-arrow{
-      background:rgba(110,80,255,.8);border:none;border-radius:0 10px 10px 0;
-      border-left:1px solid rgba(255,255,255,.15);
-      padding:11px 12px;color:#fff;cursor:pointer;font-size:12px;transition:background .18s;
-      position:relative;
-    }
-    .lb-dl-arrow:hover{background:var(--acc)}
-    .lb-dl-drop{
-      position:absolute;bottom:calc(100% + 8px);right:0;
-      background:#1a1a2e;border:1px solid rgba(110,80,255,.3);
-      border-radius:10px;overflow:hidden;display:none;flex-direction:column;
-      box-shadow:0 8px 30px rgba(0,0,0,.5);min-width:170px;z-index:10;
-    }
-    .lb-dl-drop.open{display:flex}
-    .lb-dl-opt{font-family:'DM Mono',monospace;font-size:11px;padding:11px 16px;color:var(--txt);cursor:pointer;display:flex;align-items:center;gap:10px;border:none;background:transparent;text-align:left;width:100%;transition:background .15s}
-    .lb-dl-opt:hover{background:rgba(110,80,255,.15);color:#fff}
-    .lb-dl-opt .fmt-badge{font-size:9px;font-weight:700;letter-spacing:.1em;padding:2px 7px;border-radius:4px}
-    .lb-dl-opt.png .fmt-badge{background:rgba(52,211,153,.15);color:#34d399}
-    .lb-dl-opt.jpg .fmt-badge{background:rgba(251,191,36,.15);color:#fbbf24}
+    .lb-dl-btn:hover{background:var(--acc)}
 
     .lb-share-btn{
       width:100%;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;
@@ -395,6 +402,7 @@
       <div class="pw">
         <textarea id="prompt" placeholder="Describe your image — subject, style, lighting, mood…" maxlength="800" oninput="uc(this)"></textarea>
         <span class="cc"><span id="cn">0</span>/800</span>
+        <button class="magic-btn" id="magicBtn" onclick="insertMagicPrompt()" title="Magic Prompt ✨">✦</button>
       </div>
     </div>
     <div class="sec">
@@ -509,15 +517,17 @@
         <div>
           <div class="lb-section-label">Download & Share</div>
           <div class="lb-actions">
-            <div class="lb-action-row">
-              <button class="lb-dl-main" id="lb-dl-main">↓ Download PNG</button>
-              <button class="lb-dl-arrow" id="lb-dl-arrow">▾
-                <div class="lb-dl-drop" id="lb-dl-drop">
-                  <button class="lb-dl-opt png" data-fmt="png"><span class="fmt-badge">PNG</span><span>Lossless quality<span class="dl-opt-desc">Best for AI art</span></span></button>
-                  <button class="lb-dl-opt jpg" data-fmt="jpg"><span class="fmt-badge">JPG</span><span>Smaller file size<span class="dl-opt-desc">95% quality</span></span></button>
-                </div>
-              </button>
+            <!-- Format selector -->
+            <div class="lb-fmt-row">
+              <button class="lb-fmt-pill png active" id="lb-fmt-png" onclick="lbSelectFmt('png')">PNG</button>
+              <button class="lb-fmt-pill jpg" id="lb-fmt-jpg" onclick="lbSelectFmt('jpg')">JPG</button>
             </div>
+            <!-- Download button -->
+            <button class="lb-dl-btn" id="lb-dl-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Download PNG
+            </button>
+            <!-- Share button -->
             <button class="lb-share-btn" id="lb-share-btn">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
               Share Image
@@ -531,6 +541,57 @@
 
 <script>
 function uc(el){ document.getElementById('cn').textContent = el.value.length; }
+
+/* ══ MAGIC PROMPTS ══ */
+const MAGIC_PROMPTS = [
+  "A stunning female warrior in iridescent armor standing on a cliff edge at golden hour, epic fantasy, cinematic lighting, ultra-detailed, 8K",
+  "Cyberpunk city at night, neon reflections on wet streets, a lone figure with umbrella, blade runner aesthetic, rain, volumetric fog, photorealistic",
+  "Ancient Japanese temple surrounded by cherry blossoms, misty morning, soft diffused light, traditional architecture, peaceful atmosphere, 4K",
+  "A majestic lion made entirely of galaxies and nebulae, cosmic art, deep space background, intricate detail, vivid colors, digital art masterpiece",
+  "Underwater palace with glowing bioluminescent creatures, deep sea, ethereal light rays, coral kingdom, cinematic, hyper-realistic",
+  "Portrait of a mysterious woman with galaxy eyes, bokeh background, studio lighting, dramatic shadows, fashion photography, ultra-sharp",
+  "Vast desert at sunset with a lone traveler on camelback, sand dunes casting long shadows, warm orange hues, cinematic wide shot",
+  "Enchanted forest with giant glowing mushrooms, fireflies, fairy lights, magical atmosphere, detailed foliage, fantasy concept art",
+  "Futuristic spaceship cockpit view approaching a ringed gas giant, stars, lens flare, photorealistic, sci-fi, cinematic composition",
+  "A dragon perched on a Gothic cathedral in a stormy night sky, lightning, dramatic clouds, oil painting style, epic fantasy",
+  "Aerial view of a tropical island with crystal clear turquoise water, white sand beach, lush jungle, golden hour, travel photography",
+  "Vintage 1920s jazz club, warm amber light, smoke haze, musicians on stage, art deco interior, cinematic atmosphere, detailed",
+  "A powerful thunderstorm over ocean, massive waves, lightning striking water, dramatic sky, moody color grading, photorealistic",
+  "Ancient Roman colosseum at sunset, golden light, detailed stone textures, historical atmosphere, wide angle, sharp details",
+  "Ethereal forest spirit made of light and mist, flowing robes, surrounding fireflies, magical realism, pastel color palette",
+  "Steampunk clockwork city with giant gears, hot air balloons, brass towers, vintage aesthetic, intricate mechanical details, warm tones",
+  "Dramatic portrait of an old wise man with weathered face, intense eyes, natural light from window, high contrast, photorealistic",
+  "A serene Japanese zen garden with raked sand, bonsai trees, stone lanterns, cherry blossom petals falling, golden hour light",
+  "Massive ice castle in arctic landscape, northern lights (aurora borealis), ultra-detailed, fantasy architecture, blue and green hues",
+  "A phoenix rising from ashes, fire and embers, intense orange and red, dramatic lighting, mythological, digital painting, epic scale",
+  "Luxury penthouse interior at night, floor-to-ceiling windows, city lights, minimalist design, warm mood lighting, architectural photography",
+  "Cute fluffy cat wearing a tiny astronaut helmet in space, Earth in background, floating, adorable, photorealistic, funny",
+  "Dense rainforest with shafts of sunlight piercing through canopy, exotic birds, mist, rich greens, nature photography, 4K",
+  "Abstract fluid art with metallic gold and deep blue, swirling patterns, high gloss texture, macro photography, wallpaper",
+  "A superhero silhouette against a massive full moon over a city skyline, dramatic contrast, dark atmosphere, comic book style",
+];
+
+let lastMagicIdx = -1;
+function insertMagicPrompt(){
+  const btn = document.getElementById('magicBtn');
+  btn.classList.remove('spin');
+  void btn.offsetWidth; // reflow to restart animation
+  btn.classList.add('spin');
+
+  // Pick random prompt — never repeat same twice in a row
+  let idx;
+  do { idx = Math.floor(Math.random() * MAGIC_PROMPTS.length); } while(idx === lastMagicIdx);
+  lastMagicIdx = idx;
+
+  const ta = document.getElementById('prompt');
+  ta.value = MAGIC_PROMPTS[idx];
+  uc(ta);
+  ta.focus();
+  // Flash effect on textarea
+  ta.style.borderColor = 'rgba(110,80,255,.8)';
+  ta.style.boxShadow = '0 0 0 3px rgba(110,80,255,.15)';
+  setTimeout(()=>{ ta.style.borderColor=''; ta.style.boxShadow=''; }, 600);
+}
 
 function st(tab, btn) {
   document.querySelectorAll('.stab').forEach(b => b.classList.remove('on'));
@@ -733,7 +794,15 @@ function renderRecent(){
 }
 
 /* ══ LIGHTBOX ══ */
-let lbSrc='', lbPrompt='', lbW=0, lbH=0;
+let lbSrc='', lbPrompt='', lbW=0, lbH=0, lbActiveFmt='png';
+
+function lbSelectFmt(fmt){
+  lbActiveFmt=fmt;
+  document.getElementById('lb-fmt-png').className='lb-fmt-pill png'+(fmt==='png'?' active':'');
+  document.getElementById('lb-fmt-jpg').className='lb-fmt-pill jpg'+(fmt==='jpg'?' active':'');
+  const dlBtn=document.getElementById('lb-dl-btn');
+  if(dlBtn) dlBtn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download '+fmt.toUpperCase();
+}
 
 function openLightbox(src, promptText, imgW, imgH){
   if(isMobile()) return;
@@ -743,13 +812,11 @@ function openLightbox(src, promptText, imgW, imgH){
   document.getElementById('lb-size').textContent=imgW+' × '+imgH+' px';
   document.getElementById('lb-info-size').textContent=imgW+' × '+imgH+' px';
   document.getElementById('lb-copy-btn').textContent='Copy Prompt'; document.getElementById('lb-copy-btn').classList.remove('copied');
-  // Setup download buttons in panel
-  document.getElementById('lb-dl-main').onclick=()=>downloadAs(src,'png',imgW,imgH);
+  // Setup download + format pills
+  lbActiveFmt = 'png';
+  lbSelectFmt('png');
+  document.getElementById('lb-dl-btn').onclick=()=>downloadAs(lbSrc, lbActiveFmt, lbW, lbH);
   document.getElementById('lb-share-btn').onclick=()=>shareImage(src,imgW,imgH);
-  const arrow=document.getElementById('lb-dl-arrow'), drop=document.getElementById('lb-dl-drop');
-  arrow.onclick=(e)=>{ e.stopPropagation(); drop.classList.toggle('open'); };
-  document.querySelectorAll('#lb-dl-drop .lb-dl-opt').forEach(opt=>{ opt.onclick=(e)=>{ e.stopPropagation(); downloadAs(src,opt.dataset.fmt,imgW,imgH); drop.classList.remove('open'); }; });
-  document.addEventListener('click',()=>drop.classList.remove('open'),{once:true});
   document.getElementById('lightbox').classList.add('open');
   document.body.style.overflow='hidden';
 }
