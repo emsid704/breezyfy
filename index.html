@@ -589,6 +589,13 @@ function showFeed() {
 const MSGS = ['Sampling latents…','Refining details…','Decoding image…','Almost ready…'];
 let progTimer, progIdx = 0, activeBatch = null;
 
+// Update loading card ka message
+function updateLoadingMsg(msg) {
+  if (!activeBatch) return;
+  const lbl = activeBatch.loadCard.querySelector('.load-lbl');
+  if (lbl) lbl.textContent = msg;
+}
+
 function addLoadingBatch(promptText, imgW, imgH) {
   showFeed();
   const feed = document.getElementById('feedScroll');
@@ -700,7 +707,49 @@ function renderRecent() {
 }
 
 /* ── BACKEND URL — Cloudflare tunnel URL yahan update karo ── */
-const API_URL = 'https://causes-easily-hygiene-cheers.trycloudflare.com';
+const API_URL = 'https://matt-discussing-opinions-week.trycloudflare.com';
+
+// ── Queue polling system ──
+let pollTimer = null;
+
+function stopPolling() {
+  if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+}
+
+async function pollJobStatus(jobId, imgW, imgH) {
+  try {
+    const res  = await fetch(`${API_URL}/job/${jobId}`);
+    const data = await res.json();
+
+    if (data.status === 'queued') {
+      const pos  = data.position;
+      const secs = data.estimatedSeconds;
+      const mins = secs >= 60 ? Math.ceil(secs/60) + ' min' : secs + ' sec';
+      const msg  = pos === 1
+        ? 'Aap next hain… taiyar raho!'
+        : `Queue mein ${pos}rd number pe hain`;
+      updateLoadingMsg(msg + (secs > 0 ? ` (~${mins})` : ''));
+
+    } else if (data.status === 'processing') {
+      updateLoadingMsg('Aapki image ban rahi hai ✨');
+
+    } else if (data.status === 'done') {
+      stopPolling();
+      resolveLoading('data:image/png;base64,' + data.image);
+      document.getElementById('genBtn').disabled = false;
+      document.getElementById('genBtn').innerHTML = '<span class="shim"></span>Generate';
+
+    } else if (data.status === 'error') {
+      stopPolling();
+      errorLoading(data.error || 'Generation failed');
+      document.getElementById('genBtn').disabled = false;
+      document.getElementById('genBtn').innerHTML = '<span class="shim"></span>Generate';
+    }
+  } catch (err) {
+    // network error during polling — retry karega
+    console.warn('Poll error:', err.message);
+  }
+}
 
 async function generate() {
   const promptText = document.getElementById('prompt').value.trim();
@@ -718,6 +767,7 @@ async function generate() {
   if (negPrompt) payload.negative_prompt = negPrompt;
 
   try {
+    // Step 1: Job submit karo — turant jobId milega
     const res = await fetch(`${API_URL}/generate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -726,15 +776,28 @@ async function generate() {
     if (!res.ok) throw new Error('Server error ' + res.status);
     const data = await res.json();
     if (data.error) throw new Error(data.error);
-    if (!data.image) throw new Error('No image received');
-    resolveLoading('data:image/png;base64,' + data.image);
+
+    // Step 2: Queue position dikhao
+    const pos  = data.position;
+    const secs = data.estimatedSeconds;
+    const mins = secs >= 60 ? Math.ceil(secs/60) + ' min' : secs + ' sec';
+    updateLoadingMsg(
+      pos === 1
+        ? 'Aap next hain… taiyar raho!'
+        : `Queue mein ${pos}nd number pe hain (~${mins})`
+    );
+
+    // Step 3: Har 2 second mein status check karo
+    stopPolling();
+    pollTimer = setInterval(() => pollJobStatus(data.jobId, imgW, imgH), 2000);
+
   } catch (err) {
+    stopPolling();
     if (err.message.toLowerCase().includes('fetch') || err.message.toLowerCase().includes('failed to')) {
       errorLoading('Server se connect nahi ho pa raha. Mac Mini aur Cloudflare tunnel check karo.');
     } else {
       errorLoading(err.message || 'Generation failed');
     }
-  } finally {
     btn.disabled = false;
     btn.innerHTML = '<span class="shim"></span>Generate';
   }
