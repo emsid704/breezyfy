@@ -380,6 +380,48 @@
       transition:all .3s ease;
     }
 
+    /* ── DOWNLOAD BUTTON WITH FORMAT OPTIONS ── */
+    .dl-wrap{position:relative;display:inline-flex;align-items:center}
+    .i-dl{
+      font-family:'Syne',sans-serif;font-size:11px;font-weight:700;
+      letter-spacing:.07em;text-transform:uppercase;
+      color:#fff;background:rgba(110,80,255,.75);
+      padding:7px 10px 7px 16px;border-radius:8px 0 0 8px;
+      text-decoration:none;cursor:pointer;border:none;
+      transition:background .18s;white-space:nowrap;
+    }
+    .i-dl:hover{background:rgba(110,80,255,1)}
+    .dl-fmt-btn{
+      background:rgba(110,80,255,.75);border:none;border-left:1px solid rgba(255,255,255,.15);
+      border-radius:0 8px 8px 0;padding:7px 9px;
+      color:#fff;cursor:pointer;font-size:11px;
+      transition:background .18s;
+    }
+    .dl-fmt-btn:hover{background:rgba(110,80,255,1)}
+    .dl-dropdown{
+      position:absolute;bottom:calc(100% + 6px);left:0;
+      background:#1a1a2e;border:1px solid rgba(110,80,255,.3);
+      border-radius:10px;overflow:hidden;
+      display:none;flex-direction:column;z-index:100;
+      box-shadow:0 8px 30px rgba(0,0,0,.5);min-width:160px;
+    }
+    .dl-dropdown.open{display:flex}
+    .dl-opt{
+      font-family:'DM Mono',monospace;font-size:11px;
+      padding:10px 16px;color:var(--txt);cursor:pointer;
+      display:flex;align-items:center;gap:10px;
+      transition:background .15s;border:none;background:transparent;
+      text-align:left;width:100%;
+    }
+    .dl-opt:hover{background:rgba(110,80,255,.15);color:#fff}
+    .dl-opt .fmt-badge{
+      font-size:9px;font-weight:700;letter-spacing:.1em;
+      padding:2px 7px;border-radius:4px;
+    }
+    .dl-opt.png .fmt-badge{background:rgba(52,211,153,.15);color:#34d399}
+    .dl-opt.jpg .fmt-badge{background:rgba(251,191,36,.15);color:#fbbf24}
+    .dl-opt-desc{font-size:9px;color:var(--sub);display:block;margin-top:1px}
+
     /* Old unused */
     .load-dots,.spinner,.pulse-dot,.load-row,.chevrons{display:none}
     @keyframes spin{to{transform:rotate(360deg)}}
@@ -864,7 +906,7 @@ function resolveLoading(src) {
     <div class="bh-badge hi">Breezyfy</div>
     <div class="bh-badge">${imgW} × ${imgH}</div>
     <div class="bh-prompt">${promptText}</div>
-    <div class="bh-actions"><a class="bh-dl" href="${src}" download="breezyfy_${imgW}x${imgH}.png">↓ Download</a></div>`;
+    <div class="bh-actions">${buildBhDl(src, imgW, imgH)}</div>`;
   imgArea.innerHTML = '';
   const outer = document.createElement('div');
   outer.className = 'result-img-outer';
@@ -878,7 +920,7 @@ function resolveLoading(src) {
   imgWrap.appendChild(img);
   const dlBar = document.createElement('div');
   dlBar.className = 'img-dl-bar';
-  dlBar.innerHTML = `<a class="i-dl" href="${src}" download="breezyfy_${imgW}x${imgH}.png">↓ Download</a><span class="i-size-tag">${imgW} × ${imgH}</span>`;
+  dlBar.innerHTML = buildDlBar(src, imgW, imgH);
   outer.appendChild(imgWrap);
   outer.appendChild(dlBar);
   imgArea.appendChild(outer);
@@ -894,10 +936,85 @@ function errorLoading(msg) {
 }
 
 const recentSrcs = [];
+// ── Convert base64 PNG to JPG and download
+function downloadAs(src, fmt, imgW, imgH) {
+  const canvas = document.createElement('canvas');
+  const img    = new Image();
+  img.onload = () => {
+    canvas.width  = img.naturalWidth  || imgW;
+    canvas.height = img.naturalHeight || imgH;
+    const ctx = canvas.getContext('2d');
+    // White background for JPG
+    if (fmt === 'jpg') { ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height); }
+    ctx.drawImage(img, 0, 0);
+    const mimeType = fmt === 'jpg' ? 'image/jpeg' : 'image/png';
+    const quality  = fmt === 'jpg' ? 0.95 : 1.0;
+    const a = document.createElement('a');
+    a.href     = canvas.toDataURL(mimeType, quality);
+    a.download = `breezyfy_${imgW}x${imgH}.${fmt}`;
+    a.click();
+  };
+  img.src = src;
+}
+
+// ── Build download bar HTML (PNG default + dropdown)
+function buildDlBar(src, imgW, imgH) {
+  const id = 'dd_' + Math.random().toString(36).slice(2,7);
+  setTimeout(() => {
+    const btn = document.getElementById('fmtbtn_' + id);
+    const dd  = document.getElementById('dd_' + id);
+    if (!btn || !dd) return;
+    btn.onclick = (e) => { e.stopPropagation(); dd.classList.toggle('open'); };
+    document.addEventListener('click', () => dd.classList.remove('open'));
+    dd.querySelectorAll('.dl-opt').forEach(opt => {
+      opt.onclick = (e) => {
+        e.stopPropagation();
+        downloadAs(src, opt.dataset.fmt, imgW, imgH);
+        dd.classList.remove('open');
+      };
+    });
+    // Default PNG download
+    const dlA = document.getElementById('dla_' + id);
+    if (dlA) dlA.onclick = () => downloadAs(src, 'png', imgW, imgH);
+  }, 100);
+
+  return `
+    <div class="dl-wrap">
+      <a class="i-dl" id="dla_${id}" href="javascript:void(0)">↓ Download PNG</a>
+      <button class="dl-fmt-btn" id="fmtbtn_${id}" title="Choose format">▾</button>
+      <div class="dl-dropdown" id="dd_${id}">
+        <button class="dl-opt png" data-fmt="png">
+          <span class="fmt-badge">PNG</span>
+          <span><span style="display:block">Lossless quality</span><span class="dl-opt-desc">Best for AI art</span></span>
+        </button>
+        <button class="dl-opt jpg" data-fmt="jpg">
+          <span class="fmt-badge">JPG</span>
+          <span><span style="display:block">Smaller file size</span><span class="dl-opt-desc">95% quality</span></span>
+        </button>
+      </div>
+    </div>
+    <span class="i-size-tag">${imgW} × ${imgH}</span>`;
+}
+
+// ── Build simple bh-dl button
+function buildBhDl(src, imgW, imgH) {
+  const id = 'bh_' + Math.random().toString(36).slice(2,7);
+  setTimeout(() => {
+    const el = document.getElementById(id);
+    if (el) el.onclick = () => downloadAs(src, 'png', imgW, imgH);
+  }, 100);
+  return `<a class="bh-dl" href="javascript:void(0)" id="${id}">↓ Download</a>`;
+}
+
 function addToRecent(src, imgW, imgH) {
   recentSrcs.unshift({ src, imgW, imgH });
   if (recentSrcs.length > 40) recentSrcs.pop();
   renderRecent();
+  // LocalStorage mein save karo
+  try {
+    const toSave = recentSrcs.map(i => ({ src: i.src, imgW: i.imgW, imgH: i.imgH }));
+    localStorage.setItem('breezyfy_images', JSON.stringify(toSave));
+  } catch(e) { console.warn('Image save error:', e.message); }
 }
 function renderRecent() {
   const strip = document.getElementById('rcScroll');
@@ -946,8 +1063,17 @@ async function pollJobStatus(jobId) {
       const pos  = data.position || 1;
       const secs = data.estimatedSeconds || 0;
       const timeStr = secs >= 60 ? Math.ceil(secs/60) + ' min' : secs + ' sec';
-      const msg = pos === 1 ? 'Aap next hain!' : `${pos} log pehle hain`;
-      const sub = pos === 1 ? 'almost your turn' : '~' + timeStr + ' estimated';
+      let msg, sub;
+      if (pos === 1) {
+        msg = 'Aap next hain!';
+        sub = 'almost your turn';
+      } else if (pos === 2) {
+        msg = 'You are next in queue...';
+        sub = 'ek aur image ban rahi hai';
+      } else {
+        msg = pos + ' log pehle hain';
+        sub = '~' + timeStr + ' estimated';
+      }
       updateLoadingMsg(msg, sub, pos);
       wasProcessing = false;
 
@@ -1046,6 +1172,65 @@ document.getElementById('prompt').addEventListener('keydown', e => {
 
 aspectRatio = parseFloat(document.getElementById('dimW').value) /
               parseFloat(document.getElementById('dimH').value);
+
+// ── PAGE LOAD: Saved images restore karo
+(function restoreSavedImages() {
+  try {
+    const saved = localStorage.getItem('breezyfy_images');
+    if (!saved) return;
+    const images = JSON.parse(saved);
+    if (!images || !images.length) return;
+
+    showFeed();
+    // Reverse order mein add karo (oldest first, newest on top)
+    [...images].reverse().forEach(item => {
+      const feed = document.getElementById('feedScroll');
+      const batch = document.createElement('div');
+      batch.className = 'batch';
+
+      const bh = document.createElement('div');
+      bh.className = 'bh';
+      bh.innerHTML = `
+        <svg class="bh-img-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>
+        </svg>
+        <div class="bh-divider"></div>
+        <div class="bh-badge hi">Breezyfy</div>
+        <div class="bh-badge">${item.imgW} × ${item.imgH}</div>
+        <div class="bh-actions">${buildBhDl(item.src, item.imgW, item.imgH)}</div>`;
+
+      const imgArea = document.createElement('div');
+      imgArea.className = 'batch-img-area';
+
+      const outer = document.createElement('div');
+      outer.className = 'result-img-outer';
+      const imgWrap = document.createElement('div');
+      imgWrap.className = 'result-img-wrap';
+      imgWrap.style.aspectRatio = item.imgW + '/' + item.imgH;
+      const img = document.createElement('img');
+      img.src = item.src;
+      img.style.opacity = '1';
+      imgWrap.appendChild(img);
+
+      const dlBar = document.createElement('div');
+      dlBar.className = 'img-dl-bar';
+      dlBar.innerHTML = buildDlBar(item.src, item.imgW, item.imgH);
+
+      outer.appendChild(imgWrap);
+      outer.appendChild(dlBar);
+      imgArea.appendChild(outer);
+      batch.appendChild(bh);
+      batch.appendChild(imgArea);
+      feed.insertBefore(batch, feed.firstChild);
+    });
+
+    // Recent strip bhi restore karo
+    images.forEach(item => {
+      recentSrcs.push(item);
+    });
+    renderRecent();
+  } catch(e) { console.warn('Restore error:', e.message); }
+})();
 
 // ── PAGE LOAD: check karo koi pending job hai?
 (async function resumeIfPending() {
