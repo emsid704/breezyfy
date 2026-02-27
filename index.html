@@ -118,6 +118,18 @@
     .bh-dl{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ok);background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.22);padding:5px 14px;border-radius:7px;cursor:pointer;text-decoration:none;transition:all .18s}
     .bh-dl:hover{background:rgba(52,211,153,.16)}
     .batch-img-area{padding:0 20px 20px}
+    /* Image + Ad side by side */
+    .batch-img-row{display:flex;gap:16px;align-items:flex-start;width:100%}
+    .batch-img-col{flex-shrink:0;display:flex;flex-direction:column;gap:10px}
+    .batch-ad-col{
+      flex:1;min-width:0;
+      display:flex;flex-direction:column;gap:12px;
+      align-items:center;justify-content:flex-start;
+    }
+    .ad-unit-wrap{
+      width:100%;display:flex;justify-content:center;align-items:flex-start;
+      overflow:hidden;border-radius:8px;
+    }
 
     /* ══ LOAD CARD ══ */
     .load-card{width:100%;border-radius:16px;border:1px solid rgba(110,80,255,.15);background:linear-gradient(135deg,#07071a,#0a0820);overflow:hidden;position:relative;min-height:320px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0}
@@ -700,13 +712,24 @@ function resolveLoading(src){
   const {bh,imgArea,promptText,imgW,imgH}=activeBatch; activeBatch=null;
   bh.innerHTML=`<svg class="bh-img-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><div class="bh-divider"></div><div class="bh-badge hi">Breezyfy</div><div class="bh-badge">${imgW} × ${imgH}</div><div class="bh-prompt">${promptText}</div><div class="bh-actions">${buildBhDl(src,imgW,imgH)}</div>`;
   imgArea.innerHTML='';
+  // Side-by-side row: image left, ad right
+  const row=document.createElement('div'); row.className='batch-img-row';
+  const imgCol=document.createElement('div'); imgCol.className='batch-img-col';
+  const adCol=document.createElement('div'); adCol.className='batch-ad-col';
+
   const outer=document.createElement('div'); outer.className='result-img-outer';
   const imgWrap=document.createElement('div'); imgWrap.className='result-img-wrap'; imgWrap.style.aspectRatio=`${imgW}/${imgH}`;
   const img=document.createElement('img'); img.src=src; img.alt=promptText; img.style.opacity='0'; img.style.transition='opacity .5s ease'; img.onload=()=>{ img.style.opacity='1'; };
   imgWrap.appendChild(img);
   if(!isMobile()) imgWrap.onclick=()=>openLightbox(src,promptText,imgW,imgH);
   const dlBar=document.createElement('div'); dlBar.className='img-dl-bar'; dlBar.innerHTML=buildDlBar(src,imgW,imgH);
-  outer.appendChild(imgWrap); outer.appendChild(dlBar); imgArea.appendChild(outer);
+  outer.appendChild(imgWrap); outer.appendChild(dlBar); imgCol.appendChild(outer);
+
+  // Inject ad into right column
+  injectAd(adCol);
+
+  row.appendChild(imgCol); row.appendChild(adCol);
+  imgArea.appendChild(row);
   addToRecent(src,imgW,imgH);
 }
 
@@ -715,6 +738,47 @@ function errorLoading(msg){
   if(!activeBatch) return;
   const {imgArea}=activeBatch; activeBatch=null;
   imgArea.innerHTML=`<div class="err-card"><div class="err-ico">⚠</div><div class="err-msg">${msg}</div></div>`;
+}
+
+/* ══ AD INJECTION ══ */
+const AD_KEY = '72753c259be03858d74032452ad2f30c';
+let adCount = 0;
+
+function injectAd(container) {
+  adCount++;
+  const wrap = document.createElement('div');
+  wrap.className = 'ad-unit-wrap';
+  wrap.style.cssText = 'min-height:92px;width:100%;';
+
+  // Each ad needs its own isolated script scope
+  const adId = 'ad_slot_' + adCount;
+  wrap.id = adId;
+
+  // Use iframe to isolate each ad instance
+  const iframe = document.createElement('iframe');
+  iframe.style.cssText = 'width:728px;max-width:100%;height:90px;border:none;border-radius:6px;display:block;';
+  iframe.scrolling = 'no';
+  iframe.frameBorder = '0';
+  wrap.appendChild(iframe);
+  container.appendChild(wrap);
+
+  // Write ad into iframe
+  const iDoc = iframe.contentWindow || iframe.contentDocument;
+  const doc = iDoc.document || iDoc;
+  doc.open();
+  doc.write(`<!DOCTYPE html><html><head><style>*{margin:0;padding:0;overflow:hidden}</style></head><body>
+    <script>
+      atOptions = {
+        'key': '${AD_KEY}',
+        'format': 'iframe',
+        'height': 90,
+        'width': 728,
+        'params': {}
+      };
+    <\/script>
+    <script src="https://www.highperformanceformat.com/${AD_KEY}/invoke.js"><\/script>
+  </body></html>`);
+  doc.close();
 }
 
 /* ══ CLEAR ══ */
@@ -905,12 +969,19 @@ aspectRatio=parseFloat(document.getElementById('dimW').value)/parseFloat(documen
       const bh=document.createElement('div'); bh.className='bh';
       bh.innerHTML=`<svg class="bh-img-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><div class="bh-divider"></div><div class="bh-badge hi">Breezyfy</div><div class="bh-badge">${item.imgW} × ${item.imgH}</div><div class="bh-actions">${buildBhDl(item.src,item.imgW,item.imgH)}</div>`;
       const imgArea=document.createElement('div'); imgArea.className='batch-img-area';
+      const row=document.createElement('div'); row.className='batch-img-row';
+      const imgCol=document.createElement('div'); imgCol.className='batch-img-col';
+      const adCol=document.createElement('div'); adCol.className='batch-ad-col';
+
       const outer=document.createElement('div'); outer.className='result-img-outer';
       const imgWrap=document.createElement('div'); imgWrap.className='result-img-wrap'; imgWrap.style.aspectRatio=item.imgW+'/'+item.imgH;
       const img=document.createElement('img'); img.src=item.src; img.style.opacity='1'; imgWrap.appendChild(img);
       if(!isMobile()) imgWrap.onclick=()=>openLightbox(item.src,'',item.imgW,item.imgH);
       const dlBar=document.createElement('div'); dlBar.className='img-dl-bar'; dlBar.innerHTML=buildDlBar(item.src,item.imgW,item.imgH);
-      outer.appendChild(imgWrap); outer.appendChild(dlBar); imgArea.appendChild(outer); batch.appendChild(bh); batch.appendChild(imgArea); feed.insertBefore(batch,feed.firstChild);
+      outer.appendChild(imgWrap); outer.appendChild(dlBar); imgCol.appendChild(outer);
+      injectAd(adCol);
+      row.appendChild(imgCol); row.appendChild(adCol);
+      imgArea.appendChild(row); batch.appendChild(bh); batch.appendChild(imgArea); feed.insertBefore(batch,feed.firstChild);
     });
     images.forEach(item=>recentSrcs.push(item)); renderRecent();
     const cb=document.getElementById('clearBtn'); if(cb) cb.style.display='flex';
