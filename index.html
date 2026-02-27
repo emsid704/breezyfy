@@ -952,22 +952,28 @@ async function pollJobStatus(jobId) {
       wasProcessing = false;
 
     } else if (data.status === 'processing') {
+      const realPct = data.progress || 0;
       if (!wasProcessing) {
         wasProcessing = true;
-        startFakeProgress();
+        if (fakeProgressTimer) { clearInterval(fakeProgressTimer); fakeProgressTimer = null; }
       }
-      updateLoadingMsg('Image ban rahi hai...', 'almost there', 0);
+      // Real progress use karo Draw Things se
+      updateLoadingMsg('Image ban rahi hai...', 'almost there', 0, realPct > 0 ? realPct : undefined);
 
     } else if (data.status === 'done') {
       stopPolling();
-      completeFakeProgress(() => {
+      localStorage.removeItem('breezyfy_jobId');
+      // Real 100% show karo phir image
+      updateLoadingMsg('Image ready!', '', 0, 100);
+      setTimeout(() => {
         if (data.image) resolveLoading('data:image/png;base64,' + data.image);
         else errorLoading('Image nahi mili');
         resetBtn();
-      });
+      }, 500);
 
     } else if (data.status === 'error') {
       stopPolling();
+      localStorage.removeItem('breezyfy_jobId');
       if (fakeProgressTimer) { clearInterval(fakeProgressTimer); fakeProgressTimer = null; }
       errorLoading(data.error || 'Generation failed');
       resetBtn();
@@ -1004,6 +1010,12 @@ async function generate() {
     if (data.error) throw new Error(data.error);
     if (!data.jobId) throw new Error('jobId nahi mila server se');
 
+    // LocalStorage mein save karo — refresh ke baad bhi kaam karega
+    localStorage.setItem('breezyfy_jobId', data.jobId);
+    localStorage.setItem('breezyfy_prompt', promptText);
+    localStorage.setItem('breezyfy_w', imgW);
+    localStorage.setItem('breezyfy_h', imgH);
+
     // Queue position dikhao
     const pos  = data.position || 1;
     const secs = data.estimatedSeconds || 0;
@@ -1034,6 +1046,51 @@ document.getElementById('prompt').addEventListener('keydown', e => {
 
 aspectRatio = parseFloat(document.getElementById('dimW').value) /
               parseFloat(document.getElementById('dimH').value);
+
+// ── PAGE LOAD: check karo koi pending job hai?
+(async function resumeIfPending() {
+  const savedJobId = localStorage.getItem('breezyfy_jobId');
+  if (!savedJobId) return;
+
+  const savedPrompt = localStorage.getItem('breezyfy_prompt') || '...';
+  const savedW = parseInt(localStorage.getItem('breezyfy_w')) || 512;
+  const savedH = parseInt(localStorage.getItem('breezyfy_h')) || 512;
+
+  // Check karo job abhi bhi alive hai?
+  try {
+    const res  = await fetch(`${API_URL}/job/${savedJobId}`);
+    if (!res.ok) { localStorage.removeItem('breezyfy_jobId'); return; }
+    const data = await res.json();
+
+    if (data.status === 'done') {
+      // Image already ban gayi thi — seedha dikhao
+      localStorage.removeItem('breezyfy_jobId');
+      addLoadingBatch(savedPrompt, savedW, savedH);
+      updateLoadingMsg('Image ready!', 'refresh se pehle ban gayi thi', 0, 100);
+      setTimeout(() => {
+        if (data.image) resolveLoading('data:image/png;base64,' + data.image);
+        resetBtn();
+      }, 800);
+
+    } else if (data.status === 'queued' || data.status === 'processing') {
+      // Abhi bhi chal rahi hai — resume karo
+      const btn = document.getElementById('genBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="shim"></span>Generating…';
+      addLoadingBatch(savedPrompt, savedW, savedH);
+      updateLoadingMsg('Resume ho raha hai...', 'aapka kaam chal raha tha', data.position || 1);
+      wasProcessing = false;
+      stopPolling();
+      pollTimer = setInterval(() => pollJobStatus(savedJobId), 2000);
+
+    } else {
+      // Error ya expire — clear karo
+      localStorage.removeItem('breezyfy_jobId');
+    }
+  } catch(e) {
+    localStorage.removeItem('breezyfy_jobId');
+  }
+})();
 </script>
 </body>
 </html>
