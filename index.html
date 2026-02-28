@@ -281,6 +281,14 @@
     }
     .lb-panel::-webkit-scrollbar{width:3px}
     .lb-panel::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}
+    /* Lightbox ad slot */
+    .lb-ad-wrap{
+      display:flex;justify-content:center;align-items:center;
+      border-radius:8px;overflow:hidden;
+      min-height:302px;width:100%;
+      border:1px solid rgba(255,255,255,.04);
+      background:rgba(255,255,255,.02);
+    }
 
     .lb-section-label{
       font-family:'DM Mono',monospace;font-size:9px;
@@ -546,6 +554,8 @@
             </button>
           </div>
         </div>
+        <!-- Lightbox Ad — desktop only (PC users only, matches zoom feature) -->
+        <div class="lb-ad-wrap" id="lb-ad-wrap"></div>
       </div>
     </div>
   </div>
@@ -850,6 +860,33 @@ function renderRecent(){
 
 /* ══ LIGHTBOX ══ */
 let lbSrc='', lbPrompt='', lbW=0, lbH=0, lbActiveFmt='png';
+let lbAdInjected = false;
+
+function injectLbAd() {
+  if (lbAdInjected) return; // only once per page load
+  lbAdInjected = true;
+  const wrap = document.getElementById('lb-ad-wrap');
+  if (!wrap) return;
+
+  const iframe = document.createElement('iframe');
+  iframe.style.cssText = 'width:160px;height:300px;border:none;display:block;border-radius:6px;';
+  iframe.scrolling = 'no';
+  iframe.setAttribute('frameborder', '0');
+
+  const html = [
+    '<!DOCTYPE html><html><head>',
+    '<style>*{margin:0;padding:0;overflow:hidden}</style>',
+    '</head><body>',
+    '<scr'+'ipt>',
+    "atOptions={'key':'"+"1ea2d991fc3526514fa3900325c1883a"+"','format':'iframe','height':300,'width':160,'params':{}};",
+    '</scr'+'ipt>',
+    '<scr'+'ipt src="https://www.highperformanceformat.com/'+"1ea2d991fc3526514fa3900325c1883a"+'/invoke.js"></scr'+'ipt>',
+    '</body></html>'
+  ].join('');
+
+  iframe.srcdoc = html;
+  wrap.appendChild(iframe);
+}
 
 function lbSelectFmt(fmt){
   lbActiveFmt=fmt;
@@ -872,6 +909,8 @@ function openLightbox(src, promptText, imgW, imgH){
   lbSelectFmt('png');
   document.getElementById('lb-dl-btn').onclick=()=>downloadAs(lbSrc, lbActiveFmt, lbW, lbH);
   document.getElementById('lb-share-btn').onclick=()=>shareImage(src,imgW,imgH);
+  // Inject lightbox ad (PC only — matches zoom feature)
+  injectLbAd();
   document.getElementById('lightbox').classList.add('open');
   document.body.style.overflow='hidden';
 }
