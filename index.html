@@ -586,7 +586,7 @@
   <div class="tpl-topbar">
     <div>
       <div class="tpl-modal-title"><span>B</span>reezyfy <span style="font-weight:400;color:var(--sub)">Templates</span></div>
-      <div class="tpl-modal-sub">Click any template to use its prompt</div>
+      <div class="tpl-modal-sub">Click any image to preview • Click prompt to use it</div>
     </div>
     <button class="tpl-modal-close" onclick="closeTemplateGallery()">✕</button>
   </div>
@@ -1097,7 +1097,10 @@ function openLightbox(src, promptText, imgW, imgH){
   lbActiveFmt = 'png';
   lbSelectFmt('png');
   document.getElementById('lb-dl-btn').onclick=()=>downloadAs(lbSrc, lbActiveFmt, lbW, lbH);
-  document.getElementById('lb-share-btn').onclick=()=>shareImage(src,imgW,imgH);
+  // Reset share button (in case template lightbox changed it)
+  const shareBtn=document.getElementById('lb-share-btn');
+  shareBtn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Share Image';
+  shareBtn.onclick=()=>shareImage(src,imgW,imgH);
   // Inject lightbox ad (PC only) DISABLED — enable when needed
   // injectLbAd();
   document.getElementById('lightbox').classList.add('open');
@@ -1119,39 +1122,67 @@ async function openTemplateGallery(){
   await loadTplGallery();
 }
 function closeTemplateGallery(){
-  const m=document.getElementById('tplModal');
-  if(m) m.classList.remove('open');
+  document.getElementById('tplModal').classList.remove('open');
   document.body.style.overflow='';
 }
+
 async function loadTplGallery(){
   const gallery=document.getElementById('tplGallery');
-  gallery.innerHTML='<div class="tpl-loading">Loading templates...</div>';
+  gallery.innerHTML='<div class="tpl-loading" id="tplLoading">Loading templates...</div>';
   try{
-    const res=await fetch(API_URL+'/templates');
+    const res=await fetch(`${API_URL}/templates`);
     if(!res.ok) throw new Error('Failed');
     const templates=await res.json();
     if(!templates.length){
-      gallery.innerHTML='<div class="tpl-empty">No templates yet</div>';
+      gallery.innerHTML='<div class="tpl-empty">✦ No templates yet<br/><span style="font-size:10px;margin-top:8px;display:block">Admin panel se templates upload karo</span></div>';
       return;
     }
     gallery.innerHTML=templates.map(t=>`
-      <div class="tpl-card" onclick="useTplPrompt('${encodeURIComponent(t.prompt)}')">
+      <div class="tpl-card" onclick="tplCardClick('${t.id}','${encodeURIComponent(t.image)}','${encodeURIComponent(t.prompt)}','${encodeURIComponent(t.title||'')}')">
         <img src="${t.image}" alt="${t.title||'Template'}" loading="lazy"/>
         <div class="tpl-card-info">
           <div class="tpl-card-title">${t.title||'Template'}</div>
           <div class="tpl-card-prompt">${t.prompt}</div>
         </div>
-        <div class="tpl-use-badge">Use Prompt</div>
+        <div class="tpl-use-badge">View ✦</div>
       </div>`).join('');
   }catch(e){
-    gallery.innerHTML='<div class="tpl-empty" style="color:var(--err)">Could not load templates</div>';
+    gallery.innerHTML='<div class="tpl-empty" style="color:var(--err)">Could not load templates<br/><span style="font-size:10px;opacity:.6">Make sure server is running</span></div>';
   }
 }
-function useTplPrompt(promptEnc){
+
+let tplLbData={};
+function tplCardClick(id,imgEnc,promptEnc,titleEnc){
+  const src=decodeURIComponent(imgEnc);
   const prompt=decodeURIComponent(promptEnc);
+  const title=decodeURIComponent(titleEnc);
+  tplLbData={src,prompt,title};
   closeTemplateGallery();
+  openTplLightbox(src,prompt,title);
+}
+
+function openTplLightbox(src,prompt,title){
+  lbSrc=src; lbPrompt=prompt; lbW=512; lbH=512;
+  document.getElementById('lb-img').src=src;
+  document.getElementById('lb-prompt-txt').textContent=prompt||'—';
+  document.getElementById('lb-size').textContent=title||'Template';
+  document.getElementById('lb-info-size').textContent='Template';
+  document.getElementById('lb-copy-btn').textContent='Copy Prompt';
+  document.getElementById('lb-copy-btn').classList.remove('copied');
+  lbActiveFmt='png'; lbSelectFmt('png');
+  document.getElementById('lb-dl-btn').onclick=()=>downloadAs(src,'png',512,512);
+  // Share button → "Use This Prompt"
+  const shareBtn=document.getElementById('lb-share-btn');
+  shareBtn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg> Use This Prompt';
+  shareBtn.onclick=()=>useTemplatePrompt(prompt);
+  document.getElementById('lightbox').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+
+function useTemplatePrompt(prompt){
   const ta=document.getElementById('prompt');
-  ta.value=prompt; uc(ta); ta.focus();
+  ta.value=prompt; uc(ta);
+  closeLightbox();
   ta.style.borderColor='rgba(110,80,255,.8)';
   ta.style.boxShadow='0 0 0 3px rgba(110,80,255,.15)';
   setTimeout(()=>{ta.style.borderColor='';ta.style.boxShadow='';},600);
