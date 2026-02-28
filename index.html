@@ -366,6 +366,27 @@
     @media(max-width:860px){.sidebar{width:300px;min-width:280px}.recent-col{width:62px}.rc-thumb{width:46px;height:46px}}
 
     /* ══ MOBILE ══ */
+    /* Mobile-only ads */
+    .mob-ad-static{
+      display:none; /* hidden desktop */
+    }
+    .mob-ad-between{
+      display:none; /* hidden desktop */
+      width:100%;padding:12px 14px 4px;
+      background:var(--surf);border-bottom:1px solid var(--bdr);
+      flex-direction:column;align-items:center;gap:6px;
+    }
+    .mob-ad-lbl{
+      font-family:'DM Mono',monospace;font-size:9px;
+      letter-spacing:.12em;text-transform:uppercase;
+      color:var(--mut);align-self:flex-start;
+    }
+    .mob-ad-box{
+      width:300px;max-width:100%;height:250px;
+      overflow:hidden;border-radius:8px;
+      border:1px solid rgba(255,255,255,.05);
+      background:#0c0c1c;
+    }
     @media(max-width:767px){
       html,body{height:100%;overflow:hidden}
       .shell{flex-direction:column;height:calc(100vh - 52px);overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
@@ -397,6 +418,12 @@
       .fe-ico{width:58px;height:58px;font-size:22px}
       /* Mobile lightbox — simple fullscreen */
       #lightbox{display:none!important}
+      /* Show mobile ads */
+      .mob-ad-static{
+        display:flex;flex-direction:column;align-items:center;
+        gap:6px;padding:14px 0 6px;width:100%;
+      }
+      .mob-ad-between{display:flex}
     }
   </style>
 </head>
@@ -475,10 +502,10 @@
         <button class="appbtn" id="appBtn" onclick="applyCustom()">Apply Custom Size</button>
       </div>
     </div>
-    <!-- ══ ADSTERRA 300×250 ══ -->
-    <div class="ad-slot" id="adsterraBanner">
-      <div class="ad-lbl">Advertisement</div>
-      <div class="ad-box">
+    <div class="gsec">
+      <button id="genBtn" onclick="generate()"><span class="shim"></span>Generate</button>
+      <!-- Mobile ad below Generate button -->
+      <div class="mob-ad-static" id="mobAdStatic">
         <script>
           atOptions = {
             'key' : '0325a81b241fbcfb35505509e36ae469',
@@ -490,9 +517,6 @@
         </script>
         <script src="https://www.highperformanceformat.com/0325a81b241fbcfb35505509e36ae469/invoke.js"></script>
       </div>
-    </div>
-    <div class="gsec">
-      <button id="genBtn" onclick="generate()"><span class="shim"></span>Generate</button>
     </div>
   </aside>
 
@@ -757,6 +781,12 @@ function resolveLoading(src){
   row.appendChild(imgCol); row.appendChild(adCol);
   imgArea.appendChild(row);
   addToRecent(src,imgW,imgH);
+
+  // Mobile only: insert ad block after this batch
+  if(isMobile()){
+    const thisBatch = imgArea.parentElement;
+    injectMobAdBetween(thisBatch);
+  }
 }
 
 function errorLoading(msg){
@@ -796,6 +826,51 @@ function injectAd(container) {
 
   iframe.srcdoc = html;
   wrap.appendChild(iframe);
+}
+
+/* ══ MOBILE AD BETWEEN IMAGES ══ */
+const MOB_AD_KEY = '0325a81b241fbcfb35505509e36ae469';
+let mobAdCount = 0;
+
+function injectMobAdBetween(batchEl) {
+  if (!batchEl || !batchEl.parentElement) return;
+  mobAdCount++;
+
+  const adDiv = document.createElement('div');
+  adDiv.className = 'mob-ad-between';
+  adDiv.id = 'mob_ad_' + mobAdCount;
+
+  const lbl = document.createElement('div');
+  lbl.className = 'mob-ad-lbl';
+  lbl.textContent = 'Advertisement';
+
+  const box = document.createElement('div');
+  box.className = 'mob-ad-box';
+
+  // Inject via iframe srcdoc — safe, isolated
+  const iframe = document.createElement('iframe');
+  iframe.style.cssText = 'width:300px;max-width:100%;height:250px;border:none;display:block;';
+  iframe.scrolling = 'no';
+  iframe.setAttribute('frameborder', '0');
+
+  const html = [
+    '<!DOCTYPE html><html><head>',
+    '<style>*{margin:0;padding:0;overflow:hidden}</style>',
+    '</head><body>',
+    '<scr'+'ipt>',
+    "atOptions={'key':'"+MOB_AD_KEY+"','format':'iframe','height':250,'width':300,'params':{}};",
+    '</scr'+'ipt>',
+    '<scr'+'ipt src="https://www.highperformanceformat.com/'+MOB_AD_KEY+'/invoke.js"></scr'+'ipt>',
+    '</body></html>'
+  ].join('');
+
+  iframe.srcdoc = html;
+  box.appendChild(iframe);
+  adDiv.appendChild(lbl);
+  adDiv.appendChild(box);
+
+  // Insert AFTER the batch in the feed
+  batchEl.parentElement.insertBefore(adDiv, batchEl.nextSibling);
 }
 
 /* ══ CLEAR ══ */
