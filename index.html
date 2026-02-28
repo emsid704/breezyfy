@@ -475,6 +475,22 @@
         <button class="appbtn" id="appBtn" onclick="applyCustom()">Apply Custom Size</button>
       </div>
     </div>
+    <!-- ══ ADSTERRA 300×250 ══ -->
+    <div class="ad-slot" id="adsterraBanner">
+      <div class="ad-lbl">Advertisement</div>
+      <div class="ad-box">
+        <script>
+          atOptions = {
+            'key' : '0325a81b241fbcfb35505509e36ae469',
+            'format' : 'iframe',
+            'height' : 250,
+            'width' : 300,
+            'params' : {}
+          };
+        </script>
+        <script src="https://www.highperformanceformat.com/0325a81b241fbcfb35505509e36ae469/invoke.js"></script>
+      </div>
+    </div>
     <div class="gsec">
       <button id="genBtn" onclick="generate()"><span class="shim"></span>Generate</button>
     </div>
@@ -735,8 +751,8 @@ function resolveLoading(src){
   const dlBar=document.createElement('div'); dlBar.className='img-dl-bar'; dlBar.innerHTML=buildDlBar(src,imgW,imgH);
   outer.appendChild(imgWrap); outer.appendChild(dlBar); imgCol.appendChild(outer);
 
-  // Inject ad into right column
-  injectAd(adCol);
+  // Inject ad into right column (DISABLED — enable when needed)
+  // injectAd(adCol);
 
   row.appendChild(imgCol); row.appendChild(adCol);
   imgArea.appendChild(row);
@@ -909,8 +925,8 @@ function openLightbox(src, promptText, imgW, imgH){
   lbSelectFmt('png');
   document.getElementById('lb-dl-btn').onclick=()=>downloadAs(lbSrc, lbActiveFmt, lbW, lbH);
   document.getElementById('lb-share-btn').onclick=()=>shareImage(src,imgW,imgH);
-  // Inject lightbox ad (PC only — matches zoom feature)
-  injectLbAd();
+  // Inject lightbox ad (PC only) DISABLED — enable when needed
+  // injectLbAd();
   document.getElementById('lightbox').classList.add('open');
   document.body.style.overflow='hidden';
 }
@@ -1009,8 +1025,8 @@ aspectRatio=parseFloat(document.getElementById('dimW').value)/parseFloat(documen
       if(!isMobile()) imgWrap.onclick=()=>openLightbox(item.src,'',item.imgW,item.imgH);
       const dlBar=document.createElement('div'); dlBar.className='img-dl-bar'; dlBar.innerHTML=buildDlBar(item.src,item.imgW,item.imgH);
       outer.appendChild(imgWrap); outer.appendChild(dlBar); imgCol.appendChild(outer);
-      injectAd(adCol);
-      row.appendChild(imgCol); row.appendChild(adCol);
+      // injectAd(adCol); // DISABLED — enable when needed
+      row.appendChild(imgCol); // row.appendChild(adCol); // DISABLED
       imgArea.appendChild(row); batch.appendChild(bh); batch.appendChild(imgArea); feed.insertBefore(batch,feed.firstChild);
     });
     images.forEach(item=>recentSrcs.push(item)); renderRecent();
