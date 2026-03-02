@@ -664,23 +664,18 @@ function startSmoothProgress(){
     if(pctNum) pctNum.textContent='0';
   }
 
-  // Start moving toward first milestone (20%) immediately
-  smoothTarget=20;
+  // Bar turant shuru — always moving, kabhi nahi rukti
+  smoothTarget=96; // full range open — real % se speed control hogi
 
   smoothTimer=setInterval(()=>{
     if(!activeBatch){stopSmoothProgress();return;}
 
-    // Smoothly move toward target
-    if(smoothCurrent<smoothTarget){
-      const diff=smoothTarget-smoothCurrent;
-      // Fast start, slow near milestone — easing
-      const step=Math.max(msSpeedPerTick, diff*0.05);
-      smoothCurrent=Math.min(smoothTarget, smoothCurrent+step);
-    }
-    // Slow down just before milestone (last 3%)
-    const nearMilestone=MILESTONES.some(m=>m>0&&m<100&&Math.abs(smoothCurrent-m)<3);
-    if(nearMilestone && smoothCurrent>=smoothTarget-0.5){
-      // Pause briefly at milestone until next real % pushes us
+    // Hamesha aage drift karo — speed msSpeedPerTick se control hoti hai
+    if(smoothCurrent < smoothTarget){
+      const diff = smoothTarget - smoothCurrent;
+      // Easing: fast jab door, slow jab paas
+      const step = diff * 0.03 + msSpeedPerTick;
+      smoothCurrent = Math.min(smoothTarget, smoothCurrent + step);
     }
 
     // Update ring
@@ -700,15 +695,18 @@ function startSmoothProgress(){
 }
 
 function setRealProgress(pct, eta){
-  // Draw Things se real % aaya — milestone tak push karo
-  const newTarget=getMilestoneTarget(pct);
-  smoothTarget=Math.max(smoothTarget, newTarget);
+  // Draw Things se real % aaya
+  // Real % ko current se aage seedha le jao (kabhi peeche nahi)
+  if(pct > smoothCurrent){
+    smoothCurrent = Math.max(smoothCurrent, pct - 2); // slight lag for smoothness
+    smoothTarget  = Math.max(smoothTarget,  Math.min(97, pct + 5));
+  }
 
-  // ETA se speed calculate karo — remaining% / remaining_seconds
-  if(eta>0 && pct>0){
-    const remainingPct=100-smoothCurrent;
-    const speedPctPerSec=remainingPct/Math.max(1,eta);
-    msSpeedPerTick=Math.max(0.08, Math.min(1.5, speedPctPerSec*0.08));
+  // ETA se speed calculate karo — bar ko exact time pe 97% tak pahunchao
+  if(eta > 0){
+    const remainingPct = 97 - smoothCurrent;
+    const totalTicks   = (eta * 1000) / 80; // kitne ticks mein 97% tak
+    msSpeedPerTick     = Math.max(0.04, Math.min(2.0, remainingPct / totalTicks));
   }
 }
 
