@@ -128,6 +128,8 @@
     .load-glow{position:absolute;inset:0;z-index:0;background:radial-gradient(ellipse 60% 50% at 50% 50%,rgba(110,80,255,.12),transparent 70%);animation:glowPulse 3s ease-in-out infinite}
     @keyframes glowPulse{0%,100%{opacity:.6}50%{opacity:1}}
     .queue-badge{position:relative;z-index:2;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:rgba(155,125,255,.7);background:rgba(110,80,255,.1);border:1px solid rgba(110,80,255,.2);padding:5px 16px;border-radius:50px;margin-bottom:28px;transition:all .4s ease}
+    .queue-badge.generating{animation:genBlink 1.2s ease-in-out infinite;border-color:rgba(52,211,153,.4);background:rgba(52,211,153,.08)}
+    @keyframes genBlink{0%,100%{opacity:1;box-shadow:0 0 0 rgba(52,211,153,0)}50%{opacity:.7;box-shadow:0 0 14px rgba(52,211,153,.3)}}
     .orb-wrap{position:relative;z-index:2;width:140px;height:140px;display:flex;align-items:center;justify-content:center}
     .ring-outer{position:absolute;inset:0;border-radius:50%;border:1px solid rgba(110,80,255,.2);animation:ringRotate 8s linear infinite}
     .ring-outer::before{content:'';position:absolute;top:-3px;left:50%;width:6px;height:6px;border-radius:50%;background:var(--alit);box-shadow:0 0 10px var(--alit);transform:translateX(-50%)}
@@ -554,14 +556,47 @@ function updateLoadingMsg(msg,sublbl,queueNum,pct){
     const badge=card.querySelector('#lc-badge'),pctNum=card.querySelector('#lc-pct-num'),pctSub=card.querySelector('#lc-pct-sub');
     if(lbl&&msg) lbl.innerHTML=msg;
     if(sub&&sublbl!==undefined) sub.textContent=sublbl;
-    if(queueNum!==undefined&&queueNum>0){if(badge){badge.textContent='Queue #'+queueNum;badge.style.color='rgba(155,125,255,.8)'}if(pctNum)pctNum.textContent='#'+queueNum;if(pctSub)pctSub.textContent='QUEUE';}
-    else if(queueNum===0){if(badge){badge.textContent='Generating ✨';badge.style.color='rgba(52,211,153,.9)'}}
+    if(queueNum!==undefined&&queueNum>0){if(badge){badge.textContent='Queue #'+queueNum;badge.style.color='rgba(155,125,255,.8)';badge.classList.remove('generating');}if(pctNum)pctNum.textContent='#'+queueNum;if(pctSub)pctSub.textContent='QUEUE';}
+    else if(queueNum===0){if(badge){badge.textContent='Generating ✨';badge.style.color='rgba(52,211,153,.9)';badge.classList.add('generating');}}
     if(pct!==undefined){const ring=card.querySelector('#lc-ring'),fill=card.querySelector('#lc-ring-fill');if(ring)ring.classList.add('visible');if(fill)fill.style.strokeDashoffset=376-(376*pct/100);if(pctNum)pctNum.textContent=Math.round(pct);if(pctSub)pctSub.textContent='%';}
   }catch(e){console.warn('updateMsg:',e.message);}
 }
 
 let fakeProgressTimer=null,fakeProgressVal=0;
-function startFakeProgress(){ fakeProgressVal=0; if(fakeProgressTimer) clearInterval(fakeProgressTimer); fakeProgressTimer=setInterval(()=>{ const r=95-fakeProgressVal; fakeProgressVal=Math.min(95,fakeProgressVal+r*0.05+0.4); updateLoadingMsg('Creating your image...','almost there',0,fakeProgressVal); },700); }
+// Smooth interpolation — displayed % smoothly drifts toward target %
+let smoothTarget=0, smoothCurrent=0, smoothTimer=null;
+
+function startSmoothProgress(){
+  smoothCurrent=0; smoothTarget=5;
+  if(smoothTimer) clearInterval(smoothTimer);
+  // Har 80ms render karo — 60fps smooth feel
+  smoothTimer=setInterval(()=>{
+    // Current → target tak smooth move karo
+    const diff = smoothTarget - smoothCurrent;
+    if(Math.abs(diff) > 0.1){
+      // Slow start, slow end — easing
+      smoothCurrent += diff * 0.04 + 0.08;
+      smoothCurrent = Math.min(smoothTarget, smoothCurrent);
+    }
+    // Agar real progress nahi aa raha, slowly drift karo (max 94%)
+    if(smoothTarget < 15 && smoothCurrent >= smoothTarget - 1){
+      smoothTarget = Math.min(94, smoothTarget + 0.06);
+    }
+    updateLoadingMsg('Creating your image...','',0, smoothCurrent);
+  }, 80);
+}
+
+function setRealProgress(pct, etaTxt){
+  // Real Draw Things % aaya — smoothly move toward it (kabhi peeche nahi)
+  smoothTarget = Math.max(smoothTarget, Math.min(98, pct));
+  if(etaTxt) updateLoadingMsg('Creating your image...', etaTxt, 0, smoothCurrent);
+}
+
+function stopSmoothProgress(){
+  if(smoothTimer){ clearInterval(smoothTimer); smoothTimer=null; }
+}
+
+function startFakeProgress(){ startSmoothProgress(); }
 
 function addLoadingBatch(promptText,imgW,imgH){
   showFeed();
@@ -813,30 +848,27 @@ async function pollJobStatus(jobId){
       wasProcessing=false;
 
     }else if(data.status==='processing'){
-      if(!wasProcessing){ wasProcessing=true; }
-      // Fake progress band karo — real aa raha hai
-      if(fakeProgressTimer){clearInterval(fakeProgressTimer);fakeProgressTimer=null;}
-
-      const realPct = data.progress||0; // 0-100 real Draw Things %
+      if(!wasProcessing){
+        wasProcessing=true;
+        startSmoothProgress(); // smooth animation shuru
+      }
+      const realPct = data.progress||0;
       const eta     = data.eta||0;
-
       if(realPct>0){
-        // Real Draw Things progress!
-        const etaTxt = eta>0?(eta>=60?Math.ceil(eta/60)+'m remaining':eta+'s remaining'):'generating...';
-        updateLoadingMsg('Creating your image...',etaTxt,0,realPct);
-      }else{
-        // Draw Things ne abhi start nahi ki — thoda fake chalao warmup tak
-        if(!fakeProgressTimer) startFakeProgress();
+        const etaTxt = eta>0?(eta>=60?Math.ceil(eta/60)+'m remaining':eta+'s remaining'):'';
+        setRealProgress(realPct, etaTxt); // real % se sync karo
       }
 
     }else if(data.status==='done'){
       stopPolling();localStorage.removeItem('breezyfy_jobId');
+      stopSmoothProgress();
       if(fakeProgressTimer){clearInterval(fakeProgressTimer);fakeProgressTimer=null;}
       updateLoadingMsg('Image ready!','',0,100);
       setTimeout(()=>{if(data.image)resolveLoading('data:image/png;base64,'+data.image);else errorLoading('No image received');resetBtn();},500);
 
     }else if(data.status==='error'){
       stopPolling();localStorage.removeItem('breezyfy_jobId');
+      stopSmoothProgress();
       if(fakeProgressTimer){clearInterval(fakeProgressTimer);fakeProgressTimer=null;}
       errorLoading(data.error||'Generation failed');resetBtn();
     }
@@ -965,30 +997,10 @@ function useTpl(id){
   const tpl = tplCache?.find(t => t.id === id);
   if (!tpl) return;
   closeTemplates();
-  // Lightbox mein kholo — same design jesa image click karte hain
-  openLightbox(tpl.image, tpl.prompt, getImgDims(tpl.image));
+  openLightbox(tpl.image, tpl.prompt, 512, 512);
 }
 
-// Image ka natural width/height nikalo
-function getImgDims(src){
-  // Temporary — default 512x512 (actual dims lightbox mein auto fit hote hain)
-  return [512, 512];
-}
-
-// Override openLightbox to accept optional width/height as array
-const _origOpenLightbox = openLightbox;
-function openLightbox(src, promptText, imgW, imgH){
-  if (Array.isArray(imgW)) { imgH = imgW[1]; imgW = imgW[0]; }
-  // Get actual image dimensions
-  const img = new Image();
-  img.onload = function(){
-    _origOpenLightbox(src, promptText, this.naturalWidth || imgW || 512, this.naturalHeight || imgH || 512);
-  };
-  img.onerror = function(){
-    _origOpenLightbox(src, promptText, imgW || 512, imgH || 512);
-  };
-  img.src = src;
-}
+// openLightbox override removed — using main function directly
 
 document.addEventListener('keydown', e => { if(e.key === 'Escape') { closeLightbox(); closeTemplates(); } });
 
