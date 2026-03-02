@@ -633,22 +633,34 @@ function startSmoothProgress(){
   smoothCurrent=0; smoothTarget=2;
   currentStageIdx=-1;
   if(smoothTimer) clearInterval(smoothTimer);
+
+  // ── "Generating ✨" badge blink shuru karo (Fix 1)
+  if(activeBatch){
+    const badge=activeBatch.loadCard.querySelector('#lc-badge');
+    if(badge){
+      badge.textContent='Generating ✨';
+      badge.style.color='rgba(52,211,153,.9)';
+      badge.classList.remove('generating'); // reset first
+      void badge.offsetWidth;              // reflow
+      badge.classList.add('generating');   // blink start
+    }
+    // pctSub reset karo — "#1 QUEUE" se "%" pe aao
+    const pctSub=activeBatch.loadCard.querySelector('#lc-pct-sub');
+    if(pctSub) pctSub.textContent='%';
+  }
+
   smoothTimer=setInterval(()=>{
     if(!activeBatch){stopSmoothProgress();return;}
-    // Smooth easing toward target
     const diff=smoothTarget-smoothCurrent;
     if(diff>0.05){
-      // Fast when far, slow when close
       smoothCurrent+=diff*0.06+0.05;
       smoothCurrent=Math.min(smoothTarget,smoothCurrent);
     }
-    // Auto-drift slowly when no real progress (max 92% tak)
+    // Auto-drift jab real progress nahi aa raha (max 92%)
     if(smoothTarget<92){
-      // Speed: 0-25% fast, 25-75% medium, 75-92% very slow
-      const speed = smoothCurrent<25 ? 0.12 : smoothCurrent<75 ? 0.07 : 0.02;
+      const speed=smoothCurrent<25?0.12:smoothCurrent<75?0.07:0.02;
       smoothTarget=Math.min(92,smoothTarget+speed);
     }
-    // Ring + stage update
     const card=activeBatch?.loadCard;
     if(card){
       const fill=card.querySelector('#lc-ring-fill');
@@ -664,9 +676,20 @@ function startSmoothProgress(){
   },80);
 }
 
-function setRealProgress(pct){
-  // Real Draw Things % — smoothTarget ko seedha wahan le jao (kabhi peeche nahi)
-  smoothTarget=Math.max(smoothTarget,Math.min(97,pct));
+function setRealProgress(pct, eta){
+  // Fix 2: ETA se actual target calculate karo
+  // Draw Things: pct=0-100, eta=seconds remaining
+  // Agar eta aaya hai toh use karke smooth target set karo
+  if(pct>0){
+    smoothTarget=Math.max(smoothTarget,Math.min(97,pct));
+  } else if(eta>0 && smoothCurrent>0){
+    // ETA se estimate: agar 30s bacha hai aur abhi 20% hai
+    // toh roughly (elapsed/(elapsed+eta))*100
+    // Simple approach: target = 100 - (eta/(eta+10))*remaining_gap
+    const remaining=97-smoothCurrent;
+    const etaFraction=Math.min(1,10/(eta+10)); // eta jitna kam, utna aage
+    smoothTarget=Math.max(smoothTarget,Math.min(96,smoothCurrent+remaining*etaFraction));
+  }
 }
 
 function stopSmoothProgress(){
@@ -931,8 +954,9 @@ async function pollJobStatus(jobId){
       const realPct = data.progress||0;
       const eta     = data.eta||0;
       if(realPct>0){
-        const etaTxt = eta>0?(eta>=60?Math.ceil(eta/60)+'m remaining':eta+'s remaining'):'';
-        setRealProgress(realPct); // real % se sync karo
+        setRealProgress(realPct, eta);
+      } else if(eta>0){
+        setRealProgress(0, eta); // sirf eta se sync karo
       }
 
     }else if(data.status==='done'){
