@@ -627,58 +627,42 @@ function updateLoadingMsg(msg,sublbl,queueNum,pct){
 
 let fakeProgressTimer=null,fakeProgressVal=0;
 
-// ── MILESTONE PROGRESS SYSTEM ──────────────────────────────
-// Milestones: 0→20→47→83→100
-// Draw Things se real pct milta hai har poll pe → milestone tak move karo
-const MILESTONES=[0,20,47,83,100];
-let smoothCurrent=0, smoothTarget=0, smoothTimer=null;
-let msSpeedPerTick=0.15; // default — ETA aane pe recalculate
+// ── PROGRESS SYSTEM ──────────────────────────────────────
+// Strategy:
+//   - Bar moves at constant slow speed (tickSpeed per 80ms)
+//   - Default speed: very slow (~0.5%/sec) — user ko lagta rahe kuch ho raha hai
+//   - Jab Draw Things se real % + ETA aata hai:
+//       tickSpeed = remainingPct / (eta_seconds * 12.5 ticks/sec)
+//   - Bar kabhi real % se aage nahi jaati (max = realPct + 3)
+//   - Done pe seedha 100%
 
-function getMilestoneTarget(realPct){
-  // Real pct ke hisaab se agle milestone tak jaao
-  if(realPct>=97) return 100;
-  if(realPct>=60) return 83;
-  if(realPct>=30) return 47;
-  if(realPct>=5)  return 20;
-  return 20; // shuru mein seedha 20 tak
-}
+let smoothCurrent=0, smoothTarget=0, smoothTimer=null;
+let tickSpeed=0.04; // % per tick (80ms) — ~0.5%/sec default
 
 function startSmoothProgress(){
-  smoothCurrent=0; smoothTarget=0;
-  currentStageIdx=-1; msSpeedPerTick=0.15;
+  smoothCurrent=0; smoothTarget=15; // slowly drift toward 15% initially
+  currentStageIdx=-1; tickSpeed=0.04;
   if(smoothTimer) clearInterval(smoothTimer);
 
-  // Badge set
+  // Badge
   if(activeBatch){
     const badge=activeBatch.loadCard.querySelector('#lc-badge');
-    if(badge){
-      badge.textContent='Generating ✨';
-      badge.style.color='rgba(52,211,153,.9)';
-      badge.classList.remove('generating');
-      void badge.offsetWidth;
-      badge.classList.add('generating');
-    }
+    if(badge){badge.textContent='Generating ✨';badge.style.color='rgba(52,211,153,.9)';badge.classList.remove('generating');void badge.offsetWidth;badge.classList.add('generating');}
     const pctSub=activeBatch.loadCard.querySelector('#lc-pct-sub');
     if(pctSub) pctSub.textContent='%';
     const pctNum=activeBatch.loadCard.querySelector('#lc-pct-num');
     if(pctNum) pctNum.textContent='0';
   }
 
-  // Bar turant shuru — always moving, kabhi nahi rukti
-  smoothTarget=96; // full range open — real % se speed control hogi
-
   smoothTimer=setInterval(()=>{
     if(!activeBatch){stopSmoothProgress();return;}
 
-    // Hamesha aage drift karo — speed msSpeedPerTick se control hoti hai
+    // Move at constant tickSpeed — no easing formula, no big jumps
     if(smoothCurrent < smoothTarget){
-      const diff = smoothTarget - smoothCurrent;
-      // Easing: fast jab door, slow jab paas
-      const step = diff * 0.03 + msSpeedPerTick;
-      smoothCurrent = Math.min(smoothTarget, smoothCurrent + step);
+      smoothCurrent = Math.min(smoothTarget, smoothCurrent + tickSpeed);
     }
 
-    // Update ring
+    // Ring update
     const card=activeBatch?.loadCard;
     if(card){
       const fill=card.querySelector('#lc-ring-fill');
@@ -695,18 +679,25 @@ function startSmoothProgress(){
 }
 
 function setRealProgress(pct, eta){
-  // Draw Things se real % aaya
-  // Real % ko current se aage seedha le jao (kabhi peeche nahi)
-  if(pct > smoothCurrent){
-    smoothCurrent = Math.max(smoothCurrent, pct - 2); // slight lag for smoothness
-    smoothTarget  = Math.max(smoothTarget,  Math.min(97, pct + 5));
+  if(pct<=0 && eta<=0) return;
+
+  // Real % aaya — cap smoothTarget at realPct+3 (bar ahead nahi jaayegi)
+  if(pct>0){
+    smoothTarget = Math.max(smoothCurrent+0.1, Math.min(97, pct+3));
+    // Agar bar bahut peeche hai (>5% gap) toh seedha wahan le jao
+    if(pct - smoothCurrent > 8) smoothCurrent = pct - 3;
   }
 
-  // ETA se speed calculate karo — bar ko exact time pe 97% tak pahunchao
-  if(eta > 0){
-    const remainingPct = 97 - smoothCurrent;
-    const totalTicks   = (eta * 1000) / 80; // kitne ticks mein 97% tak
-    msSpeedPerTick     = Math.max(0.04, Math.min(2.0, remainingPct / totalTicks));
+  // ETA se speed recalculate:
+  // remaining% ko eta_seconds mein cover karna hai
+  // ticks = eta_sec * (1000/80) = eta_sec * 12.5
+  if(eta>0 && pct>0){
+    const remaining = Math.max(1, 97 - smoothCurrent);
+    const ticks     = Math.max(1, eta * 12.5);
+    tickSpeed = Math.max(0.02, Math.min(1.0, remaining / ticks));
+  } else if(eta<=0 && pct>0){
+    // ETA nahi aaya — slightly faster default
+    tickSpeed = Math.max(tickSpeed, 0.06);
   }
 }
 
