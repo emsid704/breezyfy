@@ -628,25 +628,23 @@ function updateLoadingMsg(msg,sublbl,queueNum,pct){
 let fakeProgressTimer=null,fakeProgressVal=0;
 
 // ── PROGRESS SYSTEM ──────────────────────────────────────
-// Phase 1 — ETA milne se pehle:
-//   Bar 0% se 5% tak bahut slowly jaati hai (user ko lagta hai kuch ho raha hai)
-//   Speed: 5% / 30 seconds = ~0.013% per tick (80ms)
-//
-// Phase 2 — Jab Draw Things se ETA milta hai:
-//   Remaining % = 100 - currentPct
-//   Speed = remainingPct / (eta_seconds * 12.5 ticks/sec)
-//   Bar usi speed se smoothly 100% tak jaati hai
-//
-// Done pe: seedha 100%
+// Phase 1: Bar 0→5% bahut slowly (jab tak Draw Things se progress nahi milta)
+// Phase 2: Jab pehli baar progress > 0 milta hai:
+//          - ETA se ya elapsed time se remaining time estimate karo
+//          - Remaining % ko us time mein cover karne ki speed set karo
+//          - Bar smoothly 99% tak jaati hai
+// Done:    Seedha 100%
 
 let smoothCurrent=0, smoothTimer=null;
-let stepPerTick=0.013; // Phase 1: bahut slow (5% / ~30sec)
-let etaReceived=false;
+let stepPerTick=0.013; // Phase 1: ~5% in 30 sec
+let phase2Started=false;
+let genStartTime=0; // generate dabane ka time
 
 function startSmoothProgress(){
   smoothCurrent=0;
-  stepPerTick=0.013; // Phase 1 speed
-  etaReceived=false;
+  stepPerTick=0.013;
+  phase2Started=false;
+  genStartTime=Date.now();
   currentStageIdx=-1;
   if(smoothTimer) clearInterval(smoothTimer);
 
@@ -663,14 +661,13 @@ function startSmoothProgress(){
   smoothTimer=setInterval(()=>{
     if(!activeBatch){stopSmoothProgress();return;}
 
-    // Phase 1: max 5% tak slow jaao
-    // Phase 2 (etaReceived): max 99% tak ETA speed se jaao
-    const cap = etaReceived ? 99 : 5;
+    // Phase 1: 5% se aage mat jao jab tak phase2 shuru na ho
+    // Phase 2: 99% se aage mat jao (done pe 100%)
+    const cap = phase2Started ? 99 : 5;
     if(smoothCurrent < cap){
       smoothCurrent = Math.min(cap, smoothCurrent + stepPerTick);
     }
 
-    // Ring update
     const card=activeBatch?.loadCard;
     if(card){
       const fill=card.querySelector('#lc-ring-fill');
@@ -687,23 +684,39 @@ function startSmoothProgress(){
 }
 
 function setRealProgress(pct, eta){
-  // Sirf tab kaam karo jab Draw Things ne meaningful ETA diya ho
-  if(eta <= 0) return;
+  // Draw Things se data aaya — pct aur eta dono check karo
+  // Phase 2 trigger: pct > 0 hote hi (eta 0 ho ya na ho)
+  if(pct <= 0) return;
 
-  // Pehli baar ETA mila — Phase 2 shuru
-  if(!etaReceived){
-    etaReceived=true;
-    // Remaining % = 100 - smoothCurrent
-    // Time = eta seconds
-    // Speed = remaining / (eta * 12.5 ticks per second)
+  if(!phase2Started){
+    phase2Started=true;
+
+    // ETA calculate karo:
+    // Option A: Draw Things ne direct eta diya (eta > 0) — best case
+    // Option B: eta = 0 — elapsed time se estimate karo
+    //   elapsed = kitna time lag chuka hai generate se
+    //   agar 5 seconds mein 10% hua, toh baaki 90% = 45 seconds
+    let estimatedEta = eta;
+    if(estimatedEta <= 0){
+      const elapsedSec = (Date.now() - genStartTime) / 1000;
+      if(pct > 0 && elapsedSec > 0){
+        // elapsed/pct = time per 1% → remaining = (100-pct) * timePerPct
+        estimatedEta = Math.max(5, (elapsedSec / pct) * (100 - pct));
+      } else {
+        estimatedEta = 45; // fallback default
+      }
+    }
+
+    // Speed = remaining% / (eta_sec * 12.5 ticks/sec)
     const remaining = 100 - smoothCurrent;
-    const ticks     = eta * 12.5; // 1000ms/80ms = 12.5 ticks per second
-    stepPerTick     = Math.max(0.05, remaining / ticks);
-  } else {
-    // Baad mein bhi recalculate karte raho agar ETA change ho
+    const ticks = estimatedEta * 12.5;
+    stepPerTick = Math.max(0.04, remaining / ticks);
+
+  } else if(eta > 0){
+    // Phase 2 chal rahi hai — har poll pe speed recalculate karo with fresh ETA
     const remaining = 100 - smoothCurrent;
-    const ticks     = Math.max(1, eta * 12.5);
-    stepPerTick     = Math.max(0.05, remaining / ticks);
+    const ticks = Math.max(1, eta * 12.5);
+    stepPerTick = Math.max(0.04, remaining / ticks);
   }
 }
 
