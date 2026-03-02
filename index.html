@@ -628,19 +628,25 @@ function updateLoadingMsg(msg,sublbl,queueNum,pct){
 let fakeProgressTimer=null,fakeProgressVal=0;
 
 // ── PROGRESS SYSTEM ──────────────────────────────────────
-// Logic:
-//   1. Generate dabate hi bar 0 se chalna shuru — slowly
-//   2. Har poll (2s) pe server se realPct aata hai
-//   3. realPct → nextTarget set karo
-//   4. Bar us target tak 2s mein smoothly pohonche (25 ticks × stepPerTick)
-//   5. Kabhi backward nahi, kabhi achaanak jump nahi
+// Phase 1 — ETA milne se pehle:
+//   Bar 0% se 5% tak bahut slowly jaati hai (user ko lagta hai kuch ho raha hai)
+//   Speed: 5% / 30 seconds = ~0.013% per tick (80ms)
+//
+// Phase 2 — Jab Draw Things se ETA milta hai:
+//   Remaining % = 100 - currentPct
+//   Speed = remainingPct / (eta_seconds * 12.5 ticks/sec)
+//   Bar usi speed se smoothly 100% tak jaati hai
+//
+// Done pe: seedha 100%
 
-let smoothCurrent=0, smoothTarget=0, smoothTimer=null;
-let stepPerTick=0.08; // default slow step
+let smoothCurrent=0, smoothTimer=null;
+let stepPerTick=0.013; // Phase 1: bahut slow (5% / ~30sec)
+let etaReceived=false;
 
 function startSmoothProgress(){
-  smoothCurrent=0; smoothTarget=0;
-  stepPerTick=0.08;
+  smoothCurrent=0;
+  stepPerTick=0.013; // Phase 1 speed
+  etaReceived=false;
   currentStageIdx=-1;
   if(smoothTimer) clearInterval(smoothTimer);
 
@@ -657,9 +663,11 @@ function startSmoothProgress(){
   smoothTimer=setInterval(()=>{
     if(!activeBatch){stopSmoothProgress();return;}
 
-    // Constant step — no diff multiplier, no fast jumps
-    if(smoothCurrent < smoothTarget){
-      smoothCurrent = Math.min(smoothTarget, smoothCurrent + stepPerTick);
+    // Phase 1: max 5% tak slow jaao
+    // Phase 2 (etaReceived): max 99% tak ETA speed se jaao
+    const cap = etaReceived ? 99 : 5;
+    if(smoothCurrent < cap){
+      smoothCurrent = Math.min(cap, smoothCurrent + stepPerTick);
     }
 
     // Ring update
@@ -679,18 +687,23 @@ function startSmoothProgress(){
 }
 
 function setRealProgress(pct, eta){
-  // Server ne real % bheja — yahi seedha target hai
-  // Kabhi peeche nahi, kabhi achaanak full nahi
-  if(pct > smoothTarget){
-    const newTarget = Math.min(97, pct);
+  // Sirf tab kaam karo jab Draw Things ne meaningful ETA diya ho
+  if(eta <= 0) return;
 
-    // stepPerTick = kitna gap cover karna hai ÷ 25 ticks (2 seconds)
-    // Agar pct=30 aur current=10 → gap=20 → step = 20/25 = 0.8 per tick
-    const gap = newTarget - smoothCurrent;
-    if(gap > 0){
-      stepPerTick = Math.max(0.04, Math.min(1.2, gap / 25));
-    }
-    smoothTarget = newTarget;
+  // Pehli baar ETA mila — Phase 2 shuru
+  if(!etaReceived){
+    etaReceived=true;
+    // Remaining % = 100 - smoothCurrent
+    // Time = eta seconds
+    // Speed = remaining / (eta * 12.5 ticks per second)
+    const remaining = 100 - smoothCurrent;
+    const ticks     = eta * 12.5; // 1000ms/80ms = 12.5 ticks per second
+    stepPerTick     = Math.max(0.05, remaining / ticks);
+  } else {
+    // Baad mein bhi recalculate karte raho agar ETA change ho
+    const remaining = 100 - smoothCurrent;
+    const ticks     = Math.max(1, eta * 12.5);
+    stepPerTick     = Math.max(0.05, remaining / ticks);
   }
 }
 
@@ -956,12 +969,8 @@ async function pollJobStatus(jobId){
       }
       const realPct=data.progress||0;
       const eta=data.eta||0;
-      if(realPct>0){
-        setRealProgress(realPct,eta);
-      } else {
-        // Draw Things abhi warmup — slowly aage jao, ruko nahi
-        if(smoothTarget<8){smoothTarget=8;stepPerTick=0.05;}
-      }
+      // Har poll pe setRealProgress — Phase 2 trigger hoga jab ETA > 0 hoga
+      setRealProgress(realPct, eta);
 
     }else if(data.status==='done'){
       stopPolling();localStorage.removeItem('breezyfy_jobId');
