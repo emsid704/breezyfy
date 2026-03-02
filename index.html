@@ -628,27 +628,24 @@ function updateLoadingMsg(msg,sublbl,queueNum,pct){
 let fakeProgressTimer=null,fakeProgressVal=0;
 
 // ── PROGRESS SYSTEM ──────────────────────────────────────
-// Phase 1: Bar 0→5% bahut slowly (jab tak Draw Things se progress nahi milta)
-// Phase 2: Jab pehli baar progress > 0 milta hai:
-//          - ETA se ya elapsed time se remaining time estimate karo
-//          - Remaining % ko us time mein cover karne ki speed set karo
-//          - Bar smoothly 99% tak jaati hai
+// Draw Things se progress/eta nahi milta — time-based approach:
+// Phase 1: Generate dabate hi 0→5% slowly (10 seconds mein)
+// Phase 2: "processing" aate hi elapsed time se 5→99% smoothly
+//          (90 seconds assumed total — average generation time)
 // Done:    Seedha 100%
 
 let smoothCurrent=0, smoothTimer=null;
-let stepPerTick=0.013; // Phase 1: ~5% in 30 sec
-let phase2Started=false;
-let genStartTime=0; // generate dabane ka time
+let phase=1;
+let processingStartTime=0;
+const ASSUMED_GEN_SECONDS=90;
 
 function startSmoothProgress(){
   smoothCurrent=0;
-  stepPerTick=0.013;
-  phase2Started=false;
-  genStartTime=Date.now();
+  phase=1;
+  processingStartTime=0;
   currentStageIdx=-1;
   if(smoothTimer) clearInterval(smoothTimer);
 
-  // Badge
   if(activeBatch){
     const badge=activeBatch.loadCard.querySelector('#lc-badge');
     if(badge){badge.textContent='Generating ✨';badge.style.color='rgba(52,211,153,.9)';badge.classList.remove('generating');void badge.offsetWidth;badge.classList.add('generating');}
@@ -661,11 +658,14 @@ function startSmoothProgress(){
   smoothTimer=setInterval(()=>{
     if(!activeBatch){stopSmoothProgress();return;}
 
-    // Phase 1: 5% se aage mat jao jab tak phase2 shuru na ho
-    // Phase 2: 99% se aage mat jao (done pe 100%)
-    const cap = phase2Started ? 99 : 5;
-    if(smoothCurrent < cap){
-      smoothCurrent = Math.min(cap, smoothCurrent + stepPerTick);
+    if(phase===1){
+      // 0→5% slowly (10 sec mein)
+      if(smoothCurrent<5) smoothCurrent=Math.min(5,smoothCurrent+0.033);
+    } else {
+      // elapsed time se target calculate karo
+      const elapsed=(Date.now()-processingStartTime)/1000;
+      const target=Math.min(99,(elapsed/ASSUMED_GEN_SECONDS)*99);
+      if(smoothCurrent<target) smoothCurrent=Math.min(target,smoothCurrent+0.2);
     }
 
     const card=activeBatch?.loadCard;
@@ -683,40 +683,10 @@ function startSmoothProgress(){
   },80);
 }
 
-function setRealProgress(pct, eta){
-  // Draw Things se data aaya — pct aur eta dono check karo
-  // Phase 2 trigger: pct > 0 hote hi (eta 0 ho ya na ho)
-  if(pct <= 0) return;
-
-  if(!phase2Started){
-    phase2Started=true;
-
-    // ETA calculate karo:
-    // Option A: Draw Things ne direct eta diya (eta > 0) — best case
-    // Option B: eta = 0 — elapsed time se estimate karo
-    //   elapsed = kitna time lag chuka hai generate se
-    //   agar 5 seconds mein 10% hua, toh baaki 90% = 45 seconds
-    let estimatedEta = eta;
-    if(estimatedEta <= 0){
-      const elapsedSec = (Date.now() - genStartTime) / 1000;
-      if(pct > 0 && elapsedSec > 0){
-        // elapsed/pct = time per 1% → remaining = (100-pct) * timePerPct
-        estimatedEta = Math.max(5, (elapsedSec / pct) * (100 - pct));
-      } else {
-        estimatedEta = 45; // fallback default
-      }
-    }
-
-    // Speed = remaining% / (eta_sec * 12.5 ticks/sec)
-    const remaining = 100 - smoothCurrent;
-    const ticks = estimatedEta * 12.5;
-    stepPerTick = Math.max(0.04, remaining / ticks);
-
-  } else if(eta > 0){
-    // Phase 2 chal rahi hai — har poll pe speed recalculate karo with fresh ETA
-    const remaining = 100 - smoothCurrent;
-    const ticks = Math.max(1, eta * 12.5);
-    stepPerTick = Math.max(0.04, remaining / ticks);
+function setRealProgress(pct,eta){
+  if(phase===1){
+    phase=2;
+    processingStartTime=Date.now();
   }
 }
 
@@ -977,19 +947,18 @@ async function pollJobStatus(jobId){
     }else if(data.status==='processing'){
       if(!wasProcessing){
         wasProcessing=true;
+        processingStartTime=Date.now(); // timer shuru!
         const badge=activeBatch?.loadCard?.querySelector('#lc-badge');
         if(badge){badge.textContent='Generating ✨';badge.style.color='rgba(52,211,153,.9)';badge.classList.remove('generating');void badge.offsetWidth;badge.classList.add('generating');}
       }
-      const realPct=data.progress||0;
-      const eta=data.eta||0;
-      // Har poll pe setRealProgress — Phase 2 trigger hoga jab ETA > 0 hoga
-      setRealProgress(realPct, eta);
 
     }else if(data.status==='done'){
       stopPolling();localStorage.removeItem('breezyfy_jobId');
+      // Actual time track karo — avgGenTime update karo
+      const actualSec = (Date.now() - genStartTime) / 1000;
+      if(actualSec > 5) updateAvgGenTime(actualSec);
       stopSmoothProgress();
       if(fakeProgressTimer){clearInterval(fakeProgressTimer);fakeProgressTimer=null;}
-      // Final label reset
       if(activeBatch){const el=activeBatch.loadCard.querySelector('#lc-lbl');if(el){el.style.opacity='1';el.textContent='Image Ready!';}}
       updateLoadingMsg('Image Ready!','',0,100);
       setTimeout(()=>{if(data.image)resolveLoading('data:image/png;base64,'+data.image);else errorLoading('No image received');resetBtn();},500);
