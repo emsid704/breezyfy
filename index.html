@@ -293,14 +293,13 @@
       html,body{height:100%;overflow:hidden}
       .shell{flex-direction:column;height:calc(100vh - 52px);overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
       .recent-col{display:none}
-      .tpl-btn{display:none}
+      .tpl-btn{font-size:10px;padding:5px 10px;}
       .sidebar{width:100%;min-width:0;height:auto;flex-shrink:0;border-right:none;border-bottom:1px solid var(--bdr);overflow:visible}
       .feed-col{width:100%;min-width:0;height:auto;flex-shrink:0;border-right:none;overflow:visible;display:flex;flex-direction:column}
       .feed-empty{min-height:260px;flex:none}
       .feed-scroll{overflow:visible;height:auto;flex:none}
       header{padding:0 16px;gap:10px}
       .logo{font-size:18px}
-      .htag{display:none}
       .clear-btn{font-size:10px;padding:6px 10px}
       .sec{padding:16px 18px}
       .gsec{padding:14px 18px 18px;margin-top:0;border-top:1px solid var(--bdr);background:var(--surf)}
@@ -328,13 +327,11 @@
 <header>
   <a class="logo" href="#"><span>B</span>reezyfy</a>
   <div class="hd"></div>
-  <span class="htag">Create without Limits</span>
-  <div style="flex:1"></div>
-  <!-- Template button — desktop only -->
   <button class="tpl-btn" onclick="openTemplateGallery()">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
     Templates
   </button>
+  <div style="flex:1"></div>
 
   <button class="clear-btn" id="clearBtn" onclick="clearAllImages()" style="display:none">
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
@@ -936,13 +933,20 @@ async function pollJobStatus(jobId){
     const data=await res.json();
 
     if(data.status==='queued'){
-      const pos=data.position||1,secs=data.estimatedSeconds||0;
-      const ts=secs>=60?Math.ceil(secs/60)+' min':secs+' sec';
-      let msg,sub;
-      if(pos===1){msg="You're next!";sub='';}
-      else if(pos===2){msg='<span class="blink-txt">You are next in queue...</span>';sub='';}
-      else{msg=pos+' ahead in queue';sub='~'+ts+' estimated';}
-      updateLoadingMsg(msg,sub,pos);
+      const pos=data.position||1;
+      let msg='';
+      if(pos===1){msg="You're next!";}
+      else if(pos===2){msg='<span class="blink-txt">You are next in queue...</span>';}
+      else{msg='Your request is in queue... #'+pos;}
+      // Queue mein hai — stage blink band karo, sublbl khali rakho
+      stopStageBlink();
+      if(activeBatch){
+        const lbl=activeBatch.loadCard.querySelector('#lc-lbl');
+        const sub=activeBatch.loadCard.querySelector('#lc-sublbl');
+        if(lbl){lbl.style.opacity='1';lbl.innerHTML=msg;}
+        if(sub)sub.textContent='';
+      }
+      updateLoadingMsg(msg,'',pos);
       wasProcessing=false;
 
     }else if(data.status==='processing'){
