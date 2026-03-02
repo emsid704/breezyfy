@@ -626,17 +626,29 @@ function updateLoadingMsg(msg,sublbl,queueNum,pct){
 }
 
 let fakeProgressTimer=null,fakeProgressVal=0;
-// ── SMOOTH PROGRESS — real Draw Things % se sync ──
-let smoothTarget=0, smoothCurrent=0, smoothTimer=null;
 
-let etaSpeedPerTick=0.12; // default speed — ETA aane pe update hoga
+// ── MILESTONE PROGRESS SYSTEM ──────────────────────────────
+// Milestones: 0→20→47→83→100
+// Draw Things se real pct milta hai har poll pe → milestone tak move karo
+const MILESTONES=[0,20,47,83,100];
+let smoothCurrent=0, smoothTarget=0, smoothTimer=null;
+let msSpeedPerTick=0.15; // default — ETA aane pe recalculate
+
+function getMilestoneTarget(realPct){
+  // Real pct ke hisaab se agle milestone tak jaao
+  if(realPct>=97) return 100;
+  if(realPct>=60) return 83;
+  if(realPct>=30) return 47;
+  if(realPct>=5)  return 20;
+  return 20; // shuru mein seedha 20 tak
+}
 
 function startSmoothProgress(){
   smoothCurrent=0; smoothTarget=0;
-  currentStageIdx=-1; etaSpeedPerTick=0.10;
+  currentStageIdx=-1; msSpeedPerTick=0.15;
   if(smoothTimer) clearInterval(smoothTimer);
 
-  // ── "Generating ✨" badge
+  // Badge set
   if(activeBatch){
     const badge=activeBatch.loadCard.querySelector('#lc-badge');
     if(badge){
@@ -652,25 +664,26 @@ function startSmoothProgress(){
     if(pctNum) pctNum.textContent='0';
   }
 
+  // Start moving toward first milestone (20%) immediately
+  smoothTarget=20;
+
   smoothTimer=setInterval(()=>{
     if(!activeBatch){stopSmoothProgress();return;}
 
-    // ETA speed se move karo — jab real % aata hai speed update hoti hai
-    // Agar bar target se peeche hai toh speed se aage jao
-    if(smoothCurrent < smoothTarget){
+    // Smoothly move toward target
+    if(smoothCurrent<smoothTarget){
       const diff=smoothTarget-smoothCurrent;
-      // Fast catch-up jab zyada peeche
-      smoothCurrent+=Math.max(etaSpeedPerTick, diff*0.08);
-      smoothCurrent=Math.min(smoothTarget, smoothCurrent);
-    } else {
-      // Target pe hain — ETA speed se slowly aage drift karo (max 96%)
-      if(smoothTarget<96){
-        smoothTarget=Math.min(96, smoothTarget+etaSpeedPerTick);
-        smoothCurrent+=etaSpeedPerTick*0.6;
-        smoothCurrent=Math.min(smoothTarget, smoothCurrent);
-      }
+      // Fast start, slow near milestone — easing
+      const step=Math.max(msSpeedPerTick, diff*0.05);
+      smoothCurrent=Math.min(smoothTarget, smoothCurrent+step);
+    }
+    // Slow down just before milestone (last 3%)
+    const nearMilestone=MILESTONES.some(m=>m>0&&m<100&&Math.abs(smoothCurrent-m)<3);
+    if(nearMilestone && smoothCurrent>=smoothTarget-0.5){
+      // Pause briefly at milestone until next real % pushes us
     }
 
+    // Update ring
     const card=activeBatch?.loadCard;
     if(card){
       const fill=card.querySelector('#lc-ring-fill');
@@ -686,28 +699,16 @@ function startSmoothProgress(){
   },80);
 }
 
-// ETA tracking for speed calculation
-let etaStartTime=0, etaStartPct=0, etaTotalSeconds=0;
-
 function setRealProgress(pct, eta){
-  if(pct>0){
-    // Real % aaya — seedha wahan le jao
-    smoothTarget=Math.max(smoothTarget, Math.min(97, pct));
+  // Draw Things se real % aaya — milestone tak push karo
+  const newTarget=getMilestoneTarget(pct);
+  smoothTarget=Math.max(smoothTarget, newTarget);
 
-    // ETA se bar ki speed calculate karo
-    // Agar pct=20 aur eta=60s matlab 80% bacha 60s mein
-    // Speed = remaining% / remaining_seconds per second
-    if(eta>0 && pct>0){
-      // Remaining % / remaining seconds = %/sec
-      const remainingPct = 97 - pct;
-      const speedPerSec  = remainingPct / Math.max(1, eta); // %/second
-      // Smooth timer mein speed set karo
-      etaSpeedPerTick = speedPerSec * 0.08; // 80ms per tick
-    }
-  } else if(eta>0 && smoothCurrent>0){
-    const remainingPct = 97 - smoothCurrent;
-    const speedPerSec  = remainingPct / Math.max(1, eta);
-    etaSpeedPerTick = speedPerSec * 0.08;
+  // ETA se speed calculate karo — remaining% / remaining_seconds
+  if(eta>0 && pct>0){
+    const remainingPct=100-smoothCurrent;
+    const speedPctPerSec=remainingPct/Math.max(1,eta);
+    msSpeedPerTick=Math.max(0.08, Math.min(1.5, speedPctPerSec*0.08));
   }
 }
 
@@ -959,7 +960,7 @@ async function pollJobStatus(jobId){
       const pos=data.position||1,secs=data.estimatedSeconds||0;
       const ts=secs>=60?Math.ceil(secs/60)+' min':secs+' sec';
       let msg,sub;
-      if(pos===1){msg="You're next!";sub='almost your turn';}
+      if(pos===1){msg="You're next!";sub='';}
       else if(pos===2){msg='<span class="blink-txt">You are next in queue...</span>';sub='';}
       else{msg=pos+' ahead in queue';sub='~'+ts+' estimated';}
       updateLoadingMsg(msg,sub,pos);
@@ -1020,7 +1021,7 @@ async function generate(){
     if(!data.jobId)throw new Error('No job ID received');
     localStorage.setItem('breezyfy_jobId',data.jobId);localStorage.setItem('breezyfy_prompt',promptText);localStorage.setItem('breezyfy_w',imgW);localStorage.setItem('breezyfy_h',imgH);
     const pos=data.position||1,secs=data.estimatedSeconds||0,ts=secs>=60?Math.ceil(secs/60)+' min':secs+' sec';
-    updateLoadingMsg(pos===1?"You're next!":pos+' ahead in queue',pos===1?'almost your turn':'~'+ts+' estimated',pos);
+    updateLoadingMsg(pos===1?"You're next!":pos+' ahead in queue',pos===1?'':'~'+ts+' estimated',pos);
     stopPolling();const jobId=data.jobId;pollTimer=setInterval(()=>pollJobStatus(jobId),2000);
   }catch(err){
     stopPolling();console.error('[Generate]',err.message);
