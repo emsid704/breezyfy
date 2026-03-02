@@ -628,20 +628,20 @@ function updateLoadingMsg(msg,sublbl,queueNum,pct){
 let fakeProgressTimer=null,fakeProgressVal=0;
 
 // ── PROGRESS SYSTEM ──────────────────────────────────────
-// Strategy:
-//   - Bar moves at constant slow speed (tickSpeed per 80ms)
-//   - Default speed: very slow (~0.5%/sec) — user ko lagta rahe kuch ho raha hai
-//   - Jab Draw Things se real % + ETA aata hai:
-//       tickSpeed = remainingPct / (eta_seconds * 12.5 ticks/sec)
-//   - Bar kabhi real % se aage nahi jaati (max = realPct + 3)
-//   - Done pe seedha 100%
+// Logic:
+//   1. Generate dabate hi bar 0 se chalna shuru — slowly
+//   2. Har poll (2s) pe server se realPct aata hai
+//   3. realPct → nextTarget set karo
+//   4. Bar us target tak 2s mein smoothly pohonche (25 ticks × stepPerTick)
+//   5. Kabhi backward nahi, kabhi achaanak jump nahi
 
 let smoothCurrent=0, smoothTarget=0, smoothTimer=null;
-let tickSpeed=0.04; // % per tick (80ms) — ~0.5%/sec default
+let stepPerTick=0.08; // default slow step
 
 function startSmoothProgress(){
-  smoothCurrent=0; smoothTarget=15; // slowly drift toward 15% initially
-  currentStageIdx=-1; tickSpeed=0.04;
+  smoothCurrent=0; smoothTarget=0;
+  stepPerTick=0.08;
+  currentStageIdx=-1;
   if(smoothTimer) clearInterval(smoothTimer);
 
   // Badge
@@ -649,17 +649,17 @@ function startSmoothProgress(){
     const badge=activeBatch.loadCard.querySelector('#lc-badge');
     if(badge){badge.textContent='Generating ✨';badge.style.color='rgba(52,211,153,.9)';badge.classList.remove('generating');void badge.offsetWidth;badge.classList.add('generating');}
     const pctSub=activeBatch.loadCard.querySelector('#lc-pct-sub');
-    if(pctSub) pctSub.textContent='%';
+    if(pctSub)pctSub.textContent='%';
     const pctNum=activeBatch.loadCard.querySelector('#lc-pct-num');
-    if(pctNum) pctNum.textContent='0';
+    if(pctNum)pctNum.textContent='0';
   }
 
   smoothTimer=setInterval(()=>{
     if(!activeBatch){stopSmoothProgress();return;}
 
-    // Move at constant tickSpeed — no easing formula, no big jumps
+    // Constant step — no diff multiplier, no fast jumps
     if(smoothCurrent < smoothTarget){
-      smoothCurrent = Math.min(smoothTarget, smoothCurrent + tickSpeed);
+      smoothCurrent = Math.min(smoothTarget, smoothCurrent + stepPerTick);
     }
 
     // Ring update
@@ -679,25 +679,18 @@ function startSmoothProgress(){
 }
 
 function setRealProgress(pct, eta){
-  if(pct<=0 && eta<=0) return;
+  // Server ne real % bheja — yahi seedha target hai
+  // Kabhi peeche nahi, kabhi achaanak full nahi
+  if(pct > smoothTarget){
+    const newTarget = Math.min(97, pct);
 
-  // Real % aaya — cap smoothTarget at realPct+3 (bar ahead nahi jaayegi)
-  if(pct>0){
-    smoothTarget = Math.max(smoothCurrent+0.1, Math.min(97, pct+3));
-    // Agar bar bahut peeche hai (>5% gap) toh seedha wahan le jao
-    if(pct - smoothCurrent > 8) smoothCurrent = pct - 3;
-  }
-
-  // ETA se speed recalculate:
-  // remaining% ko eta_seconds mein cover karna hai
-  // ticks = eta_sec * (1000/80) = eta_sec * 12.5
-  if(eta>0 && pct>0){
-    const remaining = Math.max(1, 97 - smoothCurrent);
-    const ticks     = Math.max(1, eta * 12.5);
-    tickSpeed = Math.max(0.02, Math.min(1.0, remaining / ticks));
-  } else if(eta<=0 && pct>0){
-    // ETA nahi aaya — slightly faster default
-    tickSpeed = Math.max(tickSpeed, 0.06);
+    // stepPerTick = kitna gap cover karna hai ÷ 25 ticks (2 seconds)
+    // Agar pct=30 aur current=10 → gap=20 → step = 20/25 = 0.8 per tick
+    const gap = newTarget - smoothCurrent;
+    if(gap > 0){
+      stepPerTick = Math.max(0.04, Math.min(1.2, gap / 25));
+    }
+    smoothTarget = newTarget;
   }
 }
 
@@ -958,16 +951,16 @@ async function pollJobStatus(jobId){
     }else if(data.status==='processing'){
       if(!wasProcessing){
         wasProcessing=true;
-        // Already started in generate() — just update badge
         const badge=activeBatch?.loadCard?.querySelector('#lc-badge');
         if(badge){badge.textContent='Generating ✨';badge.style.color='rgba(52,211,153,.9)';badge.classList.remove('generating');void badge.offsetWidth;badge.classList.add('generating');}
       }
-      const realPct = data.progress||0;
-      const eta     = data.eta||0;
+      const realPct=data.progress||0;
+      const eta=data.eta||0;
       if(realPct>0){
-        setRealProgress(realPct, eta);
-      } else if(eta>0){
-        setRealProgress(0, eta); // sirf eta se sync karo
+        setRealProgress(realPct,eta);
+      } else {
+        // Draw Things abhi warmup — slowly aage jao, ruko nahi
+        if(smoothTarget<8){smoothTarget=8;stepPerTick=0.05;}
       }
 
     }else if(data.status==='done'){
