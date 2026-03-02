@@ -609,7 +609,7 @@ function updateLoadingMsg(msg,sublbl,queueNum,pct){
 
     if(queueNum!==undefined&&queueNum>0){
       if(badge){badge.textContent='Queue #'+queueNum;badge.style.color='rgba(155,125,255,.8)';badge.classList.remove('generating');}
-      if(pctNum)pctNum.textContent='#'+queueNum;if(pctSub)pctSub.textContent='QUEUE';
+      // pctNum mein "#1" nahi dikhana — % hi dikhayenge
     } else if(queueNum===0){
       if(badge){badge.textContent='Generating ✨';badge.style.color='rgba(52,211,153,.9)';badge.classList.add('generating');}
     }
@@ -629,38 +629,48 @@ let fakeProgressTimer=null,fakeProgressVal=0;
 // ── SMOOTH PROGRESS — real Draw Things % se sync ──
 let smoothTarget=0, smoothCurrent=0, smoothTimer=null;
 
+let etaSpeedPerTick=0.12; // default speed — ETA aane pe update hoga
+
 function startSmoothProgress(){
-  smoothCurrent=0; smoothTarget=2;
-  currentStageIdx=-1;
+  smoothCurrent=0; smoothTarget=0;
+  currentStageIdx=-1; etaSpeedPerTick=0.10;
   if(smoothTimer) clearInterval(smoothTimer);
 
-  // ── "Generating ✨" badge blink shuru karo (Fix 1)
+  // ── "Generating ✨" badge
   if(activeBatch){
     const badge=activeBatch.loadCard.querySelector('#lc-badge');
     if(badge){
       badge.textContent='Generating ✨';
       badge.style.color='rgba(52,211,153,.9)';
-      badge.classList.remove('generating'); // reset first
-      void badge.offsetWidth;              // reflow
-      badge.classList.add('generating');   // blink start
+      badge.classList.remove('generating');
+      void badge.offsetWidth;
+      badge.classList.add('generating');
     }
-    // pctSub reset karo — "#1 QUEUE" se "%" pe aao
     const pctSub=activeBatch.loadCard.querySelector('#lc-pct-sub');
     if(pctSub) pctSub.textContent='%';
+    const pctNum=activeBatch.loadCard.querySelector('#lc-pct-num');
+    if(pctNum) pctNum.textContent='0';
   }
 
   smoothTimer=setInterval(()=>{
     if(!activeBatch){stopSmoothProgress();return;}
-    const diff=smoothTarget-smoothCurrent;
-    if(diff>0.05){
-      smoothCurrent+=diff*0.06+0.05;
-      smoothCurrent=Math.min(smoothTarget,smoothCurrent);
+
+    // ETA speed se move karo — jab real % aata hai speed update hoti hai
+    // Agar bar target se peeche hai toh speed se aage jao
+    if(smoothCurrent < smoothTarget){
+      const diff=smoothTarget-smoothCurrent;
+      // Fast catch-up jab zyada peeche
+      smoothCurrent+=Math.max(etaSpeedPerTick, diff*0.08);
+      smoothCurrent=Math.min(smoothTarget, smoothCurrent);
+    } else {
+      // Target pe hain — ETA speed se slowly aage drift karo (max 96%)
+      if(smoothTarget<96){
+        smoothTarget=Math.min(96, smoothTarget+etaSpeedPerTick);
+        smoothCurrent+=etaSpeedPerTick*0.6;
+        smoothCurrent=Math.min(smoothTarget, smoothCurrent);
+      }
     }
-    // Auto-drift jab real progress nahi aa raha (max 92%)
-    if(smoothTarget<92){
-      const speed=smoothCurrent<25?0.12:smoothCurrent<75?0.07:0.02;
-      smoothTarget=Math.min(92,smoothTarget+speed);
-    }
+
     const card=activeBatch?.loadCard;
     if(card){
       const fill=card.querySelector('#lc-ring-fill');
@@ -676,19 +686,28 @@ function startSmoothProgress(){
   },80);
 }
 
+// ETA tracking for speed calculation
+let etaStartTime=0, etaStartPct=0, etaTotalSeconds=0;
+
 function setRealProgress(pct, eta){
-  // Fix 2: ETA se actual target calculate karo
-  // Draw Things: pct=0-100, eta=seconds remaining
-  // Agar eta aaya hai toh use karke smooth target set karo
   if(pct>0){
-    smoothTarget=Math.max(smoothTarget,Math.min(97,pct));
+    // Real % aaya — seedha wahan le jao
+    smoothTarget=Math.max(smoothTarget, Math.min(97, pct));
+
+    // ETA se bar ki speed calculate karo
+    // Agar pct=20 aur eta=60s matlab 80% bacha 60s mein
+    // Speed = remaining% / remaining_seconds per second
+    if(eta>0 && pct>0){
+      // Remaining % / remaining seconds = %/sec
+      const remainingPct = 97 - pct;
+      const speedPerSec  = remainingPct / Math.max(1, eta); // %/second
+      // Smooth timer mein speed set karo
+      etaSpeedPerTick = speedPerSec * 0.08; // 80ms per tick
+    }
   } else if(eta>0 && smoothCurrent>0){
-    // ETA se estimate: agar 30s bacha hai aur abhi 20% hai
-    // toh roughly (elapsed/(elapsed+eta))*100
-    // Simple approach: target = 100 - (eta/(eta+10))*remaining_gap
-    const remaining=97-smoothCurrent;
-    const etaFraction=Math.min(1,10/(eta+10)); // eta jitna kam, utna aage
-    smoothTarget=Math.max(smoothTarget,Math.min(96,smoothCurrent+remaining*etaFraction));
+    const remainingPct = 97 - smoothCurrent;
+    const speedPerSec  = remainingPct / Math.max(1, eta);
+    etaSpeedPerTick = speedPerSec * 0.08;
   }
 }
 
@@ -709,7 +728,7 @@ function addLoadingBatch(promptText,imgW,imgH){
   const loadCard=document.createElement('div'); loadCard.className='load-card';
   const fw=document.getElementById('feedCol').clientWidth-40;
   loadCard.style.height=Math.max(200,Math.min(480,Math.round(fw*(imgH/imgW))))+'px';
-  loadCard.innerHTML=`<div class="load-grid"></div><div class="load-glow"></div><div class="particles" id="lc-particles"></div><div class="queue-badge" id="lc-badge">Preparing...</div><div class="orb-wrap"><svg class="progress-ring" id="lc-ring" viewBox="0 0 140 140"><defs><linearGradient id="progGrad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:#6e50ff"/><stop offset="100%" style="stop-color:#9b7dff"/></linearGradient></defs><circle class="track" cx="70" cy="70" r="60"/><circle class="fill" id="lc-ring-fill" cx="70" cy="70" r="60"/></svg><div class="ring-outer"></div><div class="ring-mid"></div><div class="orb-inner"><div class="pct-text" id="lc-pct"><span id="lc-pct-num">–</span><span class="pct-sub" id="lc-pct-sub">QUEUE</span></div></div></div><div class="load-status"><div class="load-lbl" id="lc-lbl">In queue...</div><div class="load-sublbl" id="lc-sublbl">please wait</div></div>`;
+  loadCard.innerHTML=`<div class="load-grid"></div><div class="load-glow"></div><div class="particles" id="lc-particles"></div><div class="queue-badge" id="lc-badge">Preparing...</div><div class="orb-wrap"><svg class="progress-ring" id="lc-ring" viewBox="0 0 140 140"><defs><linearGradient id="progGrad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:#6e50ff"/><stop offset="100%" style="stop-color:#9b7dff"/></linearGradient></defs><circle class="track" cx="70" cy="70" r="60"/><circle class="fill" id="lc-ring-fill" cx="70" cy="70" r="60"/></svg><div class="ring-outer"></div><div class="ring-mid"></div><div class="orb-inner"><div class="pct-text" id="lc-pct"><span id="lc-pct-num">–</span><span class="pct-sub" id="lc-pct-sub">%</span></div></div></div><div class="load-status"><div class="load-lbl" id="lc-lbl">In queue...</div><div class="load-sublbl" id="lc-sublbl">please wait</div></div>`;
   const pCont=loadCard.querySelector('#lc-particles');
   for(let i=0;i<14;i++){const p=document.createElement('div');p.className='particle';const sz=Math.random()*3+2,a=Math.random()*Math.PI*2,d=50+Math.random()*70;p.style.cssText='width:'+sz+'px;height:'+sz+'px;left:'+(42+Math.random()*16)+'%;top:'+(42+Math.random()*16)+'%;--dur:'+(2+Math.random()*3)+'s;--del:'+(Math.random()*2)+'s;--tx:'+(Math.cos(a)*d)+'px;--ty:'+(Math.sin(a)*d)+'px';pCont.appendChild(p);}
   setTimeout(()=>{const pt=loadCard.querySelector('#lc-pct');if(pt)pt.classList.add('visible');},300);
@@ -949,7 +968,9 @@ async function pollJobStatus(jobId){
     }else if(data.status==='processing'){
       if(!wasProcessing){
         wasProcessing=true;
-        startSmoothProgress(); // smooth animation shuru
+        // Already started in generate() — just update badge
+        const badge=activeBatch?.loadCard?.querySelector('#lc-badge');
+        if(badge){badge.textContent='Generating ✨';badge.style.color='rgba(52,211,153,.9)';badge.classList.remove('generating');void badge.offsetWidth;badge.classList.add('generating');}
       }
       const realPct = data.progress||0;
       const eta     = data.eta||0;
@@ -985,6 +1006,11 @@ async function generate(){
     const [imgW,imgH]=getDims();
     const btn=document.getElementById('genBtn');btn.disabled=true;btn.innerHTML='<span class="shim"></span>Generating…';
     addLoadingBatch(promptText,imgW,imgH);
+    // Reset state for fresh generation
+    wasProcessing=false; smoothCurrent=0; smoothTarget=0;
+    stopSmoothProgress();
+    // Start bar immediately — don't wait for first poll
+    startSmoothProgress();
     const payload={prompt:promptText,width:imgW,height:imgH};
     if(negPrompt)payload.negative_prompt=negPrompt;
     const res=await fetch(`${API_URL}/generate`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
