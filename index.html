@@ -637,9 +637,7 @@ let processingStartTime=0;
 const ASSUMED_GEN_SECONDS=90;
 
 function startSmoothProgress(){
-  smoothCurrent=0;
-  phase=1;
-  processingStartTime=0;
+  smoothCurrent=0; phase=2; processingStartTime=Date.now();
   currentStageIdx=-1;
   if(smoothTimer) clearInterval(smoothTimer);
 
@@ -656,8 +654,9 @@ function startSmoothProgress(){
     if(!activeBatch){stopSmoothProgress();return;}
 
     if(phase===1){
-      // 0→5% slowly (10 sec mein)
+      // 0→5% slowly jab tak processing shuru na ho
       if(smoothCurrent<5) smoothCurrent=Math.min(5,smoothCurrent+0.033);
+
     } else {
       // elapsed time se target calculate karo — max 90% tak
       const elapsed=(Date.now()-processingStartTime)/1000;
