@@ -934,28 +934,38 @@ async function pollJobStatus(jobId){
 
     if(data.status==='queued'){
       const pos=data.position||1;
-      let msg='';
-      if(pos===1){msg="You're next!";}
-      else if(pos===2){msg='<span class="blink-txt">You are next in queue...</span>';}
-      else{msg='Your request is in queue... #'+pos;}
-      // Queue mein hai — stage blink band karo, sublbl khali rakho
+      // Bar 0 pe rakho — queue mein nahi chalti
+      smoothCurrent=0;
       stopStageBlink();
       if(activeBatch){
-        const lbl=activeBatch.loadCard.querySelector('#lc-lbl');
-        const sub=activeBatch.loadCard.querySelector('#lc-sublbl');
-        if(lbl){lbl.style.opacity='1';lbl.innerHTML=msg;}
-        if(sub)sub.textContent='';
+        const card=activeBatch.loadCard;
+        // Ring hide karo
+        const ring=card.querySelector('#lc-ring');
+        if(ring)ring.classList.remove('visible');
+        // pct 0 dikhao
+        const pctNum=card.querySelector('#lc-pct-num');
+        const pctSub=card.querySelector('#lc-pct-sub');
+        if(pctNum)pctNum.textContent='–';
+        if(pctSub)pctSub.textContent='';
+        // Badge
+        const badge=card.querySelector('#lc-badge');
+        if(badge){badge.textContent='In Queue';badge.style.color='rgba(155,125,255,.8)';badge.classList.remove('generating');}
+        // Label — sirf ye 2 messages
+        const lbl=card.querySelector('#lc-lbl');
+        const sub=card.querySelector('#lc-sublbl');
+        if(lbl){
+          lbl.style.opacity='1';
+          if(pos===2) lbl.innerHTML='<span class="blink-txt">You are next in queue...</span>';
+          else lbl.textContent='Your request is in queue... #'+pos;
+        }
+        if(sub) sub.textContent='';
       }
-      updateLoadingMsg(msg,'',pos);
       wasProcessing=false;
 
     }else if(data.status==='processing'){
       if(!wasProcessing){
         wasProcessing=true;
-        phase=2;
-        processingStartTime=Date.now();
-        const badge=activeBatch?.loadCard?.querySelector('#lc-badge');
-        if(badge){badge.textContent='Generating ✨';badge.style.color='rgba(52,211,153,.9)';badge.classList.remove('generating');void badge.offsetWidth;badge.classList.add('generating');}
+        startSmoothProgress(); // bar tabhi shuru ho jab processing ho
       }
 
     }else if(data.status==='done'){
@@ -984,10 +994,8 @@ async function generate(){
     const btn=document.getElementById('genBtn');btn.disabled=true;btn.innerHTML='<span class="shim"></span>Generating…';
     addLoadingBatch(promptText,imgW,imgH);
     // Reset state for fresh generation
-    wasProcessing=false; smoothCurrent=0; smoothTarget=0;
+    wasProcessing=false; smoothCurrent=0;
     stopSmoothProgress();
-    // Start bar immediately — don't wait for first poll
-    startSmoothProgress();
     const payload={prompt:promptText,width:imgW,height:imgH};
     if(negPrompt)payload.negative_prompt=negPrompt;
     const res=await fetch(`${API_URL}/generate`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
