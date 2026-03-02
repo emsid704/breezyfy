@@ -662,10 +662,11 @@ function startSmoothProgress(){
       // 0→5% slowly (10 sec mein)
       if(smoothCurrent<5) smoothCurrent=Math.min(5,smoothCurrent+0.033);
     } else {
-      // elapsed time se target calculate karo
+      // elapsed time se target calculate karo — max 90% tak
       const elapsed=(Date.now()-processingStartTime)/1000;
-      const target=Math.min(99,(elapsed/ASSUMED_GEN_SECONDS)*99);
+      const target=Math.min(90,(elapsed/ASSUMED_GEN_SECONDS)*90);
       if(smoothCurrent<target) smoothCurrent=Math.min(target,smoothCurrent+0.2);
+      // 90% ke baad ruko — done aate hi 100% hoga
     }
 
     const card=activeBatch?.loadCard;
@@ -947,16 +948,14 @@ async function pollJobStatus(jobId){
     }else if(data.status==='processing'){
       if(!wasProcessing){
         wasProcessing=true;
-        processingStartTime=Date.now(); // timer shuru!
+        phase=2;
+        processingStartTime=Date.now();
         const badge=activeBatch?.loadCard?.querySelector('#lc-badge');
         if(badge){badge.textContent='Generating ✨';badge.style.color='rgba(52,211,153,.9)';badge.classList.remove('generating');void badge.offsetWidth;badge.classList.add('generating');}
       }
 
     }else if(data.status==='done'){
       stopPolling();localStorage.removeItem('breezyfy_jobId');
-      // Actual time track karo — avgGenTime update karo
-      const actualSec = (Date.now() - genStartTime) / 1000;
-      if(actualSec > 5) updateAvgGenTime(actualSec);
       stopSmoothProgress();
       if(fakeProgressTimer){clearInterval(fakeProgressTimer);fakeProgressTimer=null;}
       if(activeBatch){const el=activeBatch.loadCard.querySelector('#lc-lbl');if(el){el.style.opacity='1';el.textContent='Image Ready!';}}
