@@ -545,8 +545,52 @@ function isMobile(){ return window.innerWidth<=767; }
 function scrollToEl(el){ if(isMobile()){const s=document.getElementById('shell');s.scrollTo({top:el.getBoundingClientRect().top+s.scrollTop-12,behavior:'smooth'});}else el.scrollIntoView({behavior:'smooth',block:'start'}); }
 function showFeed(){ document.getElementById('feedEmpty').style.display='none'; document.getElementById('feedScroll').style.display='flex'; }
 
-const MSGS=['Sampling latents…','Refining details…','Decoding image…','Almost ready…'];
+// ── 4 STAGE LABELS (25% each) ──────────────────
+const STAGE_LABELS = [
+  'Prompt Analysis...',
+  'Style Mapping...',
+  'Detail Rendering...',
+  'Final Touch...'
+];
+// Stage thresholds: 0-25, 25-50, 50-75, 75-100
 let progTimer,progIdx=0,activeBatch=null;
+let stageBlinkTimer=null, currentStageIdx=-1;
+
+function getStageForPct(pct){
+  if(pct<25) return 0;
+  if(pct<50) return 1;
+  if(pct<75) return 2;
+  return 3;
+}
+
+function startStageBlink(stageIdx){
+  // Same stage hai toh dobara mat shuru karo
+  if(stageIdx===currentStageIdx) return;
+  currentStageIdx=stageIdx;
+  if(stageBlinkTimer){clearInterval(stageBlinkTimer);stageBlinkTimer=null;}
+  let blinkOn=true;
+  const lbl=activeBatch?.loadCard?.querySelector('#lc-lbl');
+  const sub=activeBatch?.loadCard?.querySelector('#lc-sublbl');
+  if(sub) sub.textContent='';
+  stageBlinkTimer=setInterval(()=>{
+    if(!activeBatch){clearInterval(stageBlinkTimer);return;}
+    const el=activeBatch.loadCard.querySelector('#lc-lbl');
+    if(!el) return;
+    blinkOn=!blinkOn;
+    el.style.opacity=blinkOn?'1':'0.25';
+    el.textContent=STAGE_LABELS[stageIdx];
+  },520);
+  if(lbl){ lbl.style.opacity='1'; lbl.textContent=STAGE_LABELS[stageIdx]; }
+}
+
+function stopStageBlink(){
+  if(stageBlinkTimer){clearInterval(stageBlinkTimer);stageBlinkTimer=null;}
+  currentStageIdx=-1;
+  if(activeBatch){
+    const el=activeBatch.loadCard.querySelector('#lc-lbl');
+    if(el){el.style.opacity='1';}
+  }
+}
 
 function updateLoadingMsg(msg,sublbl,queueNum,pct){
   try{
@@ -554,49 +598,83 @@ function updateLoadingMsg(msg,sublbl,queueNum,pct){
     const card=activeBatch.loadCard;
     const lbl=card.querySelector('#lc-lbl'),sub=card.querySelector('#lc-sublbl');
     const badge=card.querySelector('#lc-badge'),pctNum=card.querySelector('#lc-pct-num'),pctSub=card.querySelector('#lc-pct-sub');
-    if(lbl&&msg) lbl.innerHTML=msg;
-    if(sub&&sublbl!==undefined) sub.textContent=sublbl;
-    if(queueNum!==undefined&&queueNum>0){if(badge){badge.textContent='Queue #'+queueNum;badge.style.color='rgba(155,125,255,.8)';badge.classList.remove('generating');}if(pctNum)pctNum.textContent='#'+queueNum;if(pctSub)pctSub.textContent='QUEUE';}
-    else if(queueNum===0){if(badge){badge.textContent='Generating ✨';badge.style.color='rgba(52,211,153,.9)';badge.classList.add('generating');}}
-    if(pct!==undefined){const ring=card.querySelector('#lc-ring'),fill=card.querySelector('#lc-ring-fill');if(ring)ring.classList.add('visible');if(fill)fill.style.strokeDashoffset=376-(376*pct/100);if(pctNum)pctNum.textContent=Math.round(pct);if(pctSub)pctSub.textContent='%';}
+
+    // Sirf queue mein ho tab label update karo — generating mein stage blink handle karta hai
+    if(queueNum===undefined||queueNum===0){
+      // processing state — label stage blink se handle hoga
+    } else {
+      if(lbl&&msg) lbl.innerHTML=msg;
+      if(sub&&sublbl!==undefined) sub.textContent=sublbl;
+    }
+
+    if(queueNum!==undefined&&queueNum>0){
+      if(badge){badge.textContent='Queue #'+queueNum;badge.style.color='rgba(155,125,255,.8)';badge.classList.remove('generating');}
+      if(pctNum)pctNum.textContent='#'+queueNum;if(pctSub)pctSub.textContent='QUEUE';
+    } else if(queueNum===0){
+      if(badge){badge.textContent='Generating ✨';badge.style.color='rgba(52,211,153,.9)';badge.classList.add('generating');}
+    }
+    if(pct!==undefined){
+      const ring=card.querySelector('#lc-ring'),fill=card.querySelector('#lc-ring-fill');
+      if(ring)ring.classList.add('visible');
+      if(fill)fill.style.strokeDashoffset=376-(376*pct/100);
+      if(pctNum)pctNum.textContent=Math.round(pct);
+      if(pctSub)pctSub.textContent='%';
+      // Stage update karo based on pct
+      if(pct>0&&pct<100) startStageBlink(getStageForPct(pct));
+    }
   }catch(e){console.warn('updateMsg:',e.message);}
 }
 
 let fakeProgressTimer=null,fakeProgressVal=0;
-// Smooth interpolation — displayed % smoothly drifts toward target %
+// ── SMOOTH PROGRESS — real Draw Things % se sync ──
 let smoothTarget=0, smoothCurrent=0, smoothTimer=null;
 
 function startSmoothProgress(){
-  smoothCurrent=0; smoothTarget=5;
+  smoothCurrent=0; smoothTarget=2;
+  currentStageIdx=-1;
   if(smoothTimer) clearInterval(smoothTimer);
-  // Har 80ms render karo — 60fps smooth feel
   smoothTimer=setInterval(()=>{
-    // Current → target tak smooth move karo
-    const diff = smoothTarget - smoothCurrent;
-    if(Math.abs(diff) > 0.1){
-      // Slow start, slow end — easing
-      smoothCurrent += diff * 0.04 + 0.08;
-      smoothCurrent = Math.min(smoothTarget, smoothCurrent);
+    if(!activeBatch){stopSmoothProgress();return;}
+    // Smooth easing toward target
+    const diff=smoothTarget-smoothCurrent;
+    if(diff>0.05){
+      // Fast when far, slow when close
+      smoothCurrent+=diff*0.06+0.05;
+      smoothCurrent=Math.min(smoothTarget,smoothCurrent);
     }
-    // Agar real progress nahi aa raha, slowly drift karo (max 94%)
-    if(smoothTarget < 15 && smoothCurrent >= smoothTarget - 1){
-      smoothTarget = Math.min(94, smoothTarget + 0.06);
+    // Auto-drift slowly when no real progress (max 92% tak)
+    if(smoothTarget<92){
+      // Speed: 0-25% fast, 25-75% medium, 75-92% very slow
+      const speed = smoothCurrent<25 ? 0.12 : smoothCurrent<75 ? 0.07 : 0.02;
+      smoothTarget=Math.min(92,smoothTarget+speed);
     }
-    updateLoadingMsg('Creating your image...','',0, smoothCurrent);
-  }, 80);
+    // Ring + stage update
+    const card=activeBatch?.loadCard;
+    if(card){
+      const fill=card.querySelector('#lc-ring-fill');
+      const ring=card.querySelector('#lc-ring');
+      const pctNum=card.querySelector('#lc-pct-num');
+      const pctSub=card.querySelector('#lc-pct-sub');
+      if(ring)ring.classList.add('visible');
+      if(fill)fill.style.strokeDashoffset=376-(376*smoothCurrent/100);
+      if(pctNum)pctNum.textContent=Math.round(smoothCurrent);
+      if(pctSub)pctSub.textContent='%';
+      startStageBlink(getStageForPct(smoothCurrent));
+    }
+  },80);
 }
 
-function setRealProgress(pct, etaTxt){
-  // Real Draw Things % aaya — smoothly move toward it (kabhi peeche nahi)
-  smoothTarget = Math.max(smoothTarget, Math.min(98, pct));
-  if(etaTxt) updateLoadingMsg('Creating your image...', etaTxt, 0, smoothCurrent);
+function setRealProgress(pct){
+  // Real Draw Things % — smoothTarget ko seedha wahan le jao (kabhi peeche nahi)
+  smoothTarget=Math.max(smoothTarget,Math.min(97,pct));
 }
 
 function stopSmoothProgress(){
-  if(smoothTimer){ clearInterval(smoothTimer); smoothTimer=null; }
+  if(smoothTimer){clearInterval(smoothTimer);smoothTimer=null;}
+  stopStageBlink();
 }
 
-function startFakeProgress(){ startSmoothProgress(); }
+function startFakeProgress(){startSmoothProgress();}
 
 function addLoadingBatch(promptText,imgW,imgH){
   showFeed();
@@ -617,8 +695,6 @@ function addLoadingBatch(promptText,imgW,imgH){
   setTimeout(()=>scrollToEl(batch),80);
   activeBatch={batch,bh,imgArea,loadCard,promptText,imgW,imgH};
   progIdx=0; clearInterval(progTimer);
-  const txtEl=loadCard.querySelector('.load-lbl');
-  progTimer=setInterval(()=>{progIdx=(progIdx+1)%MSGS.length;if(txtEl)txtEl.textContent=MSGS[progIdx];},2400);
 }
 
 function resolveLoading(src){
@@ -856,14 +932,16 @@ async function pollJobStatus(jobId){
       const eta     = data.eta||0;
       if(realPct>0){
         const etaTxt = eta>0?(eta>=60?Math.ceil(eta/60)+'m remaining':eta+'s remaining'):'';
-        setRealProgress(realPct, etaTxt); // real % se sync karo
+        setRealProgress(realPct); // real % se sync karo
       }
 
     }else if(data.status==='done'){
       stopPolling();localStorage.removeItem('breezyfy_jobId');
       stopSmoothProgress();
       if(fakeProgressTimer){clearInterval(fakeProgressTimer);fakeProgressTimer=null;}
-      updateLoadingMsg('Image ready!','',0,100);
+      // Final label reset
+      if(activeBatch){const el=activeBatch.loadCard.querySelector('#lc-lbl');if(el){el.style.opacity='1';el.textContent='Image Ready!';}}
+      updateLoadingMsg('Image Ready!','',0,100);
       setTimeout(()=>{if(data.image)resolveLoading('data:image/png;base64,'+data.image);else errorLoading('No image received');resetBtn();},500);
 
     }else if(data.status==='error'){
