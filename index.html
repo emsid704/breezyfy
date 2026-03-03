@@ -295,6 +295,8 @@
       /* Show mobile ads on mobile */
       .mob-ad-static{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 0 6px;width:100%;}
       .mob-ad-between{display:flex;}
+      /* Hide PC sidebar ad on mobile */
+      #pcAdSec{display:none!important;}
     }
   </style>
 </head>
@@ -374,6 +376,22 @@
           <button class="ibtn" onclick="swapDims()">⇅</button>
         </div>
         <button class="appbtn" id="appBtn" onclick="applyCustom()">Apply Custom Size</button>
+      </div>
+    </div>
+    <!-- AD 5: PC 300×250 — below Canvas Size, desktop only -->
+    <div class="sec" id="pcAdSec" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 24px;">
+      <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);align-self:flex-start;">Advertisement</div>
+      <div style="width:300px;max-width:100%;height:250px;overflow:hidden;border-radius:8px;border:1px solid rgba(255,255,255,.05);background:#0c0c1c;">
+        <script>
+          atOptions = {
+            'key' : '0325a81b241fbcfb35505509e36ae469',
+            'format' : 'iframe',
+            'height' : 250,
+            'width' : 300,
+            'params' : {}
+          };
+        </script>
+        <script src="https://www.highperformanceformat.com/0325a81b241fbcfb35505509e36ae469/invoke.js"></script>
       </div>
     </div>
     <div class="gsec">
