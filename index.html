@@ -1092,8 +1092,8 @@
 <script>
 function uc(el){ document.getElementById('cn').textContent = el.value.length; }
 
-/* ══ MODE SWITCHING (NEW) ══ */
-let currentMode = 'single'; // 'single' | 'bulk'
+/* ══ MODE SWITCHING ══ */
+let currentMode = 'single';
 
 function switchMode(mode) {
   currentMode = mode;
@@ -1122,18 +1122,16 @@ function switchMode(mode) {
   }
 }
 
-/* ══ BULK PROMPTS LOGIC (NEW) ══ */
+/* ══ BULK PROMPTS LOGIC ══ */
 let bulkQueue = [];
 let bulkCurrent = 0;
 let bulkTotal = 0;
 let isBulkRunning = false;
 let bulkStopped = false;
-let onItemComplete = null; // callback hook
+let _bulkItemResolve = null;
 
 function parseBulkPrompts(text) {
-  return text.split('\n')
-    .map(l => l.trim())
-    .filter(l => l.length > 0);
+  return text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
 }
 
 function onBulkInput() {
@@ -1151,15 +1149,10 @@ function renderBulkList(prompts, currentIdx) {
   list.innerHTML = prompts.map((p, i) => {
     let cls = 'bi-pending', ico = '';
     if (currentIdx >= 0) {
-      if (i < currentIdx) { cls = 'bi-done'; ico = '✓'; }
-      else if (i === currentIdx) { cls = 'bi-current'; ico = '⟳'; }
-      else { cls = 'bi-pending'; ico = ''; }
+      if (i < currentIdx)        { cls = 'bi-done';   ico = '&#10003;'; }
+      else if (i === currentIdx) { cls = 'bi-current'; ico = '&#8635;'; }
     }
-    return `<div class="bulk-item ${cls}" id="bi_${i}">
-      <div class="bi-num">${i+1}</div>
-      <div class="bi-txt">${p}</div>
-      <div class="bi-ico">${ico}</div>
-    </div>`;
+    return '<div class="bulk-item '+cls+'" id="bi_'+i+'"><div class="bi-num">'+(i+1)+'</div><div class="bi-txt">'+p+'</div><div class="bi-ico">'+ico+'</div></div>';
   }).join('');
 }
 
@@ -1168,30 +1161,25 @@ function updateBulkListItem(idx, state) {
   if (!el) return;
   el.className = 'bulk-item bi-' + state;
   const ico = el.querySelector('.bi-ico');
-  if (ico) ico.textContent = state === 'done' ? '✓' : state === 'current' ? '⟳' : state === 'error' ? '✗' : '';
+  if (ico) ico.textContent = state==='done' ? '✓' : state==='error' ? '✗' : '⟳';
 }
 
-function updateBulkProgress() {
+function setBulkProgress(done, total) {
   const panel = document.getElementById('bulkProgPanel');
-  const bppDone = document.getElementById('bppDone');
-  const bppTotal = document.getElementById('bppTotal');
-  const bar = document.getElementById('bppBar');
   if (!isBulkRunning) { panel.classList.remove('vis'); return; }
   panel.classList.add('vis');
-  const done = Math.max(0, bulkCurrent - 1);
-  bppDone.textContent = done;
-  bppTotal.textContent = bulkTotal;
-  bar.style.width = (bulkTotal > 0 ? (done / bulkTotal) * 100 : 0) + '%';
+  document.getElementById('bppDone').textContent = done;
+  document.getElementById('bppTotal').textContent = total;
+  document.getElementById('bppBar').style.width = (total > 0 ? (done/total)*100 : 0) + '%';
 }
 
 function stopBulk() {
   bulkStopped = true;
   isBulkRunning = false;
-  onItemComplete = null;
+  if (_bulkItemResolve) { _bulkItemResolve(false); _bulkItemResolve = null; }
   document.getElementById('bulkProgPanel').classList.remove('vis');
-  const genBtn = document.getElementById('genBtn');
-  genBtn.disabled = false;
-  genBtnTxt.innerHTML = '⚡ &nbsp;Start Bulk Generate';
+  document.getElementById('genBtn').disabled = false;
+  document.getElementById('genBtnTxt').innerHTML = '&#9889; &nbsp;Start Bulk Generate';
   showToast('Bulk generation stopped');
 }
 
@@ -1199,68 +1187,83 @@ async function startBulkQueue() {
   const ta = document.getElementById('bulkTA');
   const prompts = parseBulkPrompts(ta.value);
   if (!prompts.length) {
-    showToast('Pehle prompts likho — ek line = ek prompt');
+    ta.style.borderColor = 'rgba(255,84,112,.5)';
+    setTimeout(function(){ ta.style.borderColor = ''; }, 1000);
+    ta.focus();
     return;
   }
-
-  bulkQueue = [...prompts];
+  bulkQueue = prompts.slice();
   bulkCurrent = 0;
   bulkTotal = prompts.length;
   isBulkRunning = true;
   bulkStopped = false;
-
-  // render list with all pending
   renderBulkList(prompts, 0);
-  updateBulkProgress();
-
-  const genBtnTxt = document.getElementById('genBtnTxt');
-  genBtnTxt.innerHTML = '⚡ &nbsp;Running...';
-
-  await processBulkNext();
-}
-
-async function processBulkNext() {
-  if (bulkStopped || !isBulkRunning) return;
-  if (bulkCurrent >= bulkTotal) {
-    // All done
-    isBulkRunning = false;
-    document.getElementById('bulkProgPanel').classList.remove('vis');
-    // Final progress update
-    const bppDone = document.getElementById('bppDone');
-    const bar = document.getElementById('bppBar');
-    if (bppDone) bppDone.textContent = bulkTotal;
-    if (bar) bar.style.width = '100%';
-    const genBtnTxt = document.getElementById('genBtnTxt');
-    genBtnTxt.innerHTML = '⚡ &nbsp;Start Bulk Generate';
-    resetBtn();
-    renderBulkList(bulkQueue, bulkTotal); // all done
-    showToast(`✅ Bulk complete! ${bulkTotal} image${bulkTotal > 1 ? 's' : ''} generated`);
-    return;
+  setBulkProgress(0, bulkTotal);
+  document.getElementById('genBtnTxt').innerHTML = '&#9889; &nbsp;Running...';
+  document.getElementById('genBtn').disabled = true;
+  for (var i = 0; i < bulkQueue.length; i++) {
+    if (bulkStopped) break;
+    bulkCurrent = i;
+    renderBulkList(bulkQueue, i);
+    setBulkProgress(i, bulkTotal);
+    var ok = await runOneBulkItem(bulkQueue[i], i);
+    updateBulkListItem(i, ok ? 'done' : 'error');
+    setBulkProgress(i + 1, bulkTotal);
+    if (i < bulkQueue.length - 1 && !bulkStopped) await sleep(800);
   }
-
-  const idx = bulkCurrent;
-  const promptText = bulkQueue[idx];
-  bulkCurrent++;
-
-  // Update list UI
-  renderBulkList(bulkQueue, idx);
-  updateBulkProgress();
-
-  // Generate this prompt
-  await generateWithPrompt(promptText, idx);
+  isBulkRunning = false;
+  document.getElementById('bulkProgPanel').classList.remove('vis');
+  document.getElementById('genBtn').disabled = false;
+  document.getElementById('genBtnTxt').innerHTML = '&#9889; &nbsp;Start Bulk Generate';
+  if (!bulkStopped) {
+    renderBulkList(bulkQueue, bulkTotal);
+    showToast('All ' + bulkTotal + ' image' + (bulkTotal>1?'s':'') + ' generated!');
+  }
 }
 
-// Called when one bulk item finishes (success or error)
-function onBulkItemDone(idx, success) {
-  updateBulkListItem(idx, success ? 'done' : 'error');
-  // Small delay before next
-  setTimeout(() => processBulkNext(), 600);
+function sleep(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
+
+function runOneBulkItem(promptText, idx) {
+  return new Promise(async function(resolve) {
+    var negPrompt = document.getElementById('neg').value.trim();
+    var dims = getDims();
+    var imgW = dims[0], imgH = dims[1];
+    var bulkTag = (idx+1) + '/' + bulkTotal;
+    addLoadingBatch(promptText, imgW, imgH, bulkTag);
+    if (activeBatch) activeBatch._isBulk = true;
+    wasProcessing = false;
+    smoothCurrent = 0;
+    stopSmoothProgress();
+    _bulkItemResolve = resolve;
+    try {
+      var payload = { prompt: promptText, width: imgW, height: imgH };
+      if (negPrompt) payload.negative_prompt = negPrompt;
+      var res = await fetch(API_URL + '/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error('Server error ' + res.status);
+      var data = await res.json();
+      if (data.error) throw new Error(data.error);
+      if (!data.jobId) throw new Error('No job ID received');
+      var pos = data.position || 1, secs = data.estimatedSeconds || 0;
+      var ts = secs >= 60 ? Math.ceil(secs/60)+' min' : secs+' sec';
+      updateLoadingMsg(pos===1 ? "You're next!" : pos+' ahead in queue', pos===1?'':'~'+ts+' estimated', pos);
+      stopPolling();
+      var jobId = data.jobId;
+      pollTimer = setInterval(function(){ pollJobStatus(jobId); }, 2000);
+    } catch(err) {
+      console.error('[BulkItem]', err.message);
+      errorLoading((err.message.includes('fetch')||err.message.includes('Failed')) ? 'Unable to connect to server.' : (err.message||'Generation failed'));
+    }
+  });
 }
 
 /* ══ MAIN CLICK HANDLER ══ */
 function handleGenClick() {
   if (currentMode === 'bulk') {
-    if (isBulkRunning) return; // already running
+    if (isBulkRunning) return;
     startBulkQueue();
   } else {
     generate();
@@ -1494,12 +1497,10 @@ function resolveLoading(src){
   clearInterval(progTimer);
   if(!activeBatch) return;
   const {batch,bh,imgArea,promptText,imgW,imgH}=activeBatch;
-  const wasBulk = activeBatch._bulkIdx !== undefined;
-  const bulkIdx = activeBatch._bulkIdx;
+  const wasBulk = activeBatch._isBulk === true;
   activeBatch=null;
-  // Reconstruct bh with bulk tag if applicable
-  const bulkBadgeHTML = wasBulk ? `<div class="bh-badge bulk-tag">${bulkIdx+1}/${bulkTotal}</div>` : '';
-  bh.innerHTML=`<svg class="bh-img-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><div class="bh-divider"></div><div class="bh-badge hi">Breezyfy</div>${bulkBadgeHTML}<div class="bh-badge">${imgW} × ${imgH}</div><div class="bh-prompt">${promptText}</div><div class="bh-actions">${buildBhDl(src,imgW,imgH)}</div>`;
+  const bulkBadgeHTML = wasBulk ? '' : '';
+  bh.innerHTML=`<svg class="bh-img-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><div class="bh-divider"></div><div class="bh-badge hi">Breezyfy</div><div class="bh-badge">${imgW} × ${imgH}</div><div class="bh-prompt">${promptText}</div><div class="bh-actions">${buildBhDl(src,imgW,imgH)}</div>`;
   imgArea.innerHTML='';
   const row=document.createElement('div'); row.className='batch-img-row';
   const imgCol=document.createElement('div'); imgCol.className='batch-img-col';
@@ -1520,34 +1521,22 @@ function resolveLoading(src){
   imgArea.appendChild(row);
   addToRecent(src,imgW,imgH);
   if(isMobile()) injectMobAdBetween(batch);
-
-  // ── Bulk callback hook
-  if (onItemComplete) {
-    const cb = onItemComplete; onItemComplete = null;
-    cb(true);
-  }
+  // resolve bulk promise
+  if (_bulkItemResolve) { var r = _bulkItemResolve; _bulkItemResolve = null; r(true); }
+  else { resetBtn(); }
 }
 
 function errorLoading(msg){
   clearInterval(progTimer);
-  if(!activeBatch) return;
-  const wasBulk = activeBatch && activeBatch._bulkIdx !== undefined;
-  const bulkIdx = activeBatch ? activeBatch._bulkIdx : undefined;
-  activeBatch=null;
-  const imgArea = activeBatch?.imgArea;
-  // Try to find imgArea from last batch
-  const batches = document.querySelectorAll('#feedScroll .batch');
-  if(batches.length){
-    const firstBatch = batches[0];
-    const ia = firstBatch.querySelector('.batch-img-area');
-    if(ia) ia.innerHTML=`<div class="err-card"><div class="err-ico">⚠</div><div class="err-msg">${msg}</div></div>`;
+  stopSmoothProgress();
+  if(activeBatch){
+    const imgArea = activeBatch.imgArea;
+    activeBatch = null;
+    if(imgArea) imgArea.innerHTML='<div class="err-card"><div class="err-ico">&#9888;</div><div class="err-msg">'+msg+'</div></div>';
   }
-
-  // ── Bulk callback hook (advance even on error)
-  if (onItemComplete) {
-    const cb = onItemComplete; onItemComplete = null;
-    cb(false);
-  }
+  // resolve bulk promise with failure
+  if (_bulkItemResolve) { var r = _bulkItemResolve; _bulkItemResolve = null; r(false); }
+  else { resetBtn(); }
 }
 
 const recentSrcs=[];
@@ -1727,14 +1716,13 @@ let pollTimer=null;
 function stopPolling(){try{if(pollTimer){clearInterval(pollTimer);pollTimer=null;}}catch(e){}}
 function resetBtn(){
   try{
+    if(isBulkRunning) return; // bulk manages its own button state
     const btn=document.getElementById('genBtn');
-    if(btn && !isBulkRunning){
-      btn.disabled=false;
-      if(currentMode==='bulk'){
-        document.getElementById('genBtnTxt').innerHTML='⚡ &nbsp;Start Bulk Generate';
-      } else {
-        document.getElementById('genBtnTxt').innerHTML='◈ &nbsp;Generate Image';
-      }
+    if(btn){ btn.disabled=false; }
+    const txt=document.getElementById('genBtnTxt');
+    if(txt){
+      if(currentMode==='bulk'){ txt.innerHTML='&#9889; &nbsp;Start Bulk Generate'; }
+      else { txt.innerHTML='&#9672; &nbsp;Generate Image'; }
     }
   }catch(e){}
 }
@@ -1781,7 +1769,7 @@ async function generate(){
     if(!promptText){document.getElementById('prompt').focus();return;}
     const [imgW,imgH]=getDims();
     const btn=document.getElementById('genBtn');btn.disabled=true;
-    document.getElementById('genBtnTxt').innerHTML='<span class="shim"></span>Generating…';
+    document.getElementById('genBtnTxt').innerHTML='Generating&#8230;';
     addLoadingBatch(promptText,imgW,imgH,null);
     wasProcessing=false; smoothCurrent=0; stopSmoothProgress();
     const payload={prompt:promptText,width:imgW,height:imgH};
@@ -1800,60 +1788,6 @@ async function generate(){
     errorLoading((err.message.includes('fetch')||err.message.includes('Failed'))?'Unable to connect to server. Please try again.':(err.message||'Generation failed'));
     resetBtn();
   }
-}
-
-/* ══ GENERATE WITH PROMPT (for bulk) ══ */
-async function generateWithPrompt(promptText, bulkIdx) {
-  return new Promise(async (resolve) => {
-    try {
-      const negPrompt = document.getElementById('neg').value.trim();
-      const [imgW, imgH] = getDims();
-      const bulkTag = `${bulkIdx + 1}/${bulkTotal}`;
-
-      const btn = document.getElementById('genBtn');
-      btn.disabled = true;
-
-      addLoadingBatch(promptText, imgW, imgH, bulkTag);
-      if (activeBatch) activeBatch._bulkIdx = bulkIdx; // tag it
-
-      wasProcessing = false; smoothCurrent = 0; stopSmoothProgress();
-
-      const payload = { prompt: promptText, width: imgW, height: imgH };
-      if (negPrompt) payload.negative_prompt = negPrompt;
-
-      const res = await fetch(`${API_URL}/generate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      if (!res.ok) throw new Error('Server error ' + res.status);
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      if (!data.jobId) throw new Error('No job ID received');
-
-      const pos = data.position || 1, secs = data.estimatedSeconds || 0;
-      const ts = secs >= 60 ? Math.ceil(secs / 60) + ' min' : secs + ' sec';
-      updateLoadingMsg(pos === 1 ? "You're next!" : pos + ' ahead in queue', pos === 1 ? '' : '~' + ts + ' estimated', pos);
-
-      stopPolling();
-      const jobId = data.jobId;
-
-      // Set callback for when this item completes
-      onItemComplete = (success) => {
-        onBulkItemDone(bulkIdx, success);
-        resolve(success);
-      };
-
-      pollTimer = setInterval(() => pollJobStatus(jobId), 2000);
-
-    } catch (err) {
-      console.error('[BulkGenerate]', err.message);
-      errorLoading((err.message.includes('fetch') || err.message.includes('Failed'))
-        ? 'Unable to connect to server.' : (err.message || 'Generation failed'));
-      onBulkItemDone(bulkIdx, false);
-      resolve(false);
-    }
-  });
 }
 
 document.getElementById('prompt').addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter')generate();});
@@ -1902,7 +1836,7 @@ aspectRatio=parseFloat(document.getElementById('dimW').value)/parseFloat(documen
       setTimeout(()=>{if(data.image)resolveLoading('data:image/png;base64,'+data.image);resetBtn();},800);
     }else if(data.status==='queued'||data.status==='processing'){
       const btn=document.getElementById('genBtn');btn.disabled=true;
-      document.getElementById('genBtnTxt').innerHTML='Generating…';
+      document.getElementById('genBtnTxt').innerHTML='Generating&#8230;';
       addLoadingBatch(savedPrompt,savedW,savedH,null);
       updateLoadingMsg('Resuming your session...','your job is still running',data.position||1);
       wasProcessing=false;stopPolling();pollTimer=setInterval(()=>pollJobStatus(savedJobId),2000);
