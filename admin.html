@@ -11,7 +11,6 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Syne',sans-serif;overflow:hidden}
 body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;background:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.015'/%3E%3C/svg%3E");background-size:160px}
-
 /* LOGIN */
 #loginScreen{position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;background:var(--bg)}
 .login-box{width:380px;background:var(--card);border:1px solid var(--bdr);border-radius:20px;padding:44px 40px;text-align:center;box-shadow:0 0 80px rgba(110,80,255,.08);position:relative;z-index:1}
@@ -23,7 +22,6 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;back
 .login-btn{width:100%;background:linear-gradient(135deg,var(--acc),#4a30c8);border:none;border-radius:10px;color:#fff;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;letter-spacing:.06em;padding:14px;cursor:pointer;transition:opacity .2s}
 .login-btn:hover{opacity:.88}
 .login-err{font-family:'DM Mono',monospace;font-size:11px;color:var(--err);margin-top:10px;display:none}
-
 /* LAYOUT */
 #app{display:none;height:100%;flex-direction:row}
 .sidebar{width:220px;flex-shrink:0;height:100%;background:var(--surf);border-right:1px solid var(--bdr);display:flex;flex-direction:column;position:relative;z-index:10}
@@ -46,7 +44,6 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;back
 .status-txt{font-family:'DM Mono',monospace;font-size:11px;color:var(--sub)}
 .logout-btn{width:100%;font-family:'DM Mono',monospace;font-size:11px;color:var(--mut);background:transparent;border:1px solid var(--bdr);border-radius:8px;padding:8px;cursor:pointer;transition:all .2s;margin-top:8px}
 .logout-btn:hover{border-color:rgba(255,71,87,.3);color:var(--err)}
-
 /* MAIN AREA */
 .main{flex:1;height:100%;overflow-y:auto;display:flex;flex-direction:column;position:relative;z-index:5}
 .main::-webkit-scrollbar{width:5px}
@@ -56,11 +53,9 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;back
 .topbar-sub{font-family:'DM Mono',monospace;font-size:11px;color:var(--sub)}
 .topbar-spacer{flex:1}
 .refresh-txt{font-family:'DM Mono',monospace;font-size:10px;color:var(--mut)}
-
 /* PAGES */
 .page-section{display:none;padding:28px;flex-direction:column;gap:24px}
 .page-section.active{display:flex}
-
 /* STAT CARDS */
 .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
 .stat-card{background:var(--card);border:1px solid var(--bdr);border-radius:14px;padding:20px 22px;display:flex;flex-direction:column;gap:8px;transition:border-color .2s}
@@ -69,7 +64,6 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;back
 .stat-val{font-family:'DM Mono',monospace;font-size:32px;font-weight:400;color:var(--wh);letter-spacing:-.02em}
 .stat-lbl{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--sub)}
 .stat-card.s-live .stat-val{color:var(--live)}
-
 /* CHART */
 .chart-card{background:var(--card);border:1px solid var(--bdr);border-radius:14px;padding:22px 24px}
 .chart-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
@@ -80,7 +74,6 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;back
 .chart-bar{width:100%;background:rgba(110,80,255,.25);border-radius:3px 3px 0 0;min-height:2px;transition:height .4s ease}
 .chart-bar.active{background:rgba(110,80,255,.7)}
 .chart-lbl{font-family:'DM Mono',monospace;font-size:8px;color:var(--mut)}
-
 /* TABLE */
 .table-card{background:var(--card);border:1px solid var(--bdr);border-radius:14px;overflow:hidden}
 .table-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--bdr)}
@@ -104,14 +97,12 @@ tr:hover td{background:rgba(255,255,255,.02)}
 .action-btn.block:hover{background:rgba(255,71,87,.2)}
 .action-btn.unblock{border-color:rgba(0,217,126,.3);color:var(--ok);background:rgba(0,217,126,.06)}
 .action-btn.unblock:hover{background:rgba(0,217,126,.2)}
-
 /* SYSTEM */
 .sys-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
 .sys-card{background:var(--card);border:1px solid var(--bdr);border-radius:12px;padding:18px 20px}
 .sys-lbl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--sub);margin-bottom:8px}
 .sys-val{font-family:'DM Mono',monospace;font-size:18px;color:var(--wh)}
-
-/* ═══ TEMPLATE SECTION ═══ */
+/* TEMPLATE SECTION */
 .tpl-upload-card{background:var(--card);border:1px solid var(--bdr);border-radius:14px;padding:24px}
 .tpl-upload-title{font-size:14px;font-weight:700;color:var(--wh);margin-bottom:18px}
 .tpl-form{display:grid;grid-template-columns:1fr 1fr;gap:16px}
@@ -134,8 +125,6 @@ tr:hover td{background:rgba(255,255,255,.02)}
 .tpl-msg{font-family:'DM Mono',monospace;font-size:11px;padding:8px 14px;border-radius:7px;display:none}
 .tpl-msg.ok{background:rgba(0,217,126,.1);color:var(--ok);border:1px solid rgba(0,217,126,.2)}
 .tpl-msg.err{background:rgba(255,71,87,.1);color:var(--err);border:1px solid rgba(255,71,87,.2)}
-
-/* Template grid */
 .tpl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px}
 .tpl-item{background:var(--card2);border:1px solid var(--bdr);border-radius:12px;overflow:hidden;position:relative;transition:border-color .2s}
 .tpl-item:hover{border-color:rgba(110,80,255,.3)}
@@ -147,15 +136,12 @@ tr:hover td{background:rgba(255,255,255,.02)}
 .tpl-item:hover .tpl-del-btn{display:flex}
 .tpl-del-btn:hover{background:var(--err)}
 .empty-tpl{font-family:'DM Mono',monospace;font-size:12px;color:var(--sub);text-align:center;padding:40px;background:var(--card);border-radius:14px}
-
-/* API URL setting */
-.setting-card{background:var(--card);border:1px solid var(--bdr);border-radius:12px;padding:20px 22px;display:flex;align-items:center;gap:14px}
+.setting-card{background:var(--card);border:1px solid var(--bdr);border-radius:12px;padding:20px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .setting-lbl{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--sub);white-space:nowrap}
-.setting-input{flex:1;background:rgba(255,255,255,.04);border:1px solid var(--bdr);border-radius:8px;color:var(--wh);font-family:'DM Mono',monospace;font-size:12px;padding:9px 13px;outline:none;transition:border-color .2s}
+.setting-input{flex:1;background:rgba(255,255,255,.04);border:1px solid var(--bdr);border-radius:8px;color:var(--wh);font-family:'DM Mono',monospace;font-size:12px;padding:9px 13px;outline:none;transition:border-color .2s;min-width:200px}
 .setting-input:focus{border-color:rgba(110,80,255,.5)}
 .setting-save{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;letter-spacing:.06em;background:rgba(110,80,255,.15);border:1px solid rgba(110,80,255,.3);color:var(--alit);border-radius:8px;padding:9px 18px;cursor:pointer;transition:all .18s;white-space:nowrap}
 .setting-save:hover{background:rgba(110,80,255,.3)}
-
 /* BLOCK MODAL */
 .modal-overlay{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center}
 .modal-overlay.open{display:flex}
@@ -170,7 +156,6 @@ tr:hover td{background:rgba(255,255,255,.02)}
 .modal-btn.cancel:hover{border-color:rgba(255,255,255,.2);color:var(--txt)}
 .modal-btn.confirm{background:rgba(255,71,87,.15);border-color:rgba(255,71,87,.4);color:var(--err)}
 .modal-btn.confirm:hover{background:rgba(255,71,87,.3)}
-
 /* TOAST */
 .toast{position:fixed;bottom:24px;right:24px;background:var(--card2);border:1px solid var(--bdr);border-radius:10px;padding:12px 20px;font-family:'DM Mono',monospace;font-size:12px;color:var(--txt);z-index:999;opacity:0;transform:translateY(10px);transition:all .3s ease;pointer-events:none}
 .toast.show{opacity:1;transform:translateY(0)}
@@ -298,7 +283,6 @@ tr:hover td{background:rgba(255,255,255,.02)}
 
     <!-- TEMPLATES -->
     <div class="page-section" id="page-templates">
-      <!-- Upload form -->
       <div class="tpl-upload-card">
         <div class="tpl-upload-title">Upload New Template</div>
         <div class="tpl-form">
@@ -329,8 +313,6 @@ tr:hover td{background:rgba(255,255,255,.02)}
           </div>
         </div>
       </div>
-
-      <!-- Existing templates -->
       <div class="table-card" style="border-radius:14px">
         <div class="table-header">
           <div class="table-title">Uploaded Templates</div>
@@ -363,20 +345,16 @@ tr:hover td{background:rgba(255,255,255,.02)}
         <span class="setting-lbl">Google Drive Sync (Apps Script URL)</span>
         <input class="setting-input" type="text" id="gasUrlInput" placeholder="https://script.google.com/macros/s/.../exec"/>
         <button class="setting-save" onclick="saveGasUrl()">Save GAS URL</button>
-        <div style="margin-top:8px;font-family:'DM Mono',monospace;font-size:10px;color:var(--sub);line-height:1.7">
-          Google Apps Script se templates Google Drive mein store honge.<br>
-          Setup guide: Admin panel → System → "GAS Setup Guide" button dekho.
-        </div>
       </div>
-      <div class="setting-card" style="margin-top:14px">
+      <div class="setting-card" style="margin-top:14px;flex-direction:column;align-items:flex-start;gap:10px">
         <span class="setting-lbl">GAS Setup Guide</span>
-        <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--sub);line-height:2;margin-bottom:12px">
+        <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--sub);line-height:2">
           1. <a href="https://script.google.com" target="_blank" style="color:var(--alit)">script.google.com</a> kholo → New Project<br>
           2. Neeche diya code paste karo → Save → Deploy as Web App<br>
           3. "Execute as: Me", "Access: Anyone" select karo → Deploy<br>
           4. Milne wala URL yahan paste karo
         </div>
-        <div style="background:rgba(0,0,0,.4);border:1px solid var(--bdr);border-radius:8px;padding:12px;font-family:'DM Mono',monospace;font-size:10px;color:var(--ok);white-space:pre-wrap;max-height:200px;overflow-y:auto" id="gasScriptBox">function doGet(e){
+        <div style="background:rgba(0,0,0,.4);border:1px solid var(--bdr);border-radius:8px;padding:12px;font-family:'DM Mono',monospace;font-size:10px;color:var(--ok);white-space:pre-wrap;max-height:200px;overflow-y:auto;width:100%" id="gasScriptBox">function doGet(e){
   const action=e.parameter.action,id=e.parameter.id;
   const ss=SpreadsheetApp.getActiveOrOpenByUrl(PropertiesService.getScriptProperties().getProperty('SHEET_URL')||createSheet());
   const sh=ss.getSheets()[0];
@@ -400,7 +378,7 @@ function doPost(e){
   return ContentService.createTextOutput(JSON.stringify({ok:true})).setMimeType(ContentService.MimeType.JSON);
 }
 function createSheet(){const ss=SpreadsheetApp.create('Breezyfy Templates');ss.getSheets()[0].appendRow(['id','title','prompt','image','tags','createdAt']);PropertiesService.getScriptProperties().setProperty('SHEET_URL',ss.getUrl());return ss.getUrl();}</div>
-        <button class="setting-save" style="margin-top:8px" onclick="copyGasScript()">Copy Script</button>
+        <button class="setting-save" onclick="copyGasScript()">Copy Script</button>
       </div>
       <div class="sys-grid">
         <div class="sys-card"><div class="sys-lbl">Node Version</div><div class="sys-val" id="sys-node">—</div></div>
@@ -411,6 +389,7 @@ function createSheet(){const ss=SpreadsheetApp.create('Breezyfy Templates');ss.g
         <div class="sys-card"><div class="sys-lbl">Logs Stored</div><div class="sys-val" id="sys-logs">—</div></div>
       </div>
     </div>
+
   </div>
 </div>
 
@@ -434,7 +413,6 @@ function doLogin(){
   }
 }
 document.getElementById('passInput').addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); });
-
 function doLogout(){ location.reload(); }
 
 // ── NAV
@@ -451,7 +429,7 @@ function showPage(id, el){
   if(id==='system') loadGasUrl();
 }
 
-// ── API
+// ── API HELPERS
 async function apiFetch(path, opts={}){
   try {
     const res = await fetch(`${API_URL}/admin${path}`, {
@@ -462,9 +440,7 @@ async function apiFetch(path, opts={}){
     return await res.json();
   } catch(e){ return null; }
 }
-
 async function apiCall(path, opts={}){
-  // For non-admin routes (like /templates)
   try {
     const res = await fetch(`${API_URL}${path}`, {
       ...opts,
@@ -484,7 +460,6 @@ async function fetchAll(){
   document.getElementById('statusDot').className = 'status-dot' + (online?' online':'');
   document.getElementById('statusTxt').textContent = online ? 'Online' : 'Offline';
   document.getElementById('refreshTxt').textContent = 'Updated ' + new Date().toLocaleTimeString();
-
   if(stats){
     document.getElementById('s-live').textContent    = stats.liveUsers||0;
     document.getElementById('s-total').textContent   = stats.totalUsers||0;
@@ -505,7 +480,6 @@ async function fetchAll(){
     document.getElementById('sys-logs').textContent     = sys.logsStored||0;
   }
 }
-
 function fmtUptime(s){ const h=Math.floor(s/3600),m=Math.floor((s%3600)/60); return `${h}h ${m}m`; }
 
 // ── CHART
@@ -532,7 +506,6 @@ function renderUsers(filter=''){
   document.getElementById('userTotal').textContent=list.length+' users';
   document.getElementById('usersBody').innerHTML = list.map(u=>{
     const live=!u.blocked&&now-u.lastSeen<5*60*1000;
-    const idle=!u.blocked&&!live;
     return `<tr>
       <td class="ip-cell">${u.ip}</td>
       <td>${u.blocked?'<span class="tag err">Blocked</span>':live?'<span class="tag live">Live</span>':'<span class="tag warn">Idle</span>'}</td>
@@ -560,7 +533,6 @@ function renderLogs(filter=''){
     <td>${l.success?'<span class="tag ok">Success</span>':'<span class="tag err">Failed</span>'}</td>
   </tr>`).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--sub);padding:30px">No logs yet</td></tr>';
 }
-
 function renderOverviewLogs(){
   document.getElementById('overviewLogsBody').innerHTML = allLogs.slice(0,10).map(l=>`<tr>
     <td>${fmtTime(l.ts)}</td>
@@ -600,7 +572,6 @@ async function doUnblock(ip){
 
 // ── TEMPLATES
 let tplImageData = '';
-
 function handleTplFile(input){
   const file = input.files[0];
   if(!file) return;
@@ -619,16 +590,12 @@ async function saveTemplate(){
   const title  = document.getElementById('tplTitle').value.trim();
   const prompt = document.getElementById('tplPrompt').value.trim();
   const tags   = document.getElementById('tplTags').value.split(',').map(t=>t.trim()).filter(Boolean);
-  const msg    = document.getElementById('tplMsg');
   const btn    = document.getElementById('tplSaveBtn');
-
   if(!prompt){ showTplMsg('Prompt is required!','err'); return; }
   if(!tplImageData){ showTplMsg('Please select an image!','err'); return; }
-
   btn.disabled = true; btn.textContent = 'Uploading...';
   const r = await apiCall('/templates',{ method:'POST', body:JSON.stringify({ title:title||'Untitled', prompt, image:tplImageData, tags }) });
   btn.disabled = false; btn.textContent = 'Upload Template';
-
   if(r&&r.success){
     showTplMsg('Template uploaded!','ok');
     showToast('Template added ✓','ok');
@@ -663,20 +630,51 @@ async function loadTemplatesPanel(){
   empty.style.display = 'none';
   grid.innerHTML = allTemplates.map(t=>`
     <div class="tpl-item" id="tplitem_${t.id}">
-      <img src="${t.image}" alt="${t.title}" loading="lazy"/>
+      <img src="${t.image}" alt="${t.title||'Template'}" loading="lazy"/>
       <div class="tpl-item-info">
-        <div class="tpl-item-title">${t.title}</div>
-        <div class="tpl-item-prompt">${t.prompt}</div>
+        <div class="tpl-item-title">${t.title||'Untitled'}</div>
+        <div class="tpl-item-prompt">${t.prompt||''}</div>
       </div>
       <button class="tpl-del-btn" onclick="deleteTemplate('${t.id}')" title="Delete">✕</button>
     </div>`).join('');
 }
 
+/* ══ DELETE TEMPLATE — FIXED ══ */
 async function deleteTemplate(id){
   if(!confirm('Delete this template?')) return;
-  const r = await fetch(`${API_URL}/templates/${id}`,{ method:'DELETE', headers:{'x-admin-token':ADMIN_PASS} });
-  if(r.ok){ showToast('Template deleted','ok'); loadTemplatesPanel(); }
-  else showToast('Delete failed','err');
+  try {
+    // Method 1: DELETE /templates/:id
+    const r1 = await fetch(`${API_URL}/templates/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'x-admin-token': ADMIN_PASS,
+        'Content-Type': 'application/json'
+      }
+    });
+    if(r1.ok){
+      showToast('Template deleted ✓', 'ok');
+      loadTemplatesPanel();
+      return;
+    }
+    // Method 2: POST /templates with action=delete (fallback for some backends)
+    const r2 = await fetch(`${API_URL}/templates`, {
+      method: 'POST',
+      headers: {
+        'x-admin-token': ADMIN_PASS,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ action: 'delete', id: id })
+    });
+    if(r2.ok){
+      showToast('Template deleted ✓', 'ok');
+      loadTemplatesPanel();
+    } else {
+      showToast('Delete failed — check API connection', 'err');
+    }
+  } catch(e) {
+    console.error('[deleteTemplate]', e);
+    showToast('Delete failed — network error', 'err');
+  }
 }
 
 // ── GAS / DRIVE
@@ -712,7 +710,6 @@ function fmtTime(ts){
   const d=new Date(ts);
   return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})+' '+d.toLocaleDateString([],{month:'short',day:'numeric'});
 }
-
 function showToast(msg, type=''){
   const t=document.getElementById('toast');
   t.textContent=msg; t.className='toast '+(type||'');
