@@ -1972,15 +1972,12 @@ function buildSkeletons(n) {
   ).join('');
 }
 
-function buildTplCard(t) {
-  const safeId    = encodeURIComponent(t.id || '');
-  const safeImg   = encodeURIComponent(t.image || '');
-  const safePromt = encodeURIComponent(t.prompt || '');
-  const safeTitle = encodeURIComponent(t.title || '');
-  return `<div class="tpl-card" onclick="tplCardClick('${safeId}','${safeImg}','${safePromt}','${safeTitle}')">
-    <img src="${t.image}" alt="${t.title||'Template'}" loading="lazy" decoding="async"/>
+function buildTplCard(t, idx) {
+  // data-idx use karo — string encoding ki zarurat nahi, koi bhi URL safe hai
+  return `<div class="tpl-card" data-idx="${idx}">
+    <img src="${t.image}" alt="Template ${idx+1}" loading="lazy" decoding="async"/>
     <div class="tpl-card-overlay">
-      <div class="tpl-card-overlay-prompt">${t.prompt||''}</div>
+      <div class="tpl-card-overlay-prompt">${(t.prompt||'').replace(/</g,'&lt;')}</div>
       <span class="tpl-card-overlay-use">Use Prompt ✦</span>
     </div>
   </div>`;
@@ -2005,6 +2002,7 @@ function preloadTemplatesInBackground() {
 }
 
 async function openTemplateGallery(){
+  history.pushState({ bfy: 'tpl' }, '');
   document.getElementById('tplModal').classList.add('open');
   document.body.style.overflow='hidden';
   await loadTplGallery();
@@ -2042,15 +2040,25 @@ function renderTplGallery(gallery, templates) {
     gallery.innerHTML = '<div class="tpl-empty" style="column-span:all">◈ No templates yet</div>';
     return;
   }
-  gallery.innerHTML = templates.map(t => buildTplCard(t)).join('');
+  gallery.innerHTML = templates.map((t, i) => buildTplCard(t, i)).join('');
+
+  // Event delegation — ek listener, koi bhi card click kare
+  gallery.onclick = function(e) {
+    const card = e.target.closest('.tpl-card');
+    if (!card) return;
+    const idx = parseInt(card.dataset.idx);
+    if (isNaN(idx) || !_tplCache || !_tplCache[idx]) return;
+    const t = _tplCache[idx];
+    tplCardClick(t.id, t.image, t.prompt, t.title);
+  };
 }
 
 let tplLbData={};
-function tplCardClick(id,imgEnc,promptEnc,titleEnc){
-  const src=decodeURIComponent(imgEnc),prompt=decodeURIComponent(promptEnc),title=decodeURIComponent(titleEnc);
-  tplLbData={src,prompt,title};
+function tplCardClick(id, src, prompt, title){
+  // Direct values — no encoding/decoding
+  tplLbData = { src, prompt, title };
   closeTemplateGallery();
-  openTplLightbox(src,prompt,title);
+  openTplLightbox(src, prompt || '', title || '');
 }
 function openTplLightbox(src,prompt,title){
   // Mobile ke liye alag bottom sheet
@@ -2089,6 +2097,7 @@ function useTemplatePrompt(prompt){
 
 /* ══ MOBILE TEMPLATE SHEET ══ */
 function openMobTplSheet(src,prompt,title){
+  history.pushState({ bfy: 'mob-tpl' }, '');
   const sheet=document.getElementById('mobTplSheet');
   document.getElementById('mts-img').src=src;
   document.getElementById('mts-prompt').textContent=prompt||'—';
@@ -2124,6 +2133,40 @@ document.addEventListener('keydown',e=>{
     if(e.key==='+' || e.key==='=' || e.key==='ArrowUp'){ e.preventDefault(); lbZoom(1); }
     if(e.key==='-' || e.key==='ArrowDown'){ e.preventDefault(); lbZoom(-1); }
     if(e.key==='0'){ e.preventDefault(); lbZoomReset(); }
+  }
+});
+
+/* ══ BACK BUTTON — History API ══ */
+window.addEventListener('popstate', function(e) {
+  const state = e.state;
+
+  // Lightbox open hai → band karo
+  if (document.getElementById('lightbox').classList.contains('open')) {
+    // closeLightbox already handles lbOpenedFromTpl — tpl gallery wapas kholega
+    // lekin history ke saath hum manually handle karte hain
+    document.getElementById('lightbox').classList.remove('open');
+    document.body.style.overflow = '';
+    lbZoomLevel=1; lbPanX=0; lbPanY=0;
+    if (lbOpenedFromTpl) {
+      lbOpenedFromTpl = false;
+      // Template gallery wapas — pushState again taaki back button kaam kare
+      history.pushState({ bfy: 'tpl' }, '');
+      document.getElementById('tplModal').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+    return;
+  }
+
+  // Mobile template sheet open hai → band karo
+  if (document.getElementById('mobTplSheet').classList.contains('open')) {
+    closeMobTplSheet();
+    return;
+  }
+
+  // Template modal open hai → band karo
+  if (document.getElementById('tplModal').classList.contains('open')) {
+    closeTemplateGallery();
+    return;
   }
 });
 
