@@ -2040,15 +2040,17 @@ function renderTplGallery(gallery, templates) {
     gallery.innerHTML = '<div class="tpl-empty" style="column-span:all">◈ No templates yet</div>';
     return;
   }
-  gallery.innerHTML = templates.map((t, i) => buildTplCard(t, i)).join('');
+  // Reverse karo — nayi images upar, purani neeche
+  const reversed = templates.slice().reverse();
+  gallery.innerHTML = reversed.map((t, i) => buildTplCard(t, i)).join('');
 
   // Event delegation — ek listener, koi bhi card click kare
   gallery.onclick = function(e) {
     const card = e.target.closest('.tpl-card');
     if (!card) return;
     const idx = parseInt(card.dataset.idx);
-    if (isNaN(idx) || !_tplCache || !_tplCache[idx]) return;
-    const t = _tplCache[idx];
+    if (isNaN(idx) || !reversed[idx]) return;
+    const t = reversed[idx];
     tplCardClick(t.id, t.image, t.prompt, t.title);
   };
 }
