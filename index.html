@@ -801,6 +801,7 @@
       opacity: 0; transition: opacity .22s;
       display: flex; flex-direction: column; justify-content: flex-end;
       padding: 14px 12px 12px;
+      pointer-events: none; /* overlay clicks ko card tak jaane do */
     }
     .tpl-card:hover .tpl-card-overlay { opacity: 1; }
     .tpl-card-overlay-prompt {
@@ -900,6 +901,52 @@
     }
     .toggle-wrap input:checked + .toggle-slider::after {
       transform: translateX(18px); background: var(--ok);
+    }
+
+    /* ─── MOBILE TEMPLATE DETAIL SHEET ─── */
+    #mobTplSheet {
+      display: none;
+      position: fixed; inset: 0; z-index: 1000;
+      background: rgba(2,2,10,.85);
+      backdrop-filter: blur(12px);
+      align-items: flex-end; justify-content: center;
+    }
+    #mobTplSheet.open { display: flex; }
+    .mts-inner {
+      width: 100%; max-height: 88vh;
+      background: var(--card2); border-radius: 20px 20px 0 0;
+      border-top: 1px solid rgba(255,255,255,.08);
+      display: flex; flex-direction: column;
+      overflow: hidden;
+      animation: mtsSlideUp .28s cubic-bezier(.25,.46,.45,.94);
+    }
+    @keyframes mtsSlideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .mts-handle {
+      width: 36px; height: 4px; background: rgba(255,255,255,.15);
+      border-radius: 2px; margin: 12px auto 0;
+    }
+    .mts-scroll { flex: 1; overflow-y: auto; padding: 14px 18px 32px; }
+    .mts-img-wrap {
+      width: 100%; border-radius: 14px; overflow: hidden;
+      border: 1px solid rgba(255,255,255,.07); margin-bottom: 16px;
+    }
+    .mts-img-wrap img { width: 100%; display: block; }
+    .mts-prompt-label {
+      font-family: 'Fira Code', monospace; font-size: 9px; letter-spacing: .2em;
+      text-transform: uppercase; color: var(--mut); margin-bottom: 8px;
+    }
+    .mts-prompt-text {
+      font-family: 'Fira Code', monospace; font-size: 12px; color: var(--txt);
+      line-height: 1.8; background: rgba(255,255,255,.03);
+      border: 1px solid rgba(255,255,255,.06); border-radius: 10px; padding: 12px 14px;
+      margin-bottom: 16px; word-break: break-word;
+    }
+    .mts-use-btn {
+      width: 100%; padding: 15px; border: none; border-radius: 14px;
+      background: linear-gradient(135deg, #5c44ff, #3820cc);
+      color: #fff; font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 14px; font-weight: 700; letter-spacing: .04em;
+      cursor: pointer; box-shadow: 0 4px 20px rgba(92,68,255,.35);
     }
 
     /* ─── PC SIDEBAR AD ─── */
@@ -1216,6 +1263,19 @@
           <div class="lb-ad-wrap" id="lb-ad-wrap"></div>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MOBILE TEMPLATE DETAIL SHEET ─── -->
+<div id="mobTplSheet" onclick="mobTplSheetBgClick(event)">
+  <div class="mts-inner">
+    <div class="mts-handle"></div>
+    <div class="mts-scroll">
+      <div class="mts-img-wrap"><img id="mts-img" src="" alt=""/></div>
+      <div class="mts-prompt-label">Prompt</div>
+      <div class="mts-prompt-text" id="mts-prompt"></div>
+      <button class="mts-use-btn" id="mts-use-btn">◈ &nbsp;Use This Prompt</button>
     </div>
   </div>
 </div>
@@ -1761,6 +1821,7 @@ function renderRecent(){
 let lbSrc='',lbPrompt='',lbW=0,lbH=0,lbActiveFmt='png';
 let lbZoomLevel=1, lbPanX=0, lbPanY=0;
 let lbDragging=false, lbDragStartX=0, lbDragStartY=0, lbDragOriginX=0, lbDragOriginY=0;
+let lbOpenedFromTpl=false; // track karo — template se aaye ya image se
 const LB_ZOOM_MIN=0.5, LB_ZOOM_MAX=5, LB_ZOOM_STEP=0.25;
 
 function lbApplyZoom(animate){
@@ -1796,6 +1857,7 @@ function openLightbox(src,promptText,imgW,imgH){
   if(isMobile()) return;
   if(Array.isArray(imgW)){imgH=imgW[1];imgW=imgW[0];} imgW=imgW||512; imgH=imgH||512;
   lbSrc=src;lbPrompt=promptText;lbW=imgW;lbH=imgH;
+  lbOpenedFromTpl=false;
   lbZoomLevel=1; lbPanX=0; lbPanY=0;
   document.getElementById('lb-img').src=src;
   document.getElementById('lb-prompt-txt').textContent=promptText||'—';
@@ -1818,6 +1880,12 @@ function closeLightbox(){
   document.getElementById('lightbox').classList.remove('open');
   document.body.style.overflow='';
   lbZoomLevel=1; lbPanX=0; lbPanY=0;
+  // Agar template se aaye the toh template gallery wapas kholo
+  if(lbOpenedFromTpl){
+    lbOpenedFromTpl=false;
+    document.getElementById('tplModal').classList.add('open');
+    document.body.style.overflow='hidden';
+  }
 }
 function lbBgClick(e){
   if(e.target===document.getElementById('lb-img-area') && lbZoomLevel===1) closeLightbox();
@@ -1985,7 +2053,13 @@ function tplCardClick(id,imgEnc,promptEnc,titleEnc){
   openTplLightbox(src,prompt,title);
 }
 function openTplLightbox(src,prompt,title){
+  // Mobile ke liye alag bottom sheet
+  if(isMobile()){
+    openMobTplSheet(src,prompt,title);
+    return;
+  }
   lbSrc=src;lbPrompt=prompt;lbW=0;lbH=0;
+  lbOpenedFromTpl=true; // mark karo — back pe template gallery aaye
   lbZoomLevel=1; lbPanX=0; lbPanY=0;
   document.getElementById('lb-img').src=src;
   document.getElementById('lb-prompt-txt').textContent=prompt||'—';
@@ -2006,13 +2080,45 @@ function openTplLightbox(src,prompt,title){
 function useTemplatePrompt(prompt){
   const ta=document.getElementById('prompt');
   ta.value=prompt; uc(ta); closeLightbox();
+  // Switch to single mode agar bulk mein ho
+  if(currentMode==='bulk') switchMode('single');
   ta.style.borderColor='rgba(92,68,255,.8)';ta.style.boxShadow='0 0 0 3px rgba(92,68,255,.12)';
   setTimeout(()=>{ta.style.borderColor='';ta.style.boxShadow='';},600);
   showToast('Prompt copied to editor!');
 }
 
+/* ══ MOBILE TEMPLATE SHEET ══ */
+function openMobTplSheet(src,prompt,title){
+  const sheet=document.getElementById('mobTplSheet');
+  document.getElementById('mts-img').src=src;
+  document.getElementById('mts-prompt').textContent=prompt||'—';
+  document.getElementById('mts-use-btn').onclick=function(){
+    closeMobTplSheet();
+    closeTemplateGallery();
+    const ta=document.getElementById('prompt');
+    if(currentMode==='bulk') switchMode('single');
+    ta.value=prompt; uc(ta);
+    ta.style.borderColor='rgba(92,68,255,.8)';ta.style.boxShadow='0 0 0 3px rgba(92,68,255,.12)';
+    setTimeout(()=>{ta.style.borderColor='';ta.style.boxShadow='';},600);
+    showToast('Prompt copied to editor!');
+  };
+  sheet.classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeMobTplSheet(){
+  document.getElementById('mobTplSheet').classList.remove('open');
+  document.body.style.overflow='';
+}
+function mobTplSheetBgClick(e){
+  if(e.target===document.getElementById('mobTplSheet')) closeMobTplSheet();
+}
+
 document.addEventListener('keydown',e=>{
-  if(e.key==='Escape'){closeLightbox();closeTemplateGallery();}
+  if(e.key==='Escape'){
+    closeLightbox();
+    closeTemplateGallery();
+    closeMobTplSheet();
+  }
   // Lightbox zoom keyboard shortcuts (PC only)
   if(document.getElementById('lightbox').classList.contains('open')){
     if(e.key==='+' || e.key==='=' || e.key==='ArrowUp'){ e.preventDefault(); lbZoom(1); }
