@@ -753,7 +753,7 @@
     .lb-ad-wrap { display: flex; justify-content: center; align-items: center; border-radius: 10px; overflow: hidden; min-height: 302px; width: 100%; border: 1px solid rgba(255,255,255,.04); background: var(--card); }
 
     /* ─── TEMPLATE MODAL ─── */
-    #tplModal { position: fixed; inset: 0; z-index: 998; background: rgba(2,2,10,.95); backdrop-filter: blur(24px); display: none; flex-direction: column; }
+    #tplModal { position: fixed; inset: 0; z-index: 998; background: rgba(2,2,10,.96); backdrop-filter: blur(24px); display: none; flex-direction: column; }
     #tplModal.open { display: flex; }
     .tpl-topbar { height: 56px; flex-shrink: 0; display: flex; align-items: center; padding: 0 24px; gap: 16px; border-bottom: 1px solid rgba(255,255,255,.06); background: rgba(5,5,14,.8); }
     .tpl-modal-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 17px; font-weight: 800; color: var(--wh); }
@@ -761,20 +761,74 @@
     .tpl-modal-sub { font-family: 'Fira Code', monospace; font-size: 10px; color: var(--sub); margin-top: 2px; }
     .tpl-modal-close { width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.1); color: var(--wh); font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .18s; margin-left: auto; }
     .tpl-modal-close:hover { background: rgba(255,84,112,.2); border-color: rgba(255,84,112,.35); }
-    .tpl-scroll { flex: 1; overflow-y: auto; padding: 24px; }
+    .tpl-scroll { flex: 1; overflow-y: auto; padding: 20px 24px; }
     .tpl-scroll::-webkit-scrollbar { width: 4px; }
     .tpl-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 2px; }
-    .tpl-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap: 14px; }
-    .tpl-card { border-radius: 14px; overflow: hidden; border: 1px solid var(--bdr); background: var(--card); cursor: pointer; transition: all .22s; position: relative; }
-    .tpl-card:hover { border-color: rgba(92,68,255,.45); transform: translateY(-3px); box-shadow: 0 16px 48px rgba(92,68,255,.18); }
-    .tpl-card img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
-    .tpl-card-info { padding: 12px 14px 14px; }
-    .tpl-card-title { font-size: 13px; font-weight: 700; color: var(--wh); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .tpl-card-prompt { font-family: 'Fira Code', monospace; font-size: 10px; color: var(--sub); line-height: 1.65; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-    .tpl-use-badge { position: absolute; top: 10px; right: 10px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; background: rgba(92,68,255,.88); color: #fff; padding: 4px 10px; border-radius: 6px; opacity: 0; transition: opacity .2s; }
-    .tpl-card:hover .tpl-use-badge { opacity: 1; }
-    .tpl-empty { grid-column: 1/-1; text-align: center; padding: 80px 40px; font-family: 'Fira Code', monospace; font-size: 13px; color: var(--sub); }
-    .tpl-loading { grid-column: 1/-1; text-align: center; padding: 60px; font-family: 'Fira Code', monospace; font-size: 12px; color: var(--mut); }
+
+    /* ── Masonry layout ── */
+    .tpl-masonry {
+      columns: 5 200px;
+      column-gap: 10px;
+    }
+    @media (max-width: 1400px) { .tpl-masonry { columns: 4 180px; } }
+    @media (max-width: 900px)  { .tpl-masonry { columns: 3 140px; } }
+    @media (max-width: 600px)  { .tpl-masonry { columns: 2 120px; } }
+
+    .tpl-card {
+      break-inside: avoid;
+      margin-bottom: 10px;
+      border-radius: 12px; overflow: hidden;
+      border: 1px solid rgba(255,255,255,.04);
+      background: var(--card); cursor: pointer;
+      position: relative; display: block;
+      transition: transform .22s, box-shadow .22s, border-color .22s;
+    }
+    .tpl-card:hover {
+      transform: translateY(-3px) scale(1.01);
+      border-color: rgba(92,68,255,.5);
+      box-shadow: 0 12px 40px rgba(92,68,255,.22);
+      z-index: 2;
+    }
+    .tpl-card img {
+      width: 100%; display: block;
+      border-radius: 11px;
+      /* natural height — no forced aspect ratio */
+    }
+    /* Hover overlay with prompt */
+    .tpl-card-overlay {
+      position: absolute; inset: 0; border-radius: 11px;
+      background: linear-gradient(to top, rgba(2,2,12,.92) 0%, rgba(2,2,12,.3) 50%, transparent 100%);
+      opacity: 0; transition: opacity .22s;
+      display: flex; flex-direction: column; justify-content: flex-end;
+      padding: 14px 12px 12px;
+    }
+    .tpl-card:hover .tpl-card-overlay { opacity: 1; }
+    .tpl-card-overlay-prompt {
+      font-family: 'Fira Code', monospace; font-size: 10px;
+      color: rgba(255,255,255,.85); line-height: 1.55;
+      display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .tpl-card-overlay-use {
+      margin-top: 8px;
+      font-family: 'Plus Jakarta Sans', sans-serif; font-size: 10px; font-weight: 700;
+      letter-spacing: .07em; text-transform: uppercase;
+      color: var(--wh); background: rgba(92,68,255,.85);
+      padding: 5px 12px; border-radius: 7px; display: inline-block;
+      align-self: flex-start;
+    }
+    /* Skeleton placeholder cards */
+    .tpl-skeleton {
+      break-inside: avoid; margin-bottom: 10px;
+      border-radius: 12px; overflow: hidden;
+      background: linear-gradient(110deg, var(--card) 30%, rgba(255,255,255,.04) 50%, var(--card) 70%);
+      background-size: 200% 100%;
+      animation: skelShimmer 1.6s linear infinite;
+    }
+    @keyframes skelShimmer { to { background-position: -200% 0; } }
+
+    .tpl-empty { text-align: center; padding: 80px 40px; font-family: 'Fira Code', monospace; font-size: 13px; color: var(--sub); }
+    .tpl-loading-txt { text-align: center; padding: 60px; font-family: 'Fira Code', monospace; font-size: 12px; color: var(--mut); }
 
     /* ─── LIGHTBOX ZOOM CONTROLS ─── */
     .lb-zoom-bar {
@@ -1176,8 +1230,8 @@
     <button class="tpl-modal-close" onclick="closeTemplateGallery()">✕</button>
   </div>
   <div class="tpl-scroll">
-    <div class="tpl-gallery" id="tplGallery">
-      <div class="tpl-loading" id="tplLoading">Loading templates...</div>
+    <div class="tpl-masonry" id="tplGallery">
+      <div class="tpl-loading-txt" style="column-span:all">Loading templates...</div>
     </div>
   </div>
 </div>
@@ -1836,7 +1890,52 @@ function autoDlImage(src, imgW, imgH){
   }, 300);
 }
 
-/* ══ TEMPLATE GALLERY ══ */
+/* ══ TEMPLATE GALLERY — with background preload & masonry ══ */
+let _tplCache = null;       // in-memory cache
+let _tplFetching = false;   // dedup concurrent fetches
+let _tplFetchPromise = null;
+
+// Skeleton heights — variety dene ke liye
+const SKEL_HEIGHTS = [180,260,200,320,150,280,220,190,300,240,170,310,260,180];
+
+function buildSkeletons(n) {
+  return Array.from({length: n}, (_,i) =>
+    `<div class="tpl-skeleton" style="height:${SKEL_HEIGHTS[i % SKEL_HEIGHTS.length]}px"></div>`
+  ).join('');
+}
+
+function buildTplCard(t) {
+  const safeId    = encodeURIComponent(t.id || '');
+  const safeImg   = encodeURIComponent(t.image || '');
+  const safePromt = encodeURIComponent(t.prompt || '');
+  const safeTitle = encodeURIComponent(t.title || '');
+  return `<div class="tpl-card" onclick="tplCardClick('${safeId}','${safeImg}','${safePromt}','${safeTitle}')">
+    <img src="${t.image}" alt="${t.title||'Template'}" loading="lazy" decoding="async"/>
+    <div class="tpl-card-overlay">
+      <div class="tpl-card-overlay-prompt">${t.prompt||''}</div>
+      <span class="tpl-card-overlay-use">Use Prompt ✦</span>
+    </div>
+  </div>`;
+}
+
+async function fetchTemplates() {
+  if (_tplCache) return _tplCache;
+  if (_tplFetchPromise) return _tplFetchPromise;
+  _tplFetching = true;
+  _tplFetchPromise = fetch(`${API_URL}/templates`)
+    .then(r => { if(!r.ok) throw new Error('Failed'); return r.json(); })
+    .then(data => { _tplCache = data; _tplFetchPromise = null; _tplFetching = false; return data; })
+    .catch(e => { _tplFetchPromise = null; _tplFetching = false; throw e; });
+  return _tplFetchPromise;
+}
+
+// Background preload — page load hone ke baad 2 sec mein silently fetch
+function preloadTemplatesInBackground() {
+  setTimeout(async () => {
+    try { await fetchTemplates(); } catch(e) { /* silent fail */ }
+  }, 2000);
+}
+
 async function openTemplateGallery(){
   document.getElementById('tplModal').classList.add('open');
   document.body.style.overflow='hidden';
@@ -1846,30 +1945,38 @@ function closeTemplateGallery(){
   document.getElementById('tplModal').classList.remove('open');
   document.body.style.overflow='';
 }
+
 async function loadTplGallery(){
-  const gallery=document.getElementById('tplGallery');
-  gallery.innerHTML='<div class="tpl-loading">Loading templates...</div>';
-  try{
-    const res=await fetch(`${API_URL}/templates`);
-    if(!res.ok) throw new Error('Failed');
-    const templates=await res.json();
-    if(!templates.length){
-      gallery.innerHTML='<div class="tpl-empty">◈ No templates yet<br/><span style="font-size:10px;margin-top:8px;display:block">Admin panel se templates upload karo</span></div>';
-      return;
-    }
-    gallery.innerHTML=templates.map(t=>`
-      <div class="tpl-card" onclick="tplCardClick('${t.id}','${encodeURIComponent(t.image)}','${encodeURIComponent(t.prompt)}','${encodeURIComponent(t.title||'')}')">
-        <img src="${t.image}" alt="${t.title||'Template'}" loading="lazy"/>
-        <div class="tpl-card-info">
-          <div class="tpl-card-title">${t.title||'Template'}</div>
-          <div class="tpl-card-prompt">${t.prompt}</div>
-        </div>
-        <div class="tpl-use-badge">View ✦</div>
-      </div>`).join('');
-  }catch(e){
-    gallery.innerHTML='<div class="tpl-empty" style="color:var(--err)">Could not load templates<br/><span style="font-size:10px;opacity:.6">Make sure server is running</span></div>';
+  const gallery = document.getElementById('tplGallery');
+
+  // Agar cache already hai — instantly render, koi loading nahi
+  if (_tplCache) {
+    renderTplGallery(gallery, _tplCache);
+    return;
+  }
+
+  // Cache nahi — skeletons dikhao, phir fetch
+  gallery.innerHTML = buildSkeletons(14);
+
+  try {
+    const templates = await fetchTemplates();
+    renderTplGallery(gallery, templates);
+  } catch(e) {
+    gallery.innerHTML = `<div class="tpl-empty" style="color:var(--err);column-span:all">
+      Could not load templates<br/>
+      <span style="font-size:10px;opacity:.6">Make sure server is running</span>
+    </div>`;
   }
 }
+
+function renderTplGallery(gallery, templates) {
+  if (!templates || !templates.length) {
+    gallery.innerHTML = '<div class="tpl-empty" style="column-span:all">◈ No templates yet</div>';
+    return;
+  }
+  gallery.innerHTML = templates.map(t => buildTplCard(t)).join('');
+}
+
 let tplLbData={};
 function tplCardClick(id,imgEnc,promptEnc,titleEnc){
   const src=decodeURIComponent(imgEnc),prompt=decodeURIComponent(promptEnc),title=decodeURIComponent(titleEnc);
@@ -1879,12 +1986,14 @@ function tplCardClick(id,imgEnc,promptEnc,titleEnc){
 }
 function openTplLightbox(src,prompt,title){
   lbSrc=src;lbPrompt=prompt;lbW=0;lbH=0;
+  lbZoomLevel=1; lbPanX=0; lbPanY=0;
   document.getElementById('lb-img').src=src;
   document.getElementById('lb-prompt-txt').textContent=prompt||'—';
   document.getElementById('lb-size').textContent=title||'Template';
   document.getElementById('lb-info-size').textContent='Template';
   document.getElementById('lb-copy-btn').textContent='Copy Prompt';
   document.getElementById('lb-copy-btn').classList.remove('copied');
+  lbApplyZoom(false);
   const shareBtn=document.getElementById('lb-share-btn');
   shareBtn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg> Use This Prompt';
   shareBtn.onclick=()=>useTemplatePrompt(prompt);
@@ -2045,6 +2154,9 @@ aspectRatio=parseFloat(document.getElementById('dimW').value)/parseFloat(documen
     }else{localStorage.removeItem('breezyfy_jobId');}
   }catch(e){localStorage.removeItem('breezyfy_jobId');}
 })();
+
+// Background template preload — page load ke 2 sec baad silently fetch
+preloadTemplatesInBackground();
 </script>
 </body>
 </html>
