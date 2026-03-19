@@ -241,7 +241,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
     <div class="page-section active" id="page-overview">
       <div class="stat-grid" style="grid-template-columns:repeat(5,1fr)">
         <div class="stat-card s-live"><div class="stat-ico">🟢</div><div class="stat-val" id="s-live">0</div><div class="stat-lbl">Live Users (5min)</div></div>
-        <div class="stat-card s-queue"><div class="stat-ico">⏳</div><div class="stat-val" id="s-queue">0</div><div class="stat-lbl">Active Queue Jobs</div></div>
+        <div class="stat-card s-queue"><div class="stat-ico">⏳</div><div class="stat-val" id="s-queue">0</div><div class="stat-lbl">Active Queue Jobs</div><div id="s-queue-preview" style="display:none;font-family:'DM Mono',monospace;font-size:9px;color:var(--warn);margin-top:4px;line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;opacity:.8"></div></div>
         <div class="stat-card"><div class="stat-ico">👥</div><div class="stat-val" id="s-total">0</div><div class="stat-lbl">Total Unique IPs</div></div>
         <div class="stat-card"><div class="stat-ico">🖼</div><div class="stat-val" id="s-images">0</div><div class="stat-lbl">Images Generated</div></div>
         <div class="stat-card"><div class="stat-ico">🚫</div><div class="stat-val" id="s-blocked">0</div><div class="stat-lbl">Blocked IPs</div></div>
@@ -471,9 +471,9 @@ async function apiCall(path, opts={}){
 
 // ── FETCH ALL
 async function fetchAll(){
-  const [stats, users, logs, blocked, sys, queue] = await Promise.all([
+  const [stats, users, logs, blocked, sys] = await Promise.all([
     apiFetch('/stats'), apiFetch('/users'), apiFetch('/logs?limit=200'),
-    apiFetch('/blocked'), apiFetch('/system'), apiFetch('/queue')
+    apiFetch('/blocked'), apiFetch('/system')
   ]);
   const online = stats !== null;
   document.getElementById('statusDot').className = 'status-dot' + (online?' online':'');
@@ -486,15 +486,9 @@ async function fetchAll(){
     document.getElementById('s-blocked').textContent = stats.blockedCount||0;
     document.getElementById('logCount').textContent  = (stats.totalImages||0) + ' total';
     renderChart(stats.hourly||[]);
-    // Queue count stats se bhi aa sakta hai
-    const qCount = stats.queueLength ?? stats.activeJobs ?? stats.queue ?? null;
-    if(qCount !== null) updateQueueCard(qCount);
-  }
-  // Dedicated queue endpoint se bhi try karo
-  if(queue !== null){
-    const qLen = Array.isArray(queue) ? queue.length
-      : (queue.length ?? queue.count ?? queue.total ?? queue.queueLength ?? queue.activeJobs ?? 0);
-    updateQueueCard(qLen);
+    // Backend se queue info bhi try karo
+    const qb = stats.queueLength ?? stats.activeJobs ?? stats.queue ?? null;
+    if(qb !== null) updateQueueCard(qb, null);
   }
   if(users){ allUsers=users; renderUsers(); updateUserBadge(users); }
   if(logs){  allLogs=logs;  renderLogs(); renderOverviewLogs(); }
@@ -506,21 +500,43 @@ async function fetchAll(){
     document.getElementById('sys-mem').textContent      = (sys.memUsedMB||0)+' MB';
     document.getElementById('sys-users').textContent    = sys.usersTracked||0;
     document.getElementById('sys-logs').textContent     = sys.logsStored||0;
-    // System se bhi queue info try karo
-    if(sys.queueLength !== undefined) updateQueueCard(sys.queueLength);
-    if(sys.activeJobs  !== undefined) updateQueueCard(sys.activeJobs);
+    if(sys.queueLength !== undefined) updateQueueCard(sys.queueLength, null);
   }
+  // ── Website localStorage se live queue count padho (same domain)
+  readLiveQueueFromStorage();
 }
 
-function updateQueueCard(count){
+function readLiveQueueFromStorage() {
+  try {
+    const raw = localStorage.getItem('bfy_live_queue');
+    if (!raw) { updateQueueCard(0, []); return; }
+    const data = JSON.parse(raw);
+    const age = Date.now() - (data.ts || 0);
+    // 30 second se purana data stale maano
+    if (age > 30000) { updateQueueCard(0, []); return; }
+    updateQueueCard(data.count || 0, data.items || []);
+  } catch(e) { updateQueueCard(0, []); }
+}
+
+function updateQueueCard(count, items) {
   const el = document.getElementById('s-queue');
-  if(!el) return;
+  if (!el) return;
   el.textContent = count;
+  // Queue items preview
+  const preview = document.getElementById('s-queue-preview');
+  if (preview) {
+    if (items && items.length > 0) {
+      preview.textContent = items.slice(0,2).join(' • ') + (items.length > 2 ? ' +' + (items.length-2) : '');
+      preview.style.display = 'block';
+    } else {
+      preview.style.display = 'none';
+    }
+  }
   const card = el.closest('.stat-card');
-  if(card){
-    // Highlight karo agar queue mein koi hai
-    card.style.borderColor = count > 0 ? 'rgba(245,166,35,.4)' : '';
-    card.style.background  = count > 0 ? 'rgba(245,166,35,.04)' : '';
+  if (card) {
+    card.style.borderColor = count > 0 ? 'rgba(245,166,35,.5)' : '';
+    card.style.background  = count > 0 ? 'rgba(245,166,35,.05)' : '';
+    el.style.color = count > 0 ? 'var(--warn)' : 'var(--wh)';
   }
 }
 function fmtUptime(s){ const h=Math.floor(s/3600),m=Math.floor((s%3600)/60); return `${h}h ${m}m`; }
@@ -764,6 +780,12 @@ function showToast(msg, type=''){
 function init(){
   fetchAll();
   refreshTimer = setInterval(fetchAll, 6000);
+  // Website se instant queue update — localStorage change hone par turant update
+  window.addEventListener('storage', function(e) {
+    if (e.key === 'bfy_live_queue') {
+      readLiveQueueFromStorage();
+    }
+  });
 }
 </script>
 </body>
