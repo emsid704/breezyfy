@@ -29,7 +29,7 @@
       --r:       12px;
       --r2:      16px;
       --sidebar: 420px;
-      --hdr:     56px;
+      --hdr:     68px;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; overflow: hidden; }
@@ -58,11 +58,24 @@
     header {
       position: relative; z-index: 100;
       height: var(--hdr); flex-shrink: 0;
-      display: flex; align-items: center; padding: 0 20px; gap: 12px;
-      background: rgba(5,5,14,0.9);
-      border-bottom: 1px solid var(--bdr);
-      backdrop-filter: blur(24px) saturate(180%);
-      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      display: flex; align-items: center; padding: 0 24px; gap: 14px;
+      background: rgba(8,8,22,0.92);
+      border-bottom: none;
+      backdrop-filter: blur(28px) saturate(200%);
+      -webkit-backdrop-filter: blur(28px) saturate(200%);
+      box-shadow: 0 1px 0 rgba(92,68,255,.18), 0 2px 24px rgba(0,0,0,.4);
+    }
+    /* Gradient glow border at bottom — like sample */
+    header::after {
+      content: '';
+      position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(92,68,255,.5) 20%,
+        rgba(157,135,255,.8) 50%,
+        rgba(92,68,255,.5) 80%,
+        transparent 100%
+      );
     }
     .logo {
       font-size: 20px; font-weight: 800; letter-spacing: -0.03em;
