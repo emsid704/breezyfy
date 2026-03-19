@@ -179,6 +179,34 @@
       text-align: center; margin-top: 6px; letter-spacing: .05em;
     }
 
+    /* ─── AUTO-DOWNLOAD TOGGLE ─── */
+    .auto-dl-row {
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(92,68,255,.05); border: 1px solid rgba(92,68,255,.12);
+      border-radius: 11px; padding: 9px 14px; margin-bottom: 10px;
+    }
+    .auto-dl-label { display: flex; flex-direction: column; gap: 2px; }
+    .auto-dl-title {
+      font-family: 'Plus Jakarta Sans', sans-serif; font-size: 12px; font-weight: 700;
+      color: var(--txt); display: flex; align-items: center; gap: 6px;
+    }
+    .auto-dl-sub { font-family: 'Fira Code', monospace; font-size: 9px; color: var(--sub); }
+    .toggle-wrap { position: relative; flex-shrink: 0; }
+    .toggle-wrap input[type="checkbox"] { opacity:0; width:0; height:0; position:absolute; }
+    .toggle-slider {
+      width: 38px; height: 21px; background: rgba(255,255,255,.1);
+      border-radius: 11px; cursor: pointer; display: block;
+      border: 1px solid rgba(255,255,255,.12);
+      transition: background .2s, border-color .2s; position: relative;
+    }
+    .toggle-slider::after {
+      content:''; position:absolute; top:2px; left:2px;
+      width:15px; height:15px; border-radius:50%;
+      background:var(--sub); transition:transform .2s, background .2s;
+    }
+    .toggle-wrap input:checked + .toggle-slider { background:rgba(92,68,255,.35); border-color:rgba(92,68,255,.55); }
+    .toggle-wrap input:checked + .toggle-slider::after { transform:translateX(17px); background:var(--alit); }
+
     /* ─── NEG PROMPT ─── */
     .sec { padding: 18px 20px; border-bottom: 1px solid var(--bdr); }
     .slbl {
@@ -853,6 +881,7 @@
       .result-img-wrap img { width: 100% !important; height: auto !important; max-height: none !important; }
       .load-card { min-height: 200px; }
       #lightbox { display: none !important; }
+      .auto-dl-row { display: none !important; }
     }
   </style>
 </head>
@@ -967,6 +996,20 @@
 
     <!-- Generate Button -->
     <div class="gsec">
+      <!-- Auto-download toggle (PC only) -->
+      <div class="auto-dl-row" id="autoDlRow">
+        <div class="auto-dl-label">
+          <span class="auto-dl-title">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Auto Download
+          </span>
+          <span class="auto-dl-sub">Image bante hi download ho</span>
+        </div>
+        <label class="toggle-wrap">
+          <input type="checkbox" id="autoDlToggle">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
       <button id="genBtn" onclick="generate()">
         <span class="shim"></span>
         <span id="genBtnTxt">◈ &nbsp;Generate Image</span>
@@ -1122,14 +1165,14 @@ function queueAdd(promptText, imgW, imgH) {
   }
   _queue.push({ promptText, imgW, imgH });
   renderQueuePanel();
-  updateGenBtnHint();
+  updateGenBtn();
   return true;
 }
 
 function queueRemove(idx) {
   _queue.splice(idx, 1);
   renderQueuePanel();
-  updateGenBtnHint();
+  updateGenBtn();
 }
 
 function renderQueuePanel() {
@@ -1149,21 +1192,6 @@ function renderQueuePanel() {
       (!isFirst ? '<button class="qs-remove" onclick="queueRemove(' + i + ')" title="Remove">✕</button>' : '') +
       '</div>';
   }).join('');
-}
-
-function updateGenBtnHint() {
-  const hint = document.getElementById('queueHint');
-  if (!hint) return;
-  const remaining = MAX_QUEUE - _queue.length;
-  if (_queue.length > 0 && remaining > 0) {
-    hint.textContent = 'Add ' + remaining + ' more prompt' + (remaining > 1 ? 's' : '') + ' to queue';
-    hint.style.display = 'block';
-  } else if (_queue.length >= MAX_QUEUE) {
-    hint.textContent = 'Queue full (3/3)';
-    hint.style.display = 'block';
-  } else {
-    hint.style.display = 'none';
-  }
 }
 
 // Queue se ek item run karo — Promise return karta hai
@@ -1206,20 +1234,39 @@ function runQueueItem(item) {
 async function processQueue() {
   if (_queueRunning || !_queue.length) return;
   _queueRunning = true;
-  const btn = document.getElementById('genBtn');
+  updateGenBtn();
   while (_queue.length > 0) {
     renderQueuePanel();
-    updateGenBtnHint();
+    updateGenBtn();
     const item = _queue[0];
     await runQueueItem(item);
-    _queue.shift(); // done — remove from queue
+    _queue.shift();
     localStorage.removeItem('breezyfy_jobId');
   }
   _queueRunning = false;
   renderQueuePanel();
-  updateGenBtnHint();
-  if (btn) { btn.disabled = false; }
-  document.getElementById('genBtnTxt').innerHTML = '&#9672; &nbsp;Generate Image';
+  updateGenBtn();
+}
+
+// Button text + state update karo based on queue
+function updateGenBtn() {
+  const btn = document.getElementById('genBtn');
+  const txt = document.getElementById('genBtnTxt');
+  if (!btn || !txt) return;
+  if (!_queueRunning) {
+    btn.disabled = false;
+    txt.innerHTML = '&#9672; &nbsp;Generate Image';
+    return;
+  }
+  // Queue chal rahi hai
+  const filled = _queue.length;
+  if (filled >= MAX_QUEUE) {
+    btn.disabled = true;
+    txt.innerHTML = '&#9632; &nbsp;Queue Full (3/3)';
+  } else {
+    btn.disabled = false;
+    txt.innerHTML = '&#43; &nbsp;Add to Queue (' + filled + '/' + MAX_QUEUE + ')';
+  }
 }
 
 /* ══ MAIN GENERATE ══ */
@@ -1228,23 +1275,21 @@ async function generate() {
   if (!promptText) { document.getElementById('prompt').focus(); return; }
   const [imgW, imgH] = getDims();
 
-  // Already generating — add to queue agar space ho
   if (_queueRunning) {
+    // Queue chal rahi hai — add karo agar space ho
     if (_queue.length >= MAX_QUEUE) {
-      showToast('Queue full — max ' + MAX_QUEUE + ' images at a time');
+      showToast('Queue full — max ' + MAX_QUEUE + ' images');
       return;
     }
     queueAdd(promptText, imgW, imgH);
-    showToast('Added to queue (' + _queue.length + '/' + MAX_QUEUE + ')');
+    showToast('Queue mein add hua (' + _queue.length + '/' + MAX_QUEUE + ')');
     document.getElementById('prompt').value = '';
     uc(document.getElementById('prompt'));
+    updateGenBtn();
     return;
   }
 
-  // First item — seedha queue mein daalo aur start karo
-  const btn = document.getElementById('genBtn');
-  btn.disabled = true;
-  document.getElementById('genBtnTxt').innerHTML = 'Generating&#8230;';
+  // Pehla item — queue mein daalo aur shuru karo
   _queue = [{ promptText, imgW, imgH }];
   document.getElementById('prompt').value = '';
   uc(document.getElementById('prompt'));
@@ -1500,6 +1545,14 @@ function resolveLoading(src){
   imgArea.appendChild(row);
   addToRecent(src,imgW,imgH);
   if(isMobile()) injectMobAdBetween(batch);
+  // Auto-download if toggle on (PC only)
+  if(!isMobile() && document.getElementById('autoDlToggle') && document.getElementById('autoDlToggle').checked){
+    setTimeout(function(){
+      var c=document.createElement('canvas'),img2=new Image();
+      img2.onload=function(){c.width=img2.naturalWidth||imgW;c.height=img2.naturalHeight||imgH;c.getContext('2d').drawImage(img2,0,0);var a=document.createElement('a');a.href=c.toDataURL('image/png',1.0);a.download='breezyfy_'+imgW+'x'+imgH+'_'+Date.now()+'.png';a.click();};
+      img2.src=src;
+    },300);
+  }
   // Queue next item
   if (_queueItemResolve) { var r = _queueItemResolve; _queueItemResolve = null; r(true); }
   else { resetBtn(); }
@@ -1641,17 +1694,20 @@ function openLightbox(src,promptText,imgW,imgH){
   injectLbAd();
   document.getElementById('lightbox').classList.add('open');
   document.body.style.overflow='hidden';
+  // Save state for refresh restore
+  try{ sessionStorage.setItem('bfy_state', JSON.stringify({page:'lightbox',src,prompt:promptText,w:imgW,h:imgH})); }catch(e){}
 }
 
 function closeLightbox(){
   document.getElementById('lightbox').classList.remove('open');
   document.body.style.overflow='';
   lbZoomLevel=1; lbPanX=0; lbPanY=0;
-  // Agar template se aaye the toh template gallery wapas kholo
+  try{ sessionStorage.removeItem('bfy_state'); }catch(e){}
   if(lbOpenedFromTpl){
     lbOpenedFromTpl=false;
     document.getElementById('tplModal').classList.add('open');
     document.body.style.overflow='hidden';
+    try{ sessionStorage.setItem('bfy_state', JSON.stringify({page:'templates'})); }catch(e){}
   }
 }
 function lbBgClick(e){
@@ -1746,11 +1802,13 @@ async function openTemplateGallery(){
   history.pushState({ bfy: 'tpl' }, '');
   document.getElementById('tplModal').classList.add('open');
   document.body.style.overflow='hidden';
+  try{ sessionStorage.setItem('bfy_state', JSON.stringify({page:'templates'})); }catch(e){}
   await loadTplGallery();
 }
 function closeTemplateGallery(){
   document.getElementById('tplModal').classList.remove('open');
   document.body.style.overflow='';
+  try{ sessionStorage.removeItem('bfy_state'); }catch(e){}
 }
 
 async function loadTplGallery(){
@@ -1915,12 +1973,7 @@ const API_URL='https://capacity-cant-believed-prayers.trycloudflare.com';
 let pollTimer=null;
 function stopPolling(){try{if(pollTimer){clearInterval(pollTimer);pollTimer=null;}}catch(e){}}
 function resetBtn(){
-  try{
-    const btn=document.getElementById('genBtn');
-    if(btn && !_queueRunning){ btn.disabled=false; }
-    const txt=document.getElementById('genBtnTxt');
-    if(txt && !_queueRunning){ txt.innerHTML='&#9672; &nbsp;Generate Image'; }
-  }catch(e){}
+  try{ if(!_queueRunning) updateGenBtn(); }catch(e){}
 }
 let wasProcessing=false;
 
@@ -2013,6 +2066,30 @@ aspectRatio=parseFloat(document.getElementById('dimW').value)/parseFloat(documen
 
 // Background template preload — page load ke 2 sec baad silently fetch
 preloadTemplatesInBackground();
+
+/* ══ PAGE STATE RESTORE — refresh karne par wahi page dikhe ══ */
+(function restorePageState(){
+  try {
+    const raw = sessionStorage.getItem('bfy_state');
+    if (!raw) return;
+    const state = JSON.parse(raw);
+    if (!state || !state.page) return;
+
+    if (state.page === 'templates') {
+      // Template gallery wapas kholo
+      setTimeout(async function(){
+        document.getElementById('tplModal').classList.add('open');
+        document.body.style.overflow = 'hidden';
+        await loadTplGallery();
+      }, 300);
+    } else if (state.page === 'lightbox' && state.src && !isMobile()) {
+      // Lightbox restore — images load hone ke baad
+      setTimeout(function(){
+        openLightbox(state.src, state.prompt || '', state.w || 512, state.h || 512);
+      }, 500);
+    }
+  } catch(e) {}
+})();
 </script>
 </body>
 </html>
