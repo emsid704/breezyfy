@@ -64,6 +64,9 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;back
 .stat-val{font-family:'DM Mono',monospace;font-size:32px;font-weight:400;color:var(--wh);letter-spacing:-.02em}
 .stat-lbl{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--sub)}
 .stat-card.s-live .stat-val{color:var(--live)}
+.stat-card.s-queue .stat-val{color:var(--warn)}
+.stat-card.s-queue{border-color:rgba(245,166,35,.15)}
+.stat-card.s-queue:hover{border-color:rgba(245,166,35,.3)}
 /* CHART */
 .chart-card{background:var(--card);border:1px solid var(--bdr);border-radius:14px;padding:22px 24px}
 .chart-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
@@ -236,8 +239,9 @@ tr:hover td{background:rgba(255,255,255,.02)}
 
     <!-- OVERVIEW -->
     <div class="page-section active" id="page-overview">
-      <div class="stat-grid">
+      <div class="stat-grid" style="grid-template-columns:repeat(5,1fr)">
         <div class="stat-card s-live"><div class="stat-ico">🟢</div><div class="stat-val" id="s-live">0</div><div class="stat-lbl">Live Users (5min)</div></div>
+        <div class="stat-card s-queue"><div class="stat-ico">⏳</div><div class="stat-val" id="s-queue">0</div><div class="stat-lbl">Active Queue Jobs</div></div>
         <div class="stat-card"><div class="stat-ico">👥</div><div class="stat-val" id="s-total">0</div><div class="stat-lbl">Total Unique IPs</div></div>
         <div class="stat-card"><div class="stat-ico">🖼</div><div class="stat-val" id="s-images">0</div><div class="stat-lbl">Images Generated</div></div>
         <div class="stat-card"><div class="stat-ico">🚫</div><div class="stat-val" id="s-blocked">0</div><div class="stat-lbl">Blocked IPs</div></div>
@@ -403,17 +407,31 @@ let refreshTimer=null, blockTargetIp='';
 function doLogin(){
   const v = document.getElementById('passInput').value;
   if(v === ADMIN_PASS){
-    document.getElementById('loginScreen').style.display='none';
-    document.getElementById('app').style.display='flex';
-    document.getElementById('apiUrlInput').value = API_URL;
-    init();
+    sessionStorage.setItem('bzfy_logged', '1');
+    showApp();
   } else {
     document.getElementById('loginErr').style.display='block';
     setTimeout(()=>document.getElementById('loginErr').style.display='none',2000);
   }
 }
 document.getElementById('passInput').addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); });
-function doLogout(){ location.reload(); }
+
+function showApp(){
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('app').style.display='flex';
+  document.getElementById('apiUrlInput').value = API_URL;
+  init();
+}
+
+function doLogout(){
+  sessionStorage.removeItem('bzfy_logged');
+  location.reload();
+}
+
+// Auto-login agar session active hai
+(function checkSession(){
+  if(sessionStorage.getItem('bzfy_logged') === '1') showApp();
+})();
 
 // ── NAV
 const pageTitles = { overview:'Overview', users:'Live Users', logs:'Image Logs', templates:'Templates', blocked:'Blocked IPs', system:'System Status' };
@@ -453,8 +471,9 @@ async function apiCall(path, opts={}){
 
 // ── FETCH ALL
 async function fetchAll(){
-  const [stats, users, logs, blocked, sys] = await Promise.all([
-    apiFetch('/stats'), apiFetch('/users'), apiFetch('/logs?limit=200'), apiFetch('/blocked'), apiFetch('/system')
+  const [stats, users, logs, blocked, sys, queue] = await Promise.all([
+    apiFetch('/stats'), apiFetch('/users'), apiFetch('/logs?limit=200'),
+    apiFetch('/blocked'), apiFetch('/system'), apiFetch('/queue')
   ]);
   const online = stats !== null;
   document.getElementById('statusDot').className = 'status-dot' + (online?' online':'');
@@ -467,6 +486,15 @@ async function fetchAll(){
     document.getElementById('s-blocked').textContent = stats.blockedCount||0;
     document.getElementById('logCount').textContent  = (stats.totalImages||0) + ' total';
     renderChart(stats.hourly||[]);
+    // Queue count stats se bhi aa sakta hai
+    const qCount = stats.queueLength ?? stats.activeJobs ?? stats.queue ?? null;
+    if(qCount !== null) updateQueueCard(qCount);
+  }
+  // Dedicated queue endpoint se bhi try karo
+  if(queue !== null){
+    const qLen = Array.isArray(queue) ? queue.length
+      : (queue.length ?? queue.count ?? queue.total ?? queue.queueLength ?? queue.activeJobs ?? 0);
+    updateQueueCard(qLen);
   }
   if(users){ allUsers=users; renderUsers(); updateUserBadge(users); }
   if(logs){  allLogs=logs;  renderLogs(); renderOverviewLogs(); }
@@ -478,6 +506,21 @@ async function fetchAll(){
     document.getElementById('sys-mem').textContent      = (sys.memUsedMB||0)+' MB';
     document.getElementById('sys-users').textContent    = sys.usersTracked||0;
     document.getElementById('sys-logs').textContent     = sys.logsStored||0;
+    // System se bhi queue info try karo
+    if(sys.queueLength !== undefined) updateQueueCard(sys.queueLength);
+    if(sys.activeJobs  !== undefined) updateQueueCard(sys.activeJobs);
+  }
+}
+
+function updateQueueCard(count){
+  const el = document.getElementById('s-queue');
+  if(!el) return;
+  el.textContent = count;
+  const card = el.closest('.stat-card');
+  if(card){
+    // Highlight karo agar queue mein koi hai
+    card.style.borderColor = count > 0 ? 'rgba(245,166,35,.4)' : '';
+    card.style.background  = count > 0 ? 'rgba(245,166,35,.04)' : '';
   }
 }
 function fmtUptime(s){ const h=Math.floor(s/3600),m=Math.floor((s%3600)/60); return `${h}h ${m}m`; }
