@@ -1165,7 +1165,24 @@ var _queueItemResolve = null;
 
 /* Queue ko localStorage mein save karo */
 function saveQueueState() {
-  try { localStorage.setItem('bfy_queue', JSON.stringify(_queue)); } catch(e) {}
+  try {
+    localStorage.setItem('bfy_queue', JSON.stringify(_queue));
+    // Admin panel ke liye live queue count broadcast karo
+    broadcastQueueCount();
+  } catch(e) {}
+}
+
+/* Admin panel ke liye live queue data localStorage mein save karo */
+function broadcastQueueCount() {
+  try {
+    const activeCount = _queueRunning ? _queue.length : 0;
+    localStorage.setItem('bfy_live_queue', JSON.stringify({
+      count: activeCount,
+      running: _queueRunning,
+      items: _queue.map(function(q){ return q.promptText ? q.promptText.slice(0,40) : ''; }),
+      ts: Date.now()
+    }));
+  } catch(e) {}
 }
 /* localStorage se pending queue restore karo */
 function loadQueueState() {
@@ -1255,6 +1272,7 @@ function runQueueItem(item) {
 async function processQueue() {
   if (_queueRunning || !_queue.length) return;
   _queueRunning = true;
+  broadcastQueueCount();
   updateGenBtn();
   while (_queue.length > 0) {
     renderQueuePanel();
@@ -1267,7 +1285,7 @@ async function processQueue() {
   }
   _queueRunning = false;
   _queue = [];
-  saveQueueState();
+  saveQueueState();   // broadcasts count=0
   renderQueuePanel();
   updateGenBtn();
 }
