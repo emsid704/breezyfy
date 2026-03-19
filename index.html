@@ -936,7 +936,6 @@
       <div class="slbl">Prompt</div>
       <div class="pw">
         <textarea id="prompt" placeholder="Describe your image — subject, style, lighting, mood…" maxlength="800" oninput="uc(this)"></textarea>
-        <span class="cc"><span id="cn">0</span>/800</span>
         <button class="magic-btn" id="magicBtn" onclick="insertMagicPrompt()" title="Magic Prompt ✨">✦</button>
       </div>
       <!-- Queue panel — generating hone par dikhta hai -->
@@ -1013,17 +1012,6 @@
 
     <!-- Generate Button -->
     <div class="gsec">
-      <!-- AD 1: Mobile ad — canvas size ke baad, generate se pehle -->
-      <div class="mob-ad-static" id="mobAdStatic">
-        <div class="ad-label">Advertisement</div>
-        <div class="mob-ad-box">
-          <script>
-            atOptions = { 'key': '0325a81b241fbcfb35505509e36ae469', 'format': 'iframe', 'height': 250, 'width': 300, 'params': {} };
-          </script>
-          <script src="https://www.highperformanceformat.com/0325a81b241fbcfb35505509e36ae469/invoke.js"></script>
-        </div>
-      </div>
-
       <!-- Auto-download toggle (PC only) -->
       <div class="auto-dl-row" id="autoDlRow">
         <div class="auto-dl-label">
@@ -1163,7 +1151,7 @@
 
 <!-- ─── ALL JAVASCRIPT ─── -->
 <script>
-function uc(el){ document.getElementById('cn').textContent = el.value.length; }
+function uc(el){ const cn=document.getElementById('cn'); if(cn) cn.textContent = el.value.length; }
 
 /* ══ QUEUE SYSTEM (max 3) ══
    User pehli image generate karte waqt ya baad mein
@@ -1171,9 +1159,23 @@ function uc(el){ document.getElementById('cn').textContent = el.value.length; }
    Ek image complete ho toh next automatically start hoti hai.
 */
 const MAX_QUEUE = 3;
-var _queue = [];          // [{promptText, imgW, imgH}]
+var _queue = [];
 var _queueRunning = false;
 var _queueItemResolve = null;
+
+/* Queue ko localStorage mein save karo */
+function saveQueueState() {
+  try { localStorage.setItem('bfy_queue', JSON.stringify(_queue)); } catch(e) {}
+}
+/* localStorage se pending queue restore karo */
+function loadQueueState() {
+  try {
+    const raw = localStorage.getItem('bfy_queue');
+    if (!raw) return;
+    const q = JSON.parse(raw);
+    if (Array.isArray(q) && q.length > 0) { _queue = q; }
+  } catch(e) {}
+}
 
 function queueAdd(promptText, imgW, imgH) {
   if (_queue.length >= MAX_QUEUE) {
@@ -1181,6 +1183,7 @@ function queueAdd(promptText, imgW, imgH) {
     return false;
   }
   _queue.push({ promptText, imgW, imgH });
+  saveQueueState();
   renderQueuePanel();
   updateGenBtn();
   return true;
@@ -1188,6 +1191,7 @@ function queueAdd(promptText, imgW, imgH) {
 
 function queueRemove(idx) {
   _queue.splice(idx, 1);
+  saveQueueState();
   renderQueuePanel();
   updateGenBtn();
 }
@@ -1258,9 +1262,12 @@ async function processQueue() {
     const item = _queue[0];
     await runQueueItem(item);
     _queue.shift();
+    saveQueueState();
     localStorage.removeItem('breezyfy_jobId');
   }
   _queueRunning = false;
+  _queue = [];
+  saveQueueState();
   renderQueuePanel();
   updateGenBtn();
 }
@@ -1308,6 +1315,7 @@ async function generate() {
 
   // Pehla item — queue mein daalo aur shuru karo
   _queue = [{ promptText, imgW, imgH }];
+  saveQueueState();
   document.getElementById('prompt').value = '';
   uc(document.getElementById('prompt'));
   processQueue();
@@ -2070,9 +2078,34 @@ aspectRatio=parseFloat(document.getElementById('dimW').value)/parseFloat(documen
   }catch(e){console.warn('Restore:',e.message);}
 })();
 
-/* ══ RESUME PENDING JOB ══ */
+/* ══ RESUME PENDING JOB + QUEUE ══ */
 (async function resumeIfPending(){
-  const savedJobId=localStorage.getItem('breezyfy_jobId');if(!savedJobId)return;
+  const savedJobId=localStorage.getItem('breezyfy_jobId');
+
+  // Pending queue items restore karo (jo current job ke baad generate hone the)
+  loadQueueState();
+  // Current job bhi queue mein tha — wo pehla item tha, ab woh resume hoga
+  // Pending items (index 1, 2) wapas queue mein hain, sidebar pe dikhenge
+  if (_queue.length > 1) {
+    // First item current job hai (resume hoga), baaki pending hain
+    const pendingRest = _queue.slice(1);
+    _queue = pendingRest; // temporarily set — will be reset properly below
+    renderQueuePanel();
+    updateGenBtn();
+  } else {
+    _queue = [];
+    saveQueueState();
+  }
+
+  if(!savedJobId) {
+    // Koi current job nahi — agar sirf pending queue tha toh process karo
+    if (_queue.length > 0) {
+      showToast(_queue.length + ' queued image' + (_queue.length > 1 ? 's' : '') + ' resumed!');
+      processQueue();
+    }
+    return;
+  }
+
   const savedPrompt=localStorage.getItem('breezyfy_prompt')||'...';
   const savedW=parseInt(localStorage.getItem('breezyfy_w'))||512;
   const savedH=parseInt(localStorage.getItem('breezyfy_h'))||512;
@@ -2088,7 +2121,34 @@ aspectRatio=parseFloat(document.getElementById('dimW').value)/parseFloat(documen
       document.getElementById('genBtnTxt').innerHTML='Generating&#8230;';
       addLoadingBatch(savedPrompt,savedW,savedH,null);
       updateLoadingMsg('Resuming your session...','your job is still running',data.position||1);
-      wasProcessing=false;stopPolling();pollTimer=setInterval(()=>pollJobStatus(savedJobId),2000);
+      wasProcessing=false;stopPolling();
+      // Current job resume + pending queue bhi line mein
+      _queueRunning = true;
+      renderQueuePanel();
+      updateGenBtn();
+      if (_queue.length > 0) {
+        showToast('Resumed! ' + _queue.length + ' more in queue');
+      }
+      // Current job ka resolve set karo — complete hone pe queue process hogi
+      _queueItemResolve = async function(ok) {
+        _queue.shift && null; // already empty for current
+        localStorage.removeItem('breezyfy_jobId');
+        if (_queue.length > 0) {
+          await new Promise(r => setTimeout(r, 600));
+          const next = _queue[0];
+          await runQueueItem(next);
+          _queue.shift(); saveQueueState();
+          // Process remaining
+          while (_queue.length > 0) {
+            const item = _queue[0];
+            await runQueueItem(item);
+            _queue.shift(); saveQueueState();
+          }
+        }
+        _queueRunning = false; _queue = []; saveQueueState();
+        renderQueuePanel(); updateGenBtn();
+      };
+      pollTimer=setInterval(()=>pollJobStatus(savedJobId),2000);
     }else{localStorage.removeItem('breezyfy_jobId');}
   }catch(e){localStorage.removeItem('breezyfy_jobId');}
 })();
