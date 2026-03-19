@@ -100,6 +100,7 @@
     /* ─── HEADER NAV MENU ─── */
     .hdr-nav {
       display: flex; align-items: center; gap: 2px;
+      margin-left: auto; /* right side pe push */
     }
     .hdr-nav-item {
       position: relative;
@@ -115,26 +116,32 @@
     }
     .hdr-nav-btn:hover { color: #fff; background: rgba(255,255,255,.06); }
     .hdr-nav-btn svg { opacity: .6; transition: opacity .18s, transform .2s; }
-    .hdr-nav-item:hover .hdr-nav-btn svg { opacity: 1; transform: rotate(180deg); }
-    /* Dropdown */
+    .hdr-nav-item.open .hdr-nav-btn { color: #fff; background: rgba(255,255,255,.06); }
+    .hdr-nav-item.open .hdr-nav-btn svg { opacity: 1; transform: rotate(180deg); }
+    /* Dropdown — JS controlled, bridge gap taaki mouse slip na ho */
     .hdr-dropdown {
-      position: absolute; top: calc(100% + 10px); left: 0;
-      min-width: 260px; background: rgba(10,10,26,.97);
-      border: 1px solid rgba(92,68,255,.2); border-radius: 14px;
-      padding: 8px; display: none; flex-direction: column; gap: 2px;
+      position: absolute; top: 100%; left: 0;
+      padding-top: 8px; /* bridge between button and dropdown */
+      min-width: 260px;
+      display: none; flex-direction: column;
       z-index: 500;
-      box-shadow: 0 20px 60px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.04);
+    }
+    .hdr-dropdown-inner {
+      background: rgba(10,10,26,.97);
+      border: 1px solid rgba(92,68,255,.25); border-radius: 14px;
+      padding: 8px; display: flex; flex-direction: column; gap: 2px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.04);
       backdrop-filter: blur(24px);
       animation: ddFadeIn .15s ease;
     }
-    @keyframes ddFadeIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
-    .hdr-nav-item:hover .hdr-dropdown { display: flex; }
+    @keyframes ddFadeIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
+    .hdr-nav-item.open .hdr-dropdown { display: flex; }
     .hdr-dd-item {
       display: flex; align-items: flex-start; gap: 12px;
       padding: 10px 12px; border-radius: 9px; cursor: pointer;
       text-decoration: none; transition: background .15s;
     }
-    .hdr-dd-item:hover { background: rgba(92,68,255,.1); }
+    .hdr-dd-item:hover { background: rgba(92,68,255,.12); }
     .hdr-dd-icon {
       width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
       background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.07);
@@ -148,9 +155,9 @@
     }
     .hdr-dd-sub {
       font-family: 'Fira Code', monospace; font-size: 10.5px;
-      color: rgba(180,180,200,.6); line-height: 1.4;
+      color: rgba(180,180,200,.55); line-height: 1.4;
     }
-    /* Simple nav links (no dropdown) */
+    /* Simple nav links */
     .hdr-nav-link {
       font-family: 'Plus Jakarta Sans', sans-serif;
       font-size: 13px; font-weight: 500; color: rgba(220,220,240,.75);
@@ -160,8 +167,187 @@
       transition: color .18s, background .18s; white-space: nowrap;
     }
     .hdr-nav-link:hover { color: #fff; background: rgba(255,255,255,.06); }
+    /* Pricing button — special highlighted */
+    .hdr-nav-link.pricing {
+      color: var(--alit); background: rgba(92,68,255,.1);
+      border: 1px solid rgba(92,68,255,.25); border-radius: 9px;
+      font-weight: 700;
+    }
+    .hdr-nav-link.pricing:hover { background: rgba(92,68,255,.22); border-color: rgba(92,68,255,.5); color: #fff; }
     /* Hide nav on small screens */
-    @media (max-width: 860px) { .hdr-nav { display: none; } }
+    @media (max-width: 900px) { .hdr-nav { display: none; } }
+
+    /* ─── PRICING MODAL ─── */
+    #pricingModal {
+      position: fixed; inset: 0; z-index: 998;
+      background: rgba(2,2,10,.97); backdrop-filter: blur(24px);
+      display: none; flex-direction: column; overflow-y: auto;
+    }
+    #pricingModal.open { display: flex; }
+    .pm-topbar {
+      height: 56px; flex-shrink: 0; display: flex; align-items: center;
+      padding: 0 28px; gap: 16px;
+      border-bottom: 1px solid var(--bdr);
+      background: rgba(5,5,14,.8);
+      position: sticky; top: 0; z-index: 10;
+    }
+    .pm-logo { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; font-weight: 800; color: var(--wh); letter-spacing: -.02em; display: flex; align-items: center; gap: 6px; }
+    .pm-logo-icon { width: 22px; height: 22px; border-radius: 6px; background: linear-gradient(135deg, var(--acc), #3820cc); display: flex; align-items: center; justify-content: center; font-size: 10px; }
+    .pm-logo span { color: var(--alit); }
+    .pm-spacer { flex: 1; }
+    .pm-close {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.1);
+      color: var(--wh); font-size: 15px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; transition: all .18s;
+    }
+    .pm-close:hover { background: rgba(255,84,112,.2); border-color: rgba(255,84,112,.35); }
+    .pm-body { max-width: 1100px; margin: 0 auto; padding: 60px 28px 80px; width: 100%; }
+    .pm-hero { text-align: center; margin-bottom: 64px; }
+    .pm-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(92,68,255,.12); border: 1px solid rgba(92,68,255,.25);
+      color: var(--alit); font-family: 'Fira Code', monospace;
+      font-size: 10px; letter-spacing: .16em; text-transform: uppercase;
+      padding: 5px 14px; border-radius: 20px; margin-bottom: 20px;
+    }
+    .pm-hero h1 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: clamp(2.4rem,5vw,4rem); font-weight: 800;
+      color: var(--wh); letter-spacing: -.04em; line-height: 1.05;
+      margin-bottom: 16px;
+    }
+    .pm-hero h1 span { color: var(--alit); }
+    .pm-hero p {
+      font-family: 'Fira Code', monospace; font-size: 13px;
+      color: var(--sub); max-width: 500px; margin: 0 auto; line-height: 1.8;
+    }
+    /* Billing toggle */
+    .pm-toggle-row {
+      display: flex; align-items: center; justify-content: center; gap: 14px;
+      margin-top: 32px;
+    }
+    .pm-toggle-lbl {
+      font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px;
+      font-weight: 600; color: var(--sub);
+    }
+    .pm-toggle-lbl.active { color: var(--wh); }
+    .pm-toggle-btn {
+      width: 44px; height: 24px; border-radius: 12px;
+      background: rgba(255,255,255,.08); border: 1px solid var(--bdr2);
+      position: relative; cursor: pointer; transition: background .2s;
+    }
+    .pm-toggle-btn.on { background: rgba(92,68,255,.4); border-color: rgba(92,68,255,.6); }
+    .pm-toggle-knob {
+      width: 18px; height: 18px; border-radius: 50%;
+      background: var(--sub); position: absolute; top: 2px; left: 2px;
+      transition: transform .2s, background .2s;
+    }
+    .pm-toggle-btn.on .pm-toggle-knob { transform: translateX(20px); background: var(--alit); }
+    .pm-save-badge {
+      font-family: 'Fira Code', monospace; font-size: 10px; font-weight: 700;
+      letter-spacing: .1em; text-transform: uppercase;
+      background: rgba(92,68,255,.15); color: var(--alit);
+      border: 1px solid rgba(92,68,255,.3); padding: 3px 10px; border-radius: 6px;
+    }
+    /* Plan cards */
+    .pm-cards { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-bottom: 64px; }
+    @media (max-width: 768px) { .pm-cards { grid-template-columns: 1fr; } }
+    .pm-card {
+      background: var(--card); border: 1px solid var(--bdr);
+      border-radius: 20px; padding: 28px 26px;
+      display: flex; flex-direction: column; position: relative;
+      transition: border-color .2s, transform .2s;
+    }
+    .pm-card:hover { border-color: rgba(92,68,255,.3); transform: translateY(-3px); }
+    .pm-card.featured {
+      background: linear-gradient(145deg, rgba(92,68,255,.12), rgba(92,68,255,.04));
+      border-color: rgba(92,68,255,.4);
+      box-shadow: 0 0 0 1px rgba(92,68,255,.15), 0 20px 60px rgba(92,68,255,.12);
+    }
+    .pm-popular-tag {
+      position: absolute; top: -1px; right: 20px;
+      background: linear-gradient(135deg, var(--acc), #3820cc);
+      color: #fff; font-family: 'Fira Code', monospace;
+      font-size: 9px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+      padding: 4px 12px; border-radius: 0 0 8px 8px;
+    }
+    .pm-plan-name {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 18px; font-weight: 800; color: var(--wh);
+      letter-spacing: -.02em; margin-bottom: 4px;
+    }
+    .pm-plan-desc {
+      font-family: 'Fira Code', monospace; font-size: 10px;
+      color: var(--sub); letter-spacing: .1em; text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+    .pm-price {
+      display: flex; align-items: flex-end; gap: 4px; margin-bottom: 24px;
+    }
+    .pm-price-num {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 52px; font-weight: 800; color: var(--wh);
+      letter-spacing: -.04em; line-height: 1;
+    }
+    .pm-card.featured .pm-price-num { color: var(--alit); }
+    .pm-price-per {
+      font-family: 'Fira Code', monospace; font-size: 12px;
+      color: var(--sub); margin-bottom: 8px;
+    }
+    .pm-features {
+      list-style: none; display: flex; flex-direction: column; gap: 10px;
+      margin-bottom: 28px; flex: 1;
+    }
+    .pm-features li {
+      display: flex; align-items: center; gap: 9px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 13px; color: var(--txt);
+    }
+    .pm-features li::before {
+      content: ''; width: 6px; height: 6px; border-radius: 50%;
+      background: var(--mut); flex-shrink: 0;
+    }
+    .pm-card.featured .pm-features li::before { background: var(--alit); }
+    .pm-cta {
+      width: 100%; padding: 13px; border-radius: 12px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 13px; font-weight: 700; letter-spacing: .04em;
+      cursor: pointer; transition: all .18s;
+      border: 1px solid var(--bdr2); background: rgba(255,255,255,.05);
+      color: var(--txt);
+    }
+    .pm-cta:hover { background: rgba(255,255,255,.1); color: var(--wh); }
+    .pm-cta.featured-cta {
+      background: linear-gradient(135deg, var(--acc), #3820cc);
+      border: none; color: #fff;
+      box-shadow: 0 4px 20px rgba(92,68,255,.35);
+    }
+    .pm-cta.featured-cta:hover { opacity: .9; transform: translateY(-1px); box-shadow: 0 8px 28px rgba(92,68,255,.45); }
+    /* Compare table */
+    .pm-table-section h3 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 22px; font-weight: 800; color: var(--wh);
+      letter-spacing: -.03em; margin-bottom: 20px;
+    }
+    .pm-table { width: 100%; border-collapse: collapse; }
+    .pm-table th {
+      font-family: 'Fira Code', monospace; font-size: 10px;
+      letter-spacing: .15em; text-transform: uppercase; color: var(--sub);
+      padding: 12px 16px; text-align: left;
+      border-bottom: 1px solid var(--bdr);
+    }
+    .pm-table th.ft-col { background: rgba(92,68,255,.06); color: var(--alit); }
+    .pm-table td {
+      font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px;
+      color: var(--txt); padding: 14px 16px;
+      border-bottom: 1px solid rgba(255,255,255,.04);
+    }
+    .pm-table td.ft-col { background: rgba(92,68,255,.04); }
+    .pm-table tr:hover td { background: rgba(255,255,255,.02); }
+    .pm-table tr:hover td.ft-col { background: rgba(92,68,255,.07); }
+    .pm-check { color: var(--ok); font-size: 16px; }
+    .pm-cross { color: var(--mut); font-size: 14px; }
 
     /* ─── TEMPLATE BUTTON ─── */
     .tpl-btn {
@@ -994,78 +1180,64 @@
   </a>
   <div class="hd"></div>
   <span class="htag">AI Studio</span>
+  <div class="hd-spacer"></div>
 
-  <!-- ─── NAV MENU ─── -->
-  <nav class="hdr-nav">
+  <!-- ─── NAV MENU (right side) ─── -->
+  <nav class="hdr-nav" id="hdrNav">
     <!-- Features dropdown -->
-    <div class="hdr-nav-item">
-      <button class="hdr-nav-btn">
+    <div class="hdr-nav-item" id="navFeatures">
+      <button class="hdr-nav-btn" onclick="toggleNav('navFeatures')">
         Features
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
       <div class="hdr-dropdown">
-        <a class="hdr-dd-item" href="#">
-          <div class="hdr-dd-icon">🎨</div>
-          <div class="hdr-dd-text"><div class="hdr-dd-title">AI Image Studio</div><div class="hdr-dd-sub">Create stunning images with AI</div></div>
-        </a>
-        <a class="hdr-dd-item" href="#" onclick="openTemplateGallery();return false;">
-          <div class="hdr-dd-icon">✨</div>
-          <div class="hdr-dd-text"><div class="hdr-dd-title">Templates</div><div class="hdr-dd-sub">Browse curated prompt templates</div></div>
-        </a>
-        <a class="hdr-dd-item" href="#">
-          <div class="hdr-dd-icon">⚡</div>
-          <div class="hdr-dd-text"><div class="hdr-dd-title">Bulk Generate</div><div class="hdr-dd-sub">Queue up to 3 images at once</div></div>
-        </a>
-        <a class="hdr-dd-item" href="#">
-          <div class="hdr-dd-icon">🔍</div>
-          <div class="hdr-dd-text"><div class="hdr-dd-title">Image Zoom</div><div class="hdr-dd-sub">Inspect every detail up close</div></div>
-        </a>
+        <div class="hdr-dropdown-inner">
+          <a class="hdr-dd-item" href="#">
+            <div class="hdr-dd-icon">🎨</div>
+            <div class="hdr-dd-text"><div class="hdr-dd-title">AI Image Studio</div><div class="hdr-dd-sub">Create stunning images with AI</div></div>
+          </a>
+          <a class="hdr-dd-item" href="#" onclick="toggleNav(null);openTemplateGallery();return false;">
+            <div class="hdr-dd-icon">✨</div>
+            <div class="hdr-dd-text"><div class="hdr-dd-title">Templates</div><div class="hdr-dd-sub">Browse curated prompt templates</div></div>
+          </a>
+          <a class="hdr-dd-item" href="#">
+            <div class="hdr-dd-icon">⚡</div>
+            <div class="hdr-dd-text"><div class="hdr-dd-title">Queue Generate</div><div class="hdr-dd-sub">Queue up to 3 images at once</div></div>
+          </a>
+          <a class="hdr-dd-item" href="#">
+            <div class="hdr-dd-icon">🔍</div>
+            <div class="hdr-dd-text"><div class="hdr-dd-title">Image Zoom</div><div class="hdr-dd-sub">Inspect every detail up close</div></div>
+          </a>
+        </div>
       </div>
     </div>
 
     <!-- Resources dropdown -->
-    <div class="hdr-nav-item">
-      <button class="hdr-nav-btn">
+    <div class="hdr-nav-item" id="navResources">
+      <button class="hdr-nav-btn" onclick="toggleNav('navResources')">
         Resources
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
       <div class="hdr-dropdown">
-        <a class="hdr-dd-item" href="#">
-          <div class="hdr-dd-icon">📝</div>
-          <div class="hdr-dd-text"><div class="hdr-dd-title">Blog</div><div class="hdr-dd-sub">Read our latest announcements</div></div>
-        </a>
-        <a class="hdr-dd-item" href="#">
-          <div class="hdr-dd-icon">📖</div>
-          <div class="hdr-dd-text"><div class="hdr-dd-title">Guides</div><div class="hdr-dd-sub">Learn how to use Breezyfy</div></div>
-        </a>
-        <a class="hdr-dd-item" href="#">
-          <div class="hdr-dd-icon">❓</div>
-          <div class="hdr-dd-text"><div class="hdr-dd-title">FAQ</div><div class="hdr-dd-sub">We're here to help</div></div>
-        </a>
-        <a class="hdr-dd-item" href="#">
-          <div class="hdr-dd-icon">🕐</div>
-          <div class="hdr-dd-text"><div class="hdr-dd-title">Changelog</div><div class="hdr-dd-sub">See what's new</div></div>
-        </a>
-        <a class="hdr-dd-item" href="#">
-          <div class="hdr-dd-icon">💡</div>
-          <div class="hdr-dd-text"><div class="hdr-dd-title">Suggest a Feature</div><div class="hdr-dd-sub">Help us improve</div></div>
-        </a>
-        <a class="hdr-dd-item" href="#">
-          <div class="hdr-dd-icon">🤝</div>
-          <div class="hdr-dd-text"><div class="hdr-dd-title">Affiliate Program</div><div class="hdr-dd-sub">Earn by referring users</div></div>
-        </a>
+        <div class="hdr-dropdown-inner">
+          <a class="hdr-dd-item" href="#"><div class="hdr-dd-icon">📝</div><div class="hdr-dd-text"><div class="hdr-dd-title">Blog</div><div class="hdr-dd-sub">Read our latest announcements</div></div></a>
+          <a class="hdr-dd-item" href="#"><div class="hdr-dd-icon">📖</div><div class="hdr-dd-text"><div class="hdr-dd-title">Guides</div><div class="hdr-dd-sub">Learn how to use Breezyfy</div></div></a>
+          <a class="hdr-dd-item" href="#"><div class="hdr-dd-icon">❓</div><div class="hdr-dd-text"><div class="hdr-dd-title">FAQ</div><div class="hdr-dd-sub">We're here to help</div></div></a>
+          <a class="hdr-dd-item" href="#"><div class="hdr-dd-icon">🕐</div><div class="hdr-dd-text"><div class="hdr-dd-title">Changelog</div><div class="hdr-dd-sub">See what's new</div></div></a>
+          <a class="hdr-dd-item" href="#"><div class="hdr-dd-icon">💡</div><div class="hdr-dd-text"><div class="hdr-dd-title">Suggest a Feature</div><div class="hdr-dd-sub">Help us improve</div></div></a>
+          <a class="hdr-dd-item" href="#"><div class="hdr-dd-icon">🤝</div><div class="hdr-dd-text"><div class="hdr-dd-title">Affiliate Program</div><div class="hdr-dd-sub">Earn by referring users</div></div></a>
+        </div>
       </div>
     </div>
 
     <a class="hdr-nav-link" href="#">API</a>
-    <a class="hdr-nav-link" href="#">Pricing</a>
+    <a class="hdr-nav-link pricing" href="#" onclick="openPricing();return false;">Pricing</a>
   </nav>
 
   <button class="tpl-btn" onclick="openTemplateGallery()">
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
     Templates
   </button>
-  <div class="hd-spacer"></div>
   <button class="clear-btn" id="clearBtn" onclick="clearAllImages()" style="display:none">
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
     Clear All
@@ -1279,6 +1451,114 @@
   </div>
 </div>
 
+<!-- ─── PRICING MODAL ─── -->
+<div id="pricingModal">
+  <div class="pm-topbar">
+    <div class="pm-logo"><div class="pm-logo-icon">◈</div><span>Breezy</span>fy</div>
+    <div class="pm-spacer"></div>
+    <button class="pm-close" onclick="closePricing()">✕</button>
+  </div>
+  <div class="pm-body">
+    <!-- Hero -->
+    <div class="pm-hero">
+      <div class="pm-badge">⚡ Simple Pricing</div>
+      <h1>Free. <span>Always.</span></h1>
+      <p>Breezyfy is completely free to use — unlimited AI image generation, no credit card needed.</p>
+      <div class="pm-toggle-row">
+        <span class="pm-toggle-lbl active" id="pm-monthly-lbl">Monthly</span>
+        <div class="pm-toggle-btn" id="pmToggle" onclick="togglePmBilling()"><div class="pm-toggle-knob"></div></div>
+        <span class="pm-toggle-lbl" id="pm-yearly-lbl">Yearly</span>
+        <span class="pm-save-badge">Save 20%</span>
+      </div>
+    </div>
+
+    <!-- Plan Cards -->
+    <div class="pm-cards">
+      <!-- Free -->
+      <div class="pm-card">
+        <div class="pm-plan-name">Free</div>
+        <div class="pm-plan-desc">Explore the power of AI</div>
+        <div class="pm-price">
+          <div class="pm-price-num">$0</div>
+          <div class="pm-price-per">/mo</div>
+        </div>
+        <ul class="pm-features">
+          <li>Unlimited image generation</li>
+          <li>3 queue slots</li>
+          <li>All canvas sizes</li>
+          <li>Download PNG & JPG</li>
+          <li>Template library access</li>
+        </ul>
+        <button class="pm-cta" onclick="closePricing()">Start Creating — Free</button>
+      </div>
+      <!-- Pro -->
+      <div class="pm-card featured">
+        <div class="pm-popular-tag">Most Popular</div>
+        <div class="pm-plan-name">Pro</div>
+        <div class="pm-plan-desc">Perfect for power users</div>
+        <div class="pm-price">
+          <div class="pm-price-num" id="pm-pro-price">$10</div>
+          <div class="pm-price-per">/mo</div>
+        </div>
+        <ul class="pm-features">
+          <li>Everything in Free</li>
+          <li>Priority queue (faster generation)</li>
+          <li>High-res 4K upscaling</li>
+          <li>Private image gallery</li>
+          <li>Early access features</li>
+          <li>Remove watermark</li>
+        </ul>
+        <button class="pm-cta featured-cta">Go Pro →</button>
+      </div>
+      <!-- Studio -->
+      <div class="pm-card">
+        <div class="pm-plan-name">Studio</div>
+        <div class="pm-plan-desc">The ultimate package</div>
+        <div class="pm-price">
+          <div class="pm-price-num" id="pm-studio-price">$25</div>
+          <div class="pm-price-per">/mo</div>
+        </div>
+        <ul class="pm-features">
+          <li>Everything in Pro</li>
+          <li>Unlimited queue slots</li>
+          <li>Dedicated API access</li>
+          <li>Multi-user support (5 seats)</li>
+          <li>Commercial license</li>
+          <li>Priority support</li>
+        </ul>
+        <button class="pm-cta">Contact Sales</button>
+      </div>
+    </div>
+
+    <!-- Compare table -->
+    <div class="pm-table-section">
+      <h3>Compare Features</h3>
+      <div style="overflow-x:auto">
+        <table class="pm-table">
+          <thead>
+            <tr>
+              <th style="width:40%">Feature</th>
+              <th>Free</th>
+              <th class="ft-col">Pro</th>
+              <th>Studio</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Image Generation</td><td>Unlimited</td><td class="ft-col">Unlimited</td><td>Unlimited</td></tr>
+            <tr><td>Queue Slots</td><td>3</td><td class="ft-col" style="font-weight:700;color:var(--alit)">5 (Priority)</td><td>Unlimited</td></tr>
+            <tr><td>Canvas Sizes</td><td><span class="pm-check">✓</span></td><td class="ft-col"><span class="pm-check">✓</span></td><td><span class="pm-check">✓</span></td></tr>
+            <tr><td>4K Upscaling</td><td><span class="pm-cross">—</span></td><td class="ft-col"><span class="pm-check">✓</span></td><td><span class="pm-check">✓</span></td></tr>
+            <tr><td>Private Gallery</td><td><span class="pm-cross">—</span></td><td class="ft-col"><span class="pm-check">✓</span></td><td><span class="pm-check">✓</span></td></tr>
+            <tr><td>API Access</td><td><span class="pm-cross">—</span></td><td class="ft-col"><span class="pm-cross">—</span></td><td><span class="pm-check">✓</span></td></tr>
+            <tr><td>Commercial License</td><td><span class="pm-check">✓</span></td><td class="ft-col"><span class="pm-check">✓</span></td><td><span class="pm-check">✓</span></td></tr>
+            <tr><td>Support</td><td>Community</td><td class="ft-col">Email</td><td style="font-weight:700;color:var(--alit)">Priority</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ─── TEMPLATE MODAL ─── -->
 <div id="tplModal">
   <div class="tpl-topbar">
@@ -1297,9 +1577,56 @@
 
 <!-- ─── ALL JAVASCRIPT ─── -->
 <script>
-function uc(el){ const cn=document.getElementById('cn'); if(cn) cn.textContent = el.value.length; }
+/* ══ NAV DROPDOWN — JS controlled (hover gap fix) ══ */
+var _openNav = null;
+function toggleNav(id) {
+  if (_openNav && _openNav !== id) {
+    var prev = document.getElementById(_openNav);
+    if (prev) prev.classList.remove('open');
+  }
+  if (!id) { _openNav = null; return; }
+  var el = document.getElementById(id);
+  if (!el) return;
+  var isOpen = el.classList.contains('open');
+  el.classList.toggle('open', !isOpen);
+  _openNav = !isOpen ? id : null;
+}
+// Close dropdown when clicking outside
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.hdr-nav-item')) {
+    document.querySelectorAll('.hdr-nav-item.open').forEach(function(el){ el.classList.remove('open'); });
+    _openNav = null;
+  }
+});
 
-/* ══ QUEUE SYSTEM (max 3) ══
+/* ══ PRICING MODAL ══ */
+var _pmYearly = false;
+function openPricing() {
+  document.getElementById('pricingModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  history.pushState({ bfy: 'pricing' }, '');
+  try { sessionStorage.setItem('bfy_state', JSON.stringify({page:'pricing'})); } catch(e) {}
+}
+function closePricing() {
+  document.getElementById('pricingModal').classList.remove('open');
+  document.body.style.overflow = '';
+  try { sessionStorage.removeItem('bfy_state'); } catch(e) {}
+}
+function togglePmBilling() {
+  _pmYearly = !_pmYearly;
+  var btn = document.getElementById('pmToggle');
+  var mLbl = document.getElementById('pm-monthly-lbl');
+  var yLbl = document.getElementById('pm-yearly-lbl');
+  var proEl = document.getElementById('pm-pro-price');
+  var stuEl = document.getElementById('pm-studio-price');
+  btn.classList.toggle('on', _pmYearly);
+  mLbl.classList.toggle('active', !_pmYearly);
+  yLbl.classList.toggle('active', _pmYearly);
+  if (proEl) proEl.textContent = _pmYearly ? '$8' : '$10';
+  if (stuEl) stuEl.textContent = _pmYearly ? '$20' : '$25';
+}
+
+function uc(el){ const cn=document.getElementById('cn'); if(cn) cn.textContent = el.value.length; }
    User pehli image generate karte waqt ya baad mein
    prompt likh ke dobara Generate dabaye — queue mein add hota hai.
    Ek image complete ho toh next automatically start hoti hai.
@@ -2162,6 +2489,7 @@ document.addEventListener('keydown',e=>{
     closeLightbox();
     closeTemplateGallery();
     closeMobTplSheet();
+    closePricing();
   }
   // Lightbox zoom keyboard shortcuts (PC only)
   if(document.getElementById('lightbox').classList.contains('open')){
@@ -2174,6 +2502,12 @@ document.addEventListener('keydown',e=>{
 /* ══ BACK BUTTON — History API ══ */
 window.addEventListener('popstate', function(e) {
   const state = e.state;
+
+  // Pricing modal open hai → band karo
+  if (document.getElementById('pricingModal').classList.contains('open')) {
+    closePricing();
+    return;
+  }
 
   // Lightbox open hai → band karo
   if (document.getElementById('lightbox').classList.contains('open')) {
