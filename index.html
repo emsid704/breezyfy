@@ -875,11 +875,28 @@
       .gsec { padding: 12px 16px 16px; margin-top: 0; border-top: 1px solid var(--bdr); }
       .sgrp.on { grid-template-columns: repeat(2,1fr); }
       .sgrp4.on { grid-template-columns: repeat(2,1fr); }
+      /* Mobile image fix — full width, height auto */
+      .batch { overflow: hidden; }
       .batch-img-area { padding: 0 12px 14px; }
+      .batch-img-row { flex-direction: column; }
+      .batch-img-col { width: 100%; }
+      .result-img-outer { width: 100%; }
+      .result-img-wrap {
+        max-height: none !important; width: 100% !important;
+        height: auto !important; cursor: default;
+        aspect-ratio: auto !important;
+      }
+      .result-img-wrap img {
+        width: 100% !important; height: auto !important;
+        max-height: none !important; max-width: 100% !important;
+      }
+      .load-card { min-height: 200px; width: 100%; }
       .bh { padding: 11px 12px 9px; gap: 6px; flex-wrap: wrap; }
-      .result-img-wrap { max-height: none !important; width: 100% !important; cursor: default; }
-      .result-img-wrap img { width: 100% !important; height: auto !important; max-height: none !important; }
-      .load-card { min-height: 200px; }
+      .bh-prompt { max-width: 140px; }
+      /* Ad visible on mobile */
+      .mob-ad-static { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 0 0 12px; width: 100%; }
+      .mob-ad-between { display: flex; }
+      #pcAdSec { display: none !important; }
       #lightbox { display: none !important; }
       .auto-dl-row { display: none !important; }
     }
@@ -996,6 +1013,17 @@
 
     <!-- Generate Button -->
     <div class="gsec">
+      <!-- AD 1: Mobile ad — canvas size ke baad, generate se pehle -->
+      <div class="mob-ad-static" id="mobAdStatic">
+        <div class="ad-label">Advertisement</div>
+        <div class="mob-ad-box">
+          <script>
+            atOptions = { 'key': '0325a81b241fbcfb35505509e36ae469', 'format': 'iframe', 'height': 250, 'width': 300, 'params': {} };
+          </script>
+          <script src="https://www.highperformanceformat.com/0325a81b241fbcfb35505509e36ae469/invoke.js"></script>
+        </div>
+      </div>
+
       <!-- Auto-download toggle (PC only) -->
       <div class="auto-dl-row" id="autoDlRow">
         <div class="auto-dl-label">
@@ -1015,17 +1043,6 @@
         <span id="genBtnTxt">◈ &nbsp;Generate Image</span>
       </button>
       <div class="queue-add-hint" id="queueHint" style="display:none"></div>
-
-      <!-- AD 1: Mobile static below generate -->
-      <div class="mob-ad-static" id="mobAdStatic">
-        <div class="ad-label">Advertisement</div>
-        <div class="mob-ad-box">
-          <script>
-            atOptions = { 'key': '0325a81b241fbcfb35505509e36ae469', 'format': 'iframe', 'height': 250, 'width': 300, 'params': {} };
-          </script>
-          <script src="https://www.highperformanceformat.com/0325a81b241fbcfb35505509e36ae469/invoke.js"></script>
-        </div>
-      </div>
     </div>
 
   </aside>
@@ -1529,7 +1546,8 @@ function resolveLoading(src){
   const row=document.createElement('div'); row.className='batch-img-row';
   const imgCol=document.createElement('div'); imgCol.className='batch-img-col';
   const outer=document.createElement('div'); outer.className='result-img-outer';
-  const imgWrap=document.createElement('div'); imgWrap.className='result-img-wrap'; imgWrap.style.aspectRatio=`${imgW}/${imgH}`;
+  const imgWrap=document.createElement('div'); imgWrap.className='result-img-wrap';
+  if(!isMobile()) imgWrap.style.aspectRatio=`${imgW}/${imgH}`;
   const img=document.createElement('img'); img.src=src; img.alt=promptText; img.style.opacity='0'; img.style.transition='opacity .5s ease'; img.onload=()=>{img.style.opacity='1';};
   imgWrap.appendChild(img);
   if(!isMobile()) imgWrap.onclick=()=>openLightbox(src,promptText,imgW,imgH);
@@ -1887,11 +1905,22 @@ function openTplLightbox(src,prompt,title){
   document.body.style.overflow='hidden';
 }
 function useTemplatePrompt(prompt){
-  const ta=document.getElementById('prompt');
-  ta.value=prompt; uc(ta); closeLightbox();
-  ta.style.borderColor='rgba(92,68,255,.8)';ta.style.boxShadow='0 0 0 3px rgba(92,68,255,.12)';
-  setTimeout(()=>{ta.style.borderColor='';ta.style.boxShadow='';},600);
-  showToast('Prompt copied to editor!');
+  lbOpenedFromTpl = false; // important — warna closeLightbox template gallery dobara kholega
+  closeLightbox();
+  closeTemplateGallery();
+  const ta = document.getElementById('prompt');
+  ta.value = prompt; uc(ta);
+  ta.style.borderColor='rgba(92,68,255,.8)'; ta.style.boxShadow='0 0 0 3px rgba(92,68,255,.12)';
+  setTimeout(()=>{ ta.style.borderColor=''; ta.style.boxShadow=''; }, 600);
+  // Mobile pe prompt section tak scroll karo
+  if(isMobile()){
+    setTimeout(()=>{
+      const sec = document.getElementById('singleSec');
+      if(sec) sec.scrollIntoView({ behavior:'smooth', block:'start' });
+    }, 100);
+  }
+  ta.focus();
+  showToast('Prompt added to editor!');
 }
 
 /* ══ MOBILE TEMPLATE SHEET ══ */
