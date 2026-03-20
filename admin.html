@@ -471,9 +471,10 @@ async function apiCall(path, opts={}){
 
 // ── FETCH ALL
 async function fetchAll(){
-  const [stats, users, logs, blocked, sys] = await Promise.all([
+  const [stats, users, logs, blocked, sys, queueData] = await Promise.all([
     apiFetch('/stats'), apiFetch('/users'), apiFetch('/logs?limit=200'),
-    apiFetch('/blocked'), apiFetch('/system')
+    apiFetch('/blocked'), apiFetch('/system'),
+    apiCall('/queue')  // public endpoint — server.js mein already hai, no auth needed
   ]);
   const online = stats !== null;
   document.getElementById('statusDot').className = 'status-dot' + (online?' online':'');
@@ -486,9 +487,13 @@ async function fetchAll(){
     document.getElementById('s-blocked').textContent = stats.blockedCount||0;
     document.getElementById('logCount').textContent  = (stats.totalImages||0) + ' total';
     renderChart(stats.hourly||[]);
-    // Backend se queue info bhi try karo
-    const qb = stats.queueLength ?? stats.activeJobs ?? stats.queue ?? null;
-    if(qb !== null) updateQueueCard(qb, null);
+  }
+  // ── Live queue from /admin/queue (server.js ka real data)
+  if(queueData !== null){
+    const count = queueData.count ?? (queueData.queueSize + (queueData.processing ? 1 : 0)) ?? 0;
+    updateQueueCard(count, queueData.jobs || []);
+  } else {
+    updateQueueCard(0, []);
   }
   if(users){ allUsers=users; renderUsers(); updateUserBadge(users); }
   if(logs){  allLogs=logs;  renderLogs(); renderOverviewLogs(); }
@@ -500,33 +505,20 @@ async function fetchAll(){
     document.getElementById('sys-mem').textContent      = (sys.memUsedMB||0)+' MB';
     document.getElementById('sys-users').textContent    = sys.usersTracked||0;
     document.getElementById('sys-logs').textContent     = sys.logsStored||0;
-    if(sys.queueLength !== undefined) updateQueueCard(sys.queueLength, null);
   }
-  // ── Website localStorage se live queue count padho (same domain)
-  readLiveQueueFromStorage();
 }
 
-function readLiveQueueFromStorage() {
-  try {
-    const raw = localStorage.getItem('bfy_live_queue');
-    if (!raw) { updateQueueCard(0, []); return; }
-    const data = JSON.parse(raw);
-    const age = Date.now() - (data.ts || 0);
-    // 30 second se purana data stale maano
-    if (age > 30000) { updateQueueCard(0, []); return; }
-    updateQueueCard(data.count || 0, data.items || []);
-  } catch(e) { updateQueueCard(0, []); }
-}
-
-function updateQueueCard(count, items) {
+function updateQueueCard(count, jobs) {
   const el = document.getElementById('s-queue');
   if (!el) return;
   el.textContent = count;
-  // Queue items preview
   const preview = document.getElementById('s-queue-preview');
   if (preview) {
-    if (items && items.length > 0) {
-      preview.textContent = items.slice(0,2).join(' • ') + (items.length > 2 ? ' +' + (items.length-2) : '');
+    if (jobs && jobs.length > 0) {
+      const lines = jobs.slice(0,3).map(j =>
+        (j.status === 'processing' ? '⟳ ' : '#'+(j.position||'?')+' ') + (j.prompt || '')
+      );
+      preview.textContent = lines.join(' | ');
       preview.style.display = 'block';
     } else {
       preview.style.display = 'none';
@@ -780,12 +772,6 @@ function showToast(msg, type=''){
 function init(){
   fetchAll();
   refreshTimer = setInterval(fetchAll, 6000);
-  // Website se instant queue update — localStorage change hone par turant update
-  window.addEventListener('storage', function(e) {
-    if (e.key === 'bfy_live_queue') {
-      readLiveQueueFromStorage();
-    }
-  });
 }
 </script>
 </body>
