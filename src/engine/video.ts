@@ -114,8 +114,9 @@ export async function processVideo(file: Blob, settings: RemovalSettings, option
     const pixelRatio = outWidth * outHeight / (width * height);
     const qualityFactor = 0.3 + clamp(options.quality ?? 0.95, 0.1, 1) * 0.7;
     // Follow the source stream's bitrate when known, with bounded floor/ceiling for browser export.
-    const bitrate = clamp((Number.isFinite(sourceBitrate) && sourceBitrate > 0
-      ? sourceBitrate * pixelRatio : outWidth * outHeight * frameRate * 0.13) * qualityFactor, 500_000, 20_000_000);
+    // Packet statistics and quality scaling can yield fractions; WebCodecs requires an integer.
+    const bitrate = Math.round(clamp((Number.isFinite(sourceBitrate) && sourceBitrate > 0
+      ? sourceBitrate * pixelRatio : outWidth * outHeight * frameRate * 0.13) * qualityFactor, 500_000, 20_000_000));
     const quality = new Quality({ bitrate });
     if (!(await canEncodeVideo('avc', { width: outWidth, height: outHeight, quality }))) throw new Error('H.264 encoding at this resolution is unavailable on your device. Resize the video or try another browser.');
     if (duration * bitrate / 8 > MEDIA_LIMITS.videoOutputBytes * 0.9) throw new Error('This resolution and duration would exceed the 256 MB output limit. Use a shorter or smaller video.');
