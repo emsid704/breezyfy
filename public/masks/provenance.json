@@ -1,0 +1,26 @@
+{
+  "sourceRepository": "https://github.com/GargantuaX/gemini-watermark-remover",
+  "license": "MIT",
+  "copyright": [
+    "Copyright (c) 2025 Jad",
+    "Copyright (c) 2024 AllenK (Kwyshell)"
+  ],
+  "licenseNotice": "/third-party-notices.txt",
+  "files": [
+    {
+      "name": "compact-48.png",
+      "bytes": 1677,
+      "sha256": "4afc99afe0ef108d67acc45bf4dc5da867ddb793bebc89c9243bb121ce7f0f57"
+    },
+    {
+      "name": "classic-96.png",
+      "bytes": 8165,
+      "sha256": "3e26f2233a12a5829acac174d8df1f3db40e07fef04ecdd0e035732154077911"
+    },
+    {
+      "name": "modern-96.png",
+      "bytes": 4743,
+      "sha256": "e5e95a3cd28454a1281465519c1b6209c22320856e2bc3074d2386d75cd8bff1"
+    }
+  ]
+}
