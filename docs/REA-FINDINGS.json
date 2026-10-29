@@ -1,0 +1,214 @@
+{
+  "checkedDate": "2026-10-29",
+  "target": "https://erasio.io/tool",
+  "approach": "Read-only public browser observation and static inspection of publicly shipped browser JavaScript. No private source access, authentication bypass, account creation or processing-cap bypass.",
+  "browser": {
+    "evidenceId": "ev_3ab6b6ed3c4242696f21756a3f26c790259ffceb9d62954efc043734676cc18f",
+    "steps": [
+      {
+        "id": "scenario_start",
+        "status": "completed"
+      },
+      {
+        "id": "tool-ready",
+        "status": "completed"
+      }
+    ],
+    "completeness": {
+      "equality_eligible": false,
+      "missing_sections": [
+        "events"
+      ],
+      "status": "incomplete",
+      "truncated_sections": []
+    },
+    "cleanup": "terminated-owned-process"
+  },
+  "static": {
+    "summaryEvidenceId": "ev_893e126242bb86bdaefeef4f2334a6cf26af3205bd969f5d2798fce50b821fff",
+    "parentEvidenceId": "ev_e4a4a439d3f6fb1ecacb13ef6a24f440bef1a2f2d033402171d97984b6a6df7d",
+    "artifactSha256": "a4237a4b19b7db29450c89be03b6c14dcdb043c759cc98130242f43e82bea197",
+    "sourceSelection": {
+      "requested_paths": [
+        "_next__static__chunks__4470-1c178350324508e9.js",
+        "_next__static__chunks__1831-0954062abc2b74c7.js",
+        "_next__static__chunks__app__layout-a98ccdbb17ce1420.js"
+      ],
+      "unselected_files": 23
+    },
+    "statistics": {
+      "findings": 505,
+      "invalid_utf8_files": 0,
+      "modules": 21,
+      "nested_asar_containers": 0,
+      "parse_failures": 0,
+      "parsed_javascript_files": 3,
+      "relevant_files": 26,
+      "skipped_javascript_files": 0,
+      "text_bytes_read": 268161,
+      "visited_ast_nodes": 61683
+    },
+    "coverage": {
+      "application": {
+        "limits": [],
+        "omitted_count": null,
+        "status": "partial",
+        "truncated": false
+      },
+      "application_unknowns": 23,
+      "semantic": {
+        "families": [
+          {
+            "family": "boundary",
+            "omitted_relations": null,
+            "retained_relations": 17,
+            "status": "partial",
+            "unknown_count": 23
+          },
+          {
+            "family": "call-flow",
+            "omitted_relations": null,
+            "retained_relations": 637,
+            "status": "partial",
+            "unknown_count": 3993
+          },
+          {
+            "family": "child-process",
+            "omitted_relations": null,
+            "retained_relations": 0,
+            "status": "partial",
+            "unknown_count": 23
+          },
+          {
+            "family": "closure",
+            "omitted_relations": null,
+            "retained_relations": 3772,
+            "status": "partial",
+            "unknown_count": 23
+          },
+          {
+            "family": "configuration",
+            "omitted_relations": null,
+            "retained_relations": 0,
+            "status": "partial",
+            "unknown_count": 23
+          },
+          {
+            "family": "data-flow",
+            "omitted_relations": null,
+            "retained_relations": 42038,
+            "status": "partial",
+            "unknown_count": 3613
+          },
+          {
+            "family": "event",
+            "omitted_relations": null,
+            "retained_relations": 0,
+            "status": "partial",
+            "unknown_count": 23
+          },
+          {
+            "family": "object-flow",
+            "omitted_relations": null,
+            "retained_relations": 4398,
+            "status": "partial",
+            "unknown_count": 5951
+          },
+          {
+            "family": "promise-ownership",
+            "omitted_relations": null,
+            "retained_relations": 58,
+            "status": "partial",
+            "unknown_count": 56
+          },
+          {
+            "family": "request",
+            "omitted_relations": null,
+            "retained_relations": 7,
+            "status": "partial",
+            "unknown_count": 25
+          },
+          {
+            "family": "resource-lifecycle",
+            "omitted_relations": null,
+            "retained_relations": 0,
+            "status": "partial",
+            "unknown_count": 23
+          },
+          {
+            "family": "timer",
+            "omitted_relations": null,
+            "retained_relations": 14,
+            "status": "partial",
+            "unknown_count": 43
+          }
+        ],
+        "limits": [
+          {
+            "name": "max_semantic_nodes",
+            "unit": "items",
+            "value": 100000
+          },
+          {
+            "name": "max_semantic_nodes_per_file",
+            "unit": "items",
+            "value": 20000
+          },
+          {
+            "name": "semantic_graph_file_node_ceiling",
+            "unit": "items",
+            "value": 20000
+          },
+          {
+            "name": "semantic_graph_node_ceiling",
+            "unit": "items",
+            "value": 100000
+          }
+        ],
+        "omitted_nodes": null,
+        "omitted_relations": null,
+        "status": "partial",
+        "truncated": true
+      },
+      "semantic_unknowns": 13819,
+      "static_sources": {
+        "electron_applicability": {
+          "observed": 0,
+          "unknown": 26
+        },
+        "examination": {
+          "complete": 2,
+          "limited": 1,
+          "not-examined": 23
+        },
+        "semantics": {
+          "unexamined_sources": 23,
+          "unknown_sources": 3
+        },
+        "sources": 26,
+        "syntax": {
+          "complete": 3,
+          "failed": 0,
+          "not-examined": 23,
+          "recovered": 0
+        },
+        "unmeasured_sources": 0
+      }
+    }
+  },
+  "conclusion": "Core visible-watermark technology verified in shipped client code: calibrated alpha maps, inverse alpha arithmetic, Canvas, WebCodecs with MP4 demux/mux and audio packet copying. A full A–Z reconstruction and exact output equivalence are NOT established. Breezyfy is an independently implemented equivalent processing category with documented missing features.",
+  "limitations": [
+    "Public UI credits endpoint returned HTTP 429 during observation; no attempt was made to bypass it.",
+    "Erasio media processing was not exercised with a paid/signed-in account.",
+    "Only the three selected relevant bundles were statically analyzed; 23 inventoried sources remained outside that analysis. One selected file hit the default semantic-node ceiling.",
+    "Private backend code and special Veo/Omni calibration/pipeline remain unverified.",
+    "Breezyfy uses MIT-licensed open-source calibrations, not Erasio-owned engine code or assets."
+  ],
+  "sources": [
+    "https://erasio.io/technology",
+    "https://erasio.io/tool",
+    "https://erasio.io/terms",
+    "https://erasio.io/image-watermark-removal-settings-guide",
+    "https://erasio.io/video-watermark-removal-settings-guide"
+  ]
+}

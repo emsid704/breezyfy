@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="960" viewBox="0 0 1280 960">
+<defs><linearGradient id="wall" x2="1" y2="1"><stop stop-color="#e9d9cf"/><stop offset="1" stop-color="#c7b7d1"/></linearGradient><linearGradient id="arch" x2="1" y2=".6"><stop stop-color="#9b80bd"/><stop offset=".5" stop-color="#c4a9d6"/><stop offset="1" stop-color="#9972b0"/></linearGradient><linearGradient id="orb" x1=".25" y1=".1" x2=".8" y2="1"><stop stop-color="#f8ddbe"/><stop offset=".7" stop-color="#dfad8d"/><stop offset="1" stop-color="#b88680"/></linearGradient><linearGradient id="floor" y2="1" x2=".3"><stop stop-color="#e4d2c6"/><stop offset="1" stop-color="#f2e6d8"/></linearGradient><radialGradient id="glow"><stop stop-color="#fff4dc" stop-opacity=".8"/><stop offset="1" stop-color="#fff4dc" stop-opacity="0"/></radialGradient><filter id="shadow"><feGaussianBlur stdDeviation="20"/></filter><filter id="soft"><feGaussianBlur stdDeviation="3"/></filter></defs>
+<path fill="url(#wall)" d="M0 0h1280v960H0z"/><path fill="url(#floor)" d="M0 650h1280v310H0z"/><ellipse cx="280" cy="230" rx="700" ry="650" fill="url(#glow)"/>
+<path fill="#9876a3" opacity=".16" d="M0 0h95l590 650H490zM180 0h80l590 650H740zM360 0h75l590 650H940z"/>
+<ellipse cx="700" cy="758" rx="340" ry="50" fill="#755c79" opacity=".25" filter="url(#shadow)"/>
+<path d="M440 700V350a200 200 0 0 1 400 0v350h-115V360a85 85 0 0 0-170 0v340z" fill="#9f7db5"/>
+<path d="M400 700V350a200 200 0 0 1 400 0v350h-115V360a85 85 0 0 0-170 0v340z" fill="url(#arch)"/>
+<path d="M400 700h115l40-23H440z" fill="#b99acb"/><path d="M685 700h115l40-23H725z" fill="#916bab"/>
+<ellipse cx="850" cy="775" rx="145" ry="28" fill="#ae877c" opacity=".3" filter="url(#shadow)"/><circle cx="830" cy="665" r="118" fill="url(#orb)"/>
+<path d="M200 750q20-190-65-305q110 70 103 232q55-148 129-180q-70 90-105 210q-8 31-13 43z" fill="#7c8e78"/><path d="M238 654Q109 630 125 534Q214 535 238 654M251 674q89-113 141-69q-17 72-141 69M221 575Q160 454 208 412q63 43 13 163" fill="#91a08b"/><path d="M172 739h142l-22 111h-96z" fill="#eee1cb"/>
+<rect x="481" y="779" width="155" height="12" rx="6" fill="#bd9fae" opacity=".25" filter="url(#soft)"/>
+</svg>

@@ -1,0 +1,29 @@
+{
+  "images": {
+    "matched": true,
+    "confidence": 0.9998642155127702,
+    "maxError": 1,
+    "meanError": 0.0011577606201171875,
+    "unchanged": true,
+    "converted": true,
+    "progressValid": true,
+    "cancellation": "AbortError",
+    "spoofed": "Use a valid, non-animated PNG, JPEG, WebP or uncompressed BMP image. Large or malformed metadata is not supported.",
+    "oversized": "Image exceeds 40 megapixels or 12,288 pixels on one side. Resize it before processing.",
+    "pinnedScaleWorks": true,
+    "bmpMatched": true,
+    "compressedBmpRejected": true
+  },
+  "video": {
+    "supported": true,
+    "matched": true,
+    "frames": 24,
+    "correctedFrames": 24,
+    "type": "video/mp4",
+    "audioHashMatches": true,
+    "audioPackets": 94,
+    "audioPacketTimesMatch": true,
+    "videoMeanError": 1.1546223958333333,
+    "videoCancellation": "AbortError"
+  }
+}
